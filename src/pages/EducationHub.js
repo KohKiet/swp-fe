@@ -14,66 +14,66 @@ import "./EducationHub.css";
 const coursesData = [
   {
     id: 1,
-    title: "Drug Recognition for Parents",
+    title: "Nhận Biết Ma Túy Cho Phụ Huynh",
     description:
-      "Learn to identify common drugs and their effects to help protect your children.",
-    level: "Beginner",
-    duration: "2 hours",
+      "Học cách nhận biết các loại ma túy phổ biến và tác động của chúng để giúp bảo vệ con cái bạn.",
+    level: "Cơ bản",
+    duration: "2 giờ",
     category: "parents",
     image:
       "https://placehold.co/300x200/e8f5e9/2D7DD2?text=Parent+Education",
   },
   {
     id: 2,
-    title: "Effective Communication with Teens",
+    title: "Giao Tiếp Hiệu Quả Với Thanh Thiếu Niên",
     description:
-      "Develop skills to discuss substance abuse with teenagers in a non-confrontational way.",
-    level: "Intermediate",
-    duration: "3 hours",
+      "Phát triển kỹ năng thảo luận về lạm dụng chất gây nghiện với thanh thiếu niên theo cách không đối đầu.",
+    level: "Trung cấp",
+    duration: "3 giờ",
     category: "parents",
     image:
       "https://placehold.co/300x200/e8f5e9/2D7DD2?text=Teen+Communication",
   },
   {
     id: 3,
-    title: "Understanding Peer Pressure",
+    title: "Hiểu Về Áp Lực Bạn Bè",
     description:
-      "For students: Learn strategies to recognize and resist negative peer pressure.",
-    level: "Beginner",
-    duration: "1.5 hours",
+      "Dành cho học sinh: Học các chiến lược để nhận biết và chống lại áp lực tiêu cực từ bạn bè.",
+    level: "Cơ bản",
+    duration: "1.5 giờ",
     category: "students",
     image:
       "https://placehold.co/300x200/e8f5e9/2D7DD2?text=Peer+Pressure",
   },
   {
     id: 4,
-    title: "Healthy Coping Mechanisms",
+    title: "Cơ Chế Đối Phó Lành Mạnh",
     description:
-      "Discover positive ways to deal with stress and anxiety without turning to substances.",
-    level: "Beginner",
-    duration: "2 hours",
+      "Khám phá những cách tích cực để đối phó với căng thẳng và lo âu mà không cần dùng đến chất gây nghiện.",
+    level: "Cơ bản",
+    duration: "2 giờ",
     category: "students",
     image:
       "https://placehold.co/300x200/e8f5e9/2D7DD2?text=Healthy+Coping",
   },
   {
     id: 5,
-    title: "Classroom Intervention Strategies",
+    title: "Chiến Lược Can Thiệp Trong Lớp Học",
     description:
-      "For teachers: Learn how to identify at-risk students and provide appropriate support.",
-    level: "Advanced",
-    duration: "4 hours",
+      "Dành cho giáo viên: Học cách nhận biết học sinh có nguy cơ và cung cấp hỗ trợ phù hợp.",
+    level: "Nâng cao",
+    duration: "4 giờ",
     category: "teachers",
     image:
       "https://placehold.co/300x200/e8f5e9/2D7DD2?text=Classroom+Strategies",
   },
   {
     id: 6,
-    title: "Creating a Supportive School Environment",
+    title: "Tạo Môi Trường Học Đường Hỗ Trợ",
     description:
-      "Develop strategies to foster a drug-free culture in educational settings.",
-    level: "Intermediate",
-    duration: "3 hours",
+      "Phát triển chiến lược để nuôi dưỡng một văn hóa không ma túy trong môi trường giáo dục.",
+    level: "Trung cấp",
+    duration: "3 giờ",
     category: "teachers",
     image:
       "https://placehold.co/300x200/e8f5e9/2D7DD2?text=School+Environment",
@@ -84,37 +84,37 @@ const coursesData = [
 const surveysData = [
   {
     id: 1,
-    title: "ASSIST Survey",
+    title: "Khảo Sát ASSIST",
     description:
-      "The Alcohol, Smoking and Substance Involvement Screening Test - identify your risk level.",
-    duration: "10 minutes",
+      "Bài kiểm tra sàng lọc về rượu, thuốc lá và chất gây nghiện - xác định mức độ rủi ro của bạn.",
+    duration: "10 phút",
     questions: 8,
     link: "/education/surveys/assist",
   },
   {
     id: 2,
-    title: "CRAFFT Survey",
+    title: "Khảo Sát CRAFFT",
     description:
-      "A screening tool for adolescents to assess risky alcohol and drug use behaviors.",
-    duration: "5 minutes",
+      "Công cụ sàng lọc cho thanh thiếu niên để đánh giá hành vi sử dụng rượu và ma túy có nguy cơ.",
+    duration: "5 phút",
     questions: 6,
     link: "/education/surveys/crafft",
   },
   {
     id: 3,
-    title: "Pre-Program Assessment",
+    title: "Đánh Giá Trước Chương Trình",
     description:
-      "Evaluate your knowledge before taking a prevention program.",
-    duration: "15 minutes",
+      "Đánh giá kiến thức của bạn trước khi tham gia chương trình phòng ngừa.",
+    duration: "15 phút",
     questions: 15,
     link: "/education/surveys/pre-program",
   },
   {
     id: 4,
-    title: "Post-Program Evaluation",
+    title: "Đánh Giá Sau Chương Trình",
     description:
-      "Measure your progress after completing a prevention program.",
-    duration: "15 minutes",
+      "Đo lường tiến bộ của bạn sau khi hoàn thành chương trình phòng ngừa.",
+    duration: "15 phút",
     questions: 15,
     link: "/education/surveys/post-program",
   },
@@ -172,10 +172,10 @@ const EducationHub = () => {
     <div className="education-hub">
       <div className="page-header secondary-bg">
         <div className="container">
-          <h1>Education Hub</h1>
+          <h1>Trung Tâm Giáo Dục</h1>
           <p>
-            Access courses, resources, and assessments to strengthen
-            drug prevention knowledge
+            Truy cập khóa học, tài nguyên và đánh giá để củng cố kiến
+            thức phòng ngừa ma túy
           </p>
         </div>
       </div>
@@ -187,15 +187,15 @@ const EducationHub = () => {
               activeTab === "courses" ? "active" : ""
             }`}
             onClick={() => setActiveTab("courses")}>
-            <FontAwesomeIcon icon={faBook} /> Courses
+            <FontAwesomeIcon icon={faBook} /> Khóa Học
           </button>
           <button
             className={`tab-btn ${
               activeTab === "surveys" ? "active" : ""
             }`}
             onClick={() => setActiveTab("surveys")}>
-            <FontAwesomeIcon icon={faClipboardCheck} /> Surveys &
-            Assessments
+            <FontAwesomeIcon icon={faClipboardCheck} /> Khảo Sát &
+            Đánh Giá
           </button>
         </div>
 
@@ -206,7 +206,7 @@ const EducationHub = () => {
                 <div className="search-input">
                   <input
                     type="text"
-                    placeholder="Search courses..."
+                    placeholder="Tìm kiếm khóa học..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -218,7 +218,7 @@ const EducationHub = () => {
 
               <div className="category-filters">
                 <span className="filter-label">
-                  <FontAwesomeIcon icon={faFilter} /> Filter by:
+                  <FontAwesomeIcon icon={faFilter} /> Lọc theo:
                 </span>
                 <div className="filter-buttons">
                   <button
@@ -226,28 +226,28 @@ const EducationHub = () => {
                       selectedCategory === "all" ? "active" : ""
                     }`}
                     onClick={() => handleCategoryChange("all")}>
-                    All
+                    Tất Cả
                   </button>
                   <button
                     className={`filter-btn ${
                       selectedCategory === "students" ? "active" : ""
                     }`}
                     onClick={() => handleCategoryChange("students")}>
-                    For Students
+                    Cho Học Sinh
                   </button>
                   <button
                     className={`filter-btn ${
                       selectedCategory === "parents" ? "active" : ""
                     }`}
                     onClick={() => handleCategoryChange("parents")}>
-                    For Parents
+                    Cho Phụ Huynh
                   </button>
                   <button
                     className={`filter-btn ${
                       selectedCategory === "teachers" ? "active" : ""
                     }`}
                     onClick={() => handleCategoryChange("teachers")}>
-                    For Teachers
+                    Cho Giáo Viên
                   </button>
                 </div>
               </div>
@@ -276,7 +276,7 @@ const EducationHub = () => {
                       <Link
                         to={`/education/courses/${course.id}`}
                         className="btn btn-primary">
-                        Start Course
+                        Bắt Đầu Khóa Học
                       </Link>
                     </div>
                   </div>
@@ -284,10 +284,10 @@ const EducationHub = () => {
               </div>
             ) : (
               <div className="no-results">
-                <h3>No courses found</h3>
+                <h3>Không tìm thấy khóa học</h3>
                 <p>
-                  Try adjusting your search or filters to find what
-                  you're looking for.
+                  Hãy điều chỉnh tìm kiếm hoặc bộ lọc để tìm thấy
+                  những gì bạn đang tìm kiếm.
                 </p>
               </div>
             )}
@@ -297,16 +297,19 @@ const EducationHub = () => {
         {activeTab === "surveys" && (
           <div className="surveys-section">
             <div className="intro-card card secondary-bg">
-              <h2>Why Take a Self-Assessment?</h2>
+              <h2>Tại Sao Nên Làm Bài Tự Đánh Giá?</h2>
               <p>
-                Self-assessments help identify potential risk factors
-                and provide personalized recommendations for education
-                and support. Your responses are confidential and can
-                guide your prevention journey.
+                Các bài tự đánh giá giúp xác định các yếu tố rủi ro
+                tiềm ẩn và cung cấp các khuyến nghị được cá nhân hóa
+                cho việc giáo dục và hỗ trợ. Các câu trả lời của bạn
+                được bảo mật và có thể hướng dẫn hành trình phòng ngừa
+                của bạn.
               </p>
             </div>
 
-            <h2 className="section-title">Available Assessments</h2>
+            <h2 className="section-title">
+              Các Bài Đánh Giá Hiện Có
+            </h2>
 
             <div className="surveys-grid">
               {surveysData.map((survey) => (
@@ -316,10 +319,10 @@ const EducationHub = () => {
                     <p>{survey.description}</p>
                     <div className="survey-meta">
                       <span>{survey.duration}</span>
-                      <span>{survey.questions} questions</span>
+                      <span>{survey.questions} câu hỏi</span>
                     </div>
                     <Link to={survey.link} className="survey-link">
-                      Take Survey{" "}
+                      Làm Khảo Sát{" "}
                       <FontAwesomeIcon icon={faChevronRight} />
                     </Link>
                   </div>

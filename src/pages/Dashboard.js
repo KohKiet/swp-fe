@@ -14,36 +14,36 @@ import "./Dashboard.css";
 
 // Mock data for the dashboard
 const userData = {
-  name: "John Davis",
-  email: "john.davis@example.com",
-  joinDate: "March 12, 2023",
-  role: "Volunteer",
-  lastLogin: "Today at 9:30 AM",
+  name: "Koh Vy Kiet",
+  email: "KietKVSE160864@fpt.edu.vn",
+  joinDate: "18/04/2025",
+  role: "Nhân viên",
+  lastLogin: "Hôm nay lúc 9:30 Sáng",
 };
 
 const courseProgress = [
   {
     id: 1,
-    title: "Understanding Peer Pressure",
+    title: "Hiểu Về Áp Lực Bạn Bè",
     progress: 75,
-    lastAccessed: "Yesterday",
-    nextLesson: "Refusal Techniques",
+    lastAccessed: "Hôm qua",
+    nextLesson: "Kỹ Thuật Từ Chối",
     completed: false,
   },
   {
     id: 2,
-    title: "Drug Recognition for Parents",
+    title: "Nhận Biết Ma Túy Cho Phụ Huynh",
     progress: 100,
-    lastAccessed: "April 15, 2023",
+    lastAccessed: "15/04/2023",
     completed: true,
     certificate: true,
   },
   {
     id: 3,
-    title: "Healthy Coping Mechanisms",
+    title: "Cơ Chế Đối Phó Lành Mạnh",
     progress: 30,
-    lastAccessed: "Today",
-    nextLesson: "Stress Management",
+    lastAccessed: "Hôm nay",
+    nextLesson: "Quản Lý Căng Thẳng",
     completed: false,
   },
 ];
@@ -51,39 +51,39 @@ const courseProgress = [
 const upcomingAppointments = [
   {
     id: 1,
-    counselor: "Dr. Sarah Johnson",
-    date: "May 10, 2023",
-    time: "2:00 PM",
-    type: "Initial Consultation",
+    counselor: "TS. Nguyễn Thị Hương",
+    date: "10/05/2023",
+    time: "2:00 Chiều",
+    type: "Tư Vấn Ban Đầu",
   },
   {
     id: 2,
-    counselor: "Mark Robinson, LCSW",
-    date: "May 24, 2023",
-    time: "10:00 AM",
-    type: "Follow-up Session",
+    counselor: "Trần Văn Minh, LCSW",
+    date: "24/05/2023",
+    time: "10:00 Sáng",
+    type: "Buổi Theo Dõi",
   },
 ];
 
 const surveyResults = [
   {
     id: 1,
-    name: "ASSIST Survey",
-    date: "April 2, 2023",
-    riskLevel: "Low",
+    name: "Khảo Sát ASSIST",
+    date: "02/04/2023",
+    riskLevel: "Thấp",
     recommendations: [
-      "Continue with preventive education",
-      "Take 'Healthy Coping Mechanisms' course",
+      "Tiếp tục với giáo dục phòng ngừa",
+      "Tham gia khóa học 'Cơ Chế Đối Phó Lành Mạnh'",
     ],
   },
   {
     id: 2,
-    name: "CRAFFT Survey",
-    date: "April 15, 2023",
-    riskLevel: "Medium",
+    name: "Khảo Sát CRAFFT",
+    date: "15/04/2023",
+    riskLevel: "Trung bình",
     recommendations: [
-      "Schedule a counseling session",
-      "Join a peer support group",
+      "Lên lịch buổi tư vấn",
+      "Tham gia nhóm hỗ trợ đồng đẳng",
     ],
   },
 ];
@@ -103,10 +103,10 @@ const Dashboard = () => {
     <div className="dashboard-page">
       <div className="page-header secondary-bg">
         <div className="container">
-          <h1>My Dashboard</h1>
+          <h1>Bảng Điều Khiển Của Tôi</h1>
           <p>
-            Track your progress and manage your drug prevention
-            journey
+            Theo dõi tiến trình và quản lý hành trình phòng ngừa ma
+            túy của bạn
           </p>
         </div>
       </div>
@@ -125,14 +125,15 @@ const Dashboard = () => {
                   <strong>Email:</strong> {userData.email}
                 </p>
                 <p>
-                  <strong>Member since:</strong> {userData.joinDate}
+                  <strong>Thành viên từ:</strong> {userData.joinDate}
                 </p>
                 <p>
-                  <strong>Last login:</strong> {userData.lastLogin}
+                  <strong>Đăng nhập lần cuối:</strong>{" "}
+                  {userData.lastLogin}
                 </p>
               </div>
               <Link to="/profile/edit" className="btn">
-                Edit Profile
+                Chỉnh Sửa Hồ Sơ
               </Link>
             </div>
 
@@ -142,30 +143,29 @@ const Dashboard = () => {
                   activeTab === "overview" ? "active" : ""
                 }`}
                 onClick={() => setActiveTab("overview")}>
-                <FontAwesomeIcon icon={faChartLine} /> Overview
+                <FontAwesomeIcon icon={faChartLine} /> Tổng Quan
               </button>
               <button
                 className={`nav-item ${
                   activeTab === "courses" ? "active" : ""
                 }`}
                 onClick={() => setActiveTab("courses")}>
-                <FontAwesomeIcon icon={faBook} /> My Courses
+                <FontAwesomeIcon icon={faBook} /> Khóa Học Của Tôi
               </button>
               <button
                 className={`nav-item ${
                   activeTab === "appointments" ? "active" : ""
                 }`}
                 onClick={() => setActiveTab("appointments")}>
-                <FontAwesomeIcon icon={faCalendarCheck} />{" "}
-                Appointments
+                <FontAwesomeIcon icon={faCalendarCheck} /> Lịch Hẹn
               </button>
               <button
                 className={`nav-item ${
                   activeTab === "surveys" ? "active" : ""
                 }`}
                 onClick={() => setActiveTab("surveys")}>
-                <FontAwesomeIcon icon={faClipboardList} /> Survey
-                Results
+                <FontAwesomeIcon icon={faClipboardList} /> Kết Quả
+                Khảo Sát
               </button>
             </div>
           </div>
@@ -175,191 +175,137 @@ const Dashboard = () => {
               <div className="dashboard-overview">
                 <div className="stats-row">
                   <div className="stat-card card">
-                    <h3>Program Impact</h3>
+                    <h3>Tác Động Chương Trình</h3>
                     <div className="stat-highlight">
                       <div className="stat-number">
                         {programStatistics.participantsHelped}
                       </div>
                       <div className="stat-label">
-                        Participants Helped
+                        Người Tham Gia Được Hỗ Trợ
                       </div>
                     </div>
                     <div className="stat-details">
                       <div className="stat-detail">
-                        <span>Active Courses</span>
+                        <span>Khóa Học Đang Hoạt Động</span>
                         <span>{programStatistics.activeCourses}</span>
                       </div>
                       <div className="stat-detail">
-                        <span>Counseling Sessions</span>
+                        <span>Buổi Tư Vấn</span>
                         <span>
                           {programStatistics.counselingSessions}
                         </span>
                       </div>
                       <div className="stat-detail">
-                        <span>Surveys Completed</span>
+                        <span>Khảo Sát Đã Hoàn Thành</span>
                         <span>
                           {programStatistics.surveysCompleted}
                         </span>
                       </div>
                       <div className="stat-detail">
-                        <span>Success Rate</span>
+                        <span>Tỷ Lệ Thành Công</span>
                         <span>{programStatistics.successRate}%</span>
                       </div>
                     </div>
                   </div>
-
-                  <div className="quick-actions card">
-                    <h3>Quick Actions</h3>
-                    <div className="action-buttons">
-                      <Link to="/education" className="action-btn">
-                        <FontAwesomeIcon icon={faBook} />
-                        <span>Browse Courses</span>
-                      </Link>
-                      <Link to="/counseling" className="action-btn">
-                        <FontAwesomeIcon icon={faCalendarCheck} />
-                        <span>Book Counseling</span>
-                      </Link>
-                      <Link
-                        to="/education/surveys/assist"
-                        className="action-btn">
-                        <FontAwesomeIcon icon={faClipboardList} />
-                        <span>Take Assessment</span>
-                      </Link>
-                    </div>
-                  </div>
                 </div>
 
-                <div className="overview-card card">
-                  <h3>Course Progress</h3>
-                  <div className="course-progress-list">
-                    {courseProgress.map((course) => (
-                      <div className="progress-item" key={course.id}>
-                        <div className="progress-info">
-                          <h4>{course.title}</h4>
-                          <div className="progress-meta">
-                            <span>
-                              Last accessed: {course.lastAccessed}
-                            </span>
-                            {!course.completed && (
-                              <span>Next: {course.nextLesson}</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="progress-bar-container">
+                <h2 className="section-title">Hoạt Động Gần Đây</h2>
+
+                <div className="recent-activities">
+                  <div className="recent-courses card">
+                    <h3>Khóa Học Của Tôi</h3>
+                    {courseProgress.length > 0 ? (
+                      <div className="course-list">
+                        {courseProgress.slice(0, 2).map((course) => (
                           <div
-                            className="progress-bar"
-                            style={{
-                              width: `${course.progress}%`,
-                            }}></div>
-                          <span className="progress-percentage">
-                            {course.progress}%
-                          </span>
-                        </div>
-                        {course.completed ? (
-                          <div className="course-completed">
-                            <FontAwesomeIcon icon={faCheckCircle} />{" "}
-                            Completed
+                            className="course-item"
+                            key={course.id}>
+                            <div className="course-info">
+                              <h4>{course.title}</h4>
+                              <div className="progress-container">
+                                <div
+                                  className="progress-bar"
+                                  style={{
+                                    width: `${course.progress}%`,
+                                  }}></div>
+                              </div>
+                              <div className="progress-details">
+                                <span>
+                                  {course.progress}% hoàn thành
+                                </span>
+                                <span>
+                                  Truy cập lần cuối:{" "}
+                                  {course.lastAccessed}
+                                </span>
+                              </div>
+                            </div>
+                            <Link
+                              to={`/education/courses/${course.id}`}
+                              className="btn btn-small">
+                              {course.completed
+                                ? "Xem Lại"
+                                : "Tiếp Tục"}
+                            </Link>
                           </div>
-                        ) : (
-                          <Link
-                            to={`/education/courses/${course.id}`}
-                            className="btn btn-primary">
-                            Continue
-                          </Link>
-                        )}
+                        ))}
                       </div>
-                    ))}
+                    ) : (
+                      <p className="empty-state">
+                        Bạn chưa đăng ký khóa học nào.
+                      </p>
+                    )}
+                    <Link to="/education" className="view-all-link">
+                      Xem Tất Cả Khóa Học
+                    </Link>
                   </div>
-                </div>
 
-                <div className="overview-row">
-                  <div className="overview-card card">
-                    <h3>Upcoming Appointments</h3>
+                  <div className="recent-appointments card">
+                    <h3>Lịch Hẹn Sắp Tới</h3>
                     {upcomingAppointments.length > 0 ? (
                       <div className="appointment-list">
-                        {upcomingAppointments.map((appointment) => (
-                          <div
-                            className="appointment-item"
-                            key={appointment.id}>
-                            <div className="appointment-icon">
-                              <FontAwesomeIcon
-                                icon={faCalendarCheck}
-                              />
-                            </div>
-                            <div className="appointment-details">
-                              <h4>{appointment.counselor}</h4>
-                              <p className="appointment-type">
-                                {appointment.type}
-                              </p>
-                              <p className="appointment-datetime">
-                                {appointment.date} at{" "}
-                                {appointment.time}
-                              </p>
-                            </div>
-                            <div className="appointment-actions">
-                              <button className="btn">
-                                Reschedule
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="empty-state">
-                        <p>No upcoming appointments</p>
-                        <Link to="/counseling" className="btn">
-                          Book Now
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="overview-card card">
-                    <h3>Recent Survey Results</h3>
-                    {surveyResults.length > 0 ? (
-                      <div className="survey-results-list">
-                        {surveyResults.map((survey) => (
-                          <div
-                            className="survey-result-item"
-                            key={survey.id}>
-                            <div className="survey-result-header">
-                              <h4>{survey.name}</h4>
-                              <span className="survey-date">
-                                {survey.date}
-                              </span>
-                            </div>
+                        {upcomingAppointments
+                          .slice(0, 1)
+                          .map((appointment) => (
                             <div
-                              className={`risk-level risk-${survey.riskLevel.toLowerCase()}`}>
-                              <FontAwesomeIcon
-                                icon={
-                                  survey.riskLevel === "Low"
-                                    ? faCheckCircle
-                                    : faExclamationTriangle
-                                }
-                              />
-                              {survey.riskLevel} Risk
+                              className="appointment-item"
+                              key={appointment.id}>
+                              <div className="appointment-info">
+                                <h4>{appointment.counselor}</h4>
+                                <p className="appointment-type">
+                                  {appointment.type}
+                                </p>
+                                <p className="appointment-datetime">
+                                  <strong>Ngày:</strong>{" "}
+                                  {appointment.date}
+                                </p>
+                                <p className="appointment-datetime">
+                                  <strong>Giờ:</strong>{" "}
+                                  {appointment.time}
+                                </p>
+                              </div>
+                              <div className="appointment-actions">
+                                <Link
+                                  to={`/appointments/${appointment.id}`}
+                                  className="btn btn-small">
+                                  Chi Tiết
+                                </Link>
+                                <button className="btn btn-small btn-outline">
+                                  Đổi Lịch
+                                </button>
+                              </div>
                             </div>
-                            <div className="recommendations">
-                              <h5>Recommendations:</h5>
-                              <ul>
-                                {survey.recommendations.map(
-                                  (rec, index) => (
-                                    <li key={index}>{rec}</li>
-                                  )
-                                )}
-                              </ul>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     ) : (
-                      <div className="empty-state">
-                        <p>No survey results yet</p>
-                        <Link to="/education/surveys" className="btn">
-                          Take Survey
-                        </Link>
-                      </div>
+                      <p className="empty-state">
+                        Bạn không có lịch hẹn sắp tới nào.
+                      </p>
                     )}
+                    <Link
+                      to="/counseling/booking"
+                      className="view-all-link">
+                      Quản Lý Lịch Hẹn
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -368,343 +314,217 @@ const Dashboard = () => {
             {activeTab === "courses" && (
               <div className="courses-tab">
                 <div className="tab-header">
-                  <h2>My Courses</h2>
+                  <h2>Khóa Học Của Tôi</h2>
                   <Link to="/education" className="btn">
-                    Browse More Courses
+                    Khám Phá Khóa Học Mới
                   </Link>
                 </div>
 
-                <div className="courses-list">
-                  {courseProgress.map((course) => (
-                    <div className="course-item card" key={course.id}>
-                      <div className="course-status">
-                        {course.completed ? (
-                          <span className="status-completed">
-                            <FontAwesomeIcon icon={faCheckCircle} />{" "}
-                            Completed
-                          </span>
-                        ) : (
-                          <span className="status-in-progress">
-                            In Progress
-                          </span>
-                        )}
-                      </div>
+                {courseProgress.length > 0 ? (
+                  <div className="courses-list">
+                    {courseProgress.map((course) => (
+                      <div
+                        className="course-card card"
+                        key={course.id}>
+                        <div className="course-header">
+                          <h3>{course.title}</h3>
+                          {course.completed ? (
+                            <span className="status-badge completed">
+                              <FontAwesomeIcon icon={faCheckCircle} />{" "}
+                              Hoàn Thành
+                            </span>
+                          ) : (
+                            <span className="status-badge in-progress">
+                              Đang Tiến Hành
+                            </span>
+                          )}
+                        </div>
 
-                      <h3>{course.title}</h3>
-                      <div className="course-progress-details">
-                        <div className="progress-bar-container">
+                        <div className="progress-container">
                           <div
                             className="progress-bar"
                             style={{
                               width: `${course.progress}%`,
                             }}></div>
                         </div>
-                        <span className="progress-text">
-                          {course.progress}% Complete
-                        </span>
-                      </div>
-
-                      <div className="course-meta-info">
-                        <div className="meta-item">
-                          <strong>Last Accessed:</strong>{" "}
-                          {course.lastAccessed}
+                        <div className="progress-details">
+                          <span>{course.progress}% hoàn thành</span>
                         </div>
-                        {!course.completed && (
-                          <div className="meta-item">
-                            <strong>Next Lesson:</strong>{" "}
-                            {course.nextLesson}
+
+                        <div className="course-details">
+                          <div className="detail-item">
+                            <strong>Truy cập lần cuối:</strong>{" "}
+                            {course.lastAccessed}
                           </div>
-                        )}
-                      </div>
+                          {!course.completed && (
+                            <div className="detail-item">
+                              <strong>Bài học tiếp theo:</strong>{" "}
+                              {course.nextLesson}
+                            </div>
+                          )}
+                          {course.certificate && (
+                            <div className="detail-item certificate">
+                              <strong>Chứng Chỉ:</strong>{" "}
+                              <Link to={`/certificates/${course.id}`}>
+                                Xem Chứng Chỉ
+                              </Link>
+                            </div>
+                          )}
+                        </div>
 
-                      <div className="course-actions">
-                        {course.completed ? (
-                          <>
-                            <button className="btn">
-                              View Certificate
-                            </button>
-                            <button className="btn">
-                              Review Course
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <Link
-                              to={`/education/courses/${course.id}`}
-                              className="btn btn-primary">
-                              Continue Course
-                            </Link>
-                            <button className="btn">
-                              View Materials
-                            </button>
-                          </>
-                        )}
+                        <div className="course-actions">
+                          <Link
+                            to={`/education/courses/${course.id}`}
+                            className="btn">
+                            {course.completed
+                              ? "Xem Lại Khóa Học"
+                              : "Tiếp Tục Học"}
+                          </Link>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="recommended-courses card">
-                  <h3>Recommended For You</h3>
-                  <p>
-                    Based on your assessments and previous courses, we
-                    recommend:
-                  </p>
-                  <div className="recommendations-list">
-                    <div className="recommendation-item">
-                      <h4>
-                        Creating a Supportive School Environment
-                      </h4>
-                      <p>
-                        Develop strategies to foster a drug-free
-                        culture in educational settings.
-                      </p>
-                      <Link to="/education/courses/6" className="btn">
-                        View Course
-                      </Link>
-                    </div>
-                    <div className="recommendation-item">
-                      <h4>Effective Communication with Teens</h4>
-                      <p>
-                        Develop skills to discuss substance abuse with
-                        teenagers in a non-confrontational way.
-                      </p>
-                      <Link to="/education/courses/2" className="btn">
-                        View Course
-                      </Link>
-                    </div>
+                    ))}
                   </div>
-                </div>
+                ) : (
+                  <div className="empty-state-container card">
+                    <p>Bạn chưa đăng ký khóa học nào.</p>
+                    <Link to="/education" className="btn">
+                      Khám Phá Khóa Học
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
 
             {activeTab === "appointments" && (
               <div className="appointments-tab">
                 <div className="tab-header">
-                  <h2>My Appointments</h2>
+                  <h2>Lịch Hẹn Của Tôi</h2>
                   <Link to="/counseling" className="btn">
-                    Book New Appointment
+                    Đặt Lịch Hẹn Mới
                   </Link>
                 </div>
 
-                <div className="appointments-container">
-                  <div className="upcoming-appointments card">
-                    <h3>Upcoming Appointments</h3>
-                    {upcomingAppointments.length > 0 ? (
-                      <div className="appointments-list">
-                        {upcomingAppointments.map((appointment) => (
-                          <div
-                            className="appointment-item"
-                            key={appointment.id}>
-                            <div className="appointment-date">
-                              <div className="date-circle">
-                                <span className="month">
-                                  {new Date(
-                                    appointment.date
-                                  ).toLocaleString("en-US", {
-                                    month: "short",
-                                  })}
-                                </span>
-                                <span className="day">
-                                  {new Date(
-                                    appointment.date
-                                  ).getDate()}
-                                </span>
-                              </div>
-                              <span className="time">
-                                {appointment.time}
-                              </span>
-                            </div>
-
-                            <div className="appointment-details">
-                              <h4>{appointment.counselor}</h4>
-                              <p className="appointment-type">
-                                {appointment.type}
-                              </p>
-                            </div>
-
-                            <div className="appointment-actions">
-                              <button className="btn">
-                                Reschedule
-                              </button>
-                              <button className="btn">Cancel</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="empty-state">
-                        <p>No upcoming appointments</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="past-appointments card">
-                    <h3>Past Appointments</h3>
-                    <div className="appointments-list">
-                      <div className="appointment-item past">
-                        <div className="appointment-date">
-                          <div className="date-circle">
-                            <span className="month">Apr</span>
-                            <span className="day">12</span>
-                          </div>
-                          <span className="time">11:00 AM</span>
-                        </div>
-
-                        <div className="appointment-details">
-                          <h4>Dr. Sarah Johnson</h4>
-                          <p className="appointment-type">
-                            Initial Consultation
-                          </p>
-                          <span className="appointment-status completed">
-                            Completed
+                {upcomingAppointments.length > 0 ? (
+                  <div className="appointments-list">
+                    {upcomingAppointments.map((appointment) => (
+                      <div
+                        className="appointment-card card"
+                        key={appointment.id}>
+                        <div className="appointment-header">
+                          <h3>{appointment.counselor}</h3>
+                          <span className="appointment-type">
+                            {appointment.type}
                           </span>
                         </div>
 
-                        <div className="appointment-actions">
-                          <button className="btn">View Notes</button>
-                        </div>
-                      </div>
-
-                      <div className="appointment-item past">
-                        <div className="appointment-date">
-                          <div className="date-circle">
-                            <span className="month">Mar</span>
-                            <span className="day">28</span>
-                          </div>
-                          <span className="time">2:30 PM</span>
-                        </div>
-
                         <div className="appointment-details">
-                          <h4>Mark Robinson, LCSW</h4>
-                          <p className="appointment-type">
-                            Group Session
-                          </p>
-                          <span className="appointment-status completed">
-                            Completed
-                          </span>
+                          <div className="detail-item">
+                            <strong>Ngày:</strong> {appointment.date}
+                          </div>
+                          <div className="detail-item">
+                            <strong>Giờ:</strong> {appointment.time}
+                          </div>
                         </div>
 
                         <div className="appointment-actions">
-                          <button className="btn">View Notes</button>
+                          <Link
+                            to={`/appointments/${appointment.id}`}
+                            className="btn">
+                            Xem Chi Tiết
+                          </Link>
+                          <button className="btn btn-outline">
+                            Đổi Lịch
+                          </button>
+                          <button className="btn btn-outline btn-danger">
+                            Hủy
+                          </button>
                         </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                </div>
+                ) : (
+                  <div className="empty-state-container card">
+                    <p>Bạn không có lịch hẹn nào.</p>
+                    <Link to="/counseling" className="btn">
+                      Đặt Lịch Tư Vấn
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
 
             {activeTab === "surveys" && (
               <div className="surveys-tab">
                 <div className="tab-header">
-                  <h2>My Survey Results</h2>
+                  <h2>Kết Quả Khảo Sát Của Tôi</h2>
                   <Link to="/education/surveys" className="btn">
-                    Take New Survey
+                    Làm Khảo Sát Mới
                   </Link>
                 </div>
 
-                <div className="survey-results-container">
-                  {surveyResults.map((survey) => (
-                    <div
-                      className="survey-result-card card"
-                      key={survey.id}>
-                      <div className="survey-header">
-                        <h3>{survey.name}</h3>
-                        <span className="survey-date">
-                          {survey.date}
-                        </span>
-                      </div>
-
+                {surveyResults.length > 0 ? (
+                  <div className="surveys-list">
+                    {surveyResults.map((survey) => (
                       <div
-                        className={`risk-assessment risk-${survey.riskLevel.toLowerCase()}`}>
-                        <div className="risk-icon">
-                          <FontAwesomeIcon
-                            icon={
-                              survey.riskLevel === "Low"
-                                ? faCheckCircle
-                                : faExclamationTriangle
-                            }
-                          />
+                        className="survey-card card"
+                        key={survey.id}>
+                        <div className="survey-header">
+                          <h3>{survey.name}</h3>
+                          <span
+                            className={`risk-level ${survey.riskLevel.toLowerCase()}`}>
+                            {survey.riskLevel === "Low" && (
+                              <FontAwesomeIcon icon={faCheckCircle} />
+                            )}
+                            {survey.riskLevel === "Medium" && (
+                              <FontAwesomeIcon
+                                icon={faExclamationTriangle}
+                              />
+                            )}
+                            {survey.riskLevel === "High" && (
+                              <FontAwesomeIcon
+                                icon={faExclamationTriangle}
+                              />
+                            )}
+                            Mức Độ Rủi Ro: {survey.riskLevel}
+                          </span>
                         </div>
-                        <div className="risk-details">
-                          <h4>Risk Level: {survey.riskLevel}</h4>
-                          <p className="risk-description">
-                            {survey.riskLevel === "Low"
-                              ? "You have a low risk of developing substance use issues. Continue with preventive education."
-                              : "You have some risk factors that may benefit from additional support and education."}
-                          </p>
+
+                        <div className="survey-details">
+                          <div className="detail-item">
+                            <strong>Ngày Hoàn Thành:</strong>{" "}
+                            {survey.date}
+                          </div>
+                        </div>
+
+                        <div className="recommendations">
+                          <h4>Khuyến Nghị:</h4>
+                          <ul>
+                            {survey.recommendations.map(
+                              (recommendation, index) => (
+                                <li key={index}>{recommendation}</li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+
+                        <div className="survey-actions">
+                          <Link
+                            to={`/education/surveys/results/${survey.id}`}
+                            className="btn">
+                            Xem Kết Quả Chi Tiết
+                          </Link>
                         </div>
                       </div>
-
-                      <div className="recommendations-section">
-                        <h4>Recommendations:</h4>
-                        <ul className="recommendations-list">
-                          {survey.recommendations.map(
-                            (rec, index) => (
-                              <li key={index}>{rec}</li>
-                            )
-                          )}
-                        </ul>
-                      </div>
-
-                      <div className="survey-actions">
-                        <button className="btn">
-                          View Full Results
-                        </button>
-                        <button className="btn">Download PDF</button>
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="available-surveys card">
-                    <h3>Available Surveys</h3>
-                    <p>
-                      Take these assessments to receive personalized
-                      recommendations:
-                    </p>
-                    <div className="survey-list">
-                      <Link
-                        to="/education/surveys/assist"
-                        className="survey-item">
-                        <h4>ASSIST Survey</h4>
-                        <p>
-                          The Alcohol, Smoking and Substance
-                          Involvement Screening Test
-                        </p>
-                        <span className="survey-link">
-                          Take Survey →
-                        </span>
-                      </Link>
-
-                      <Link
-                        to="/education/surveys/crafft"
-                        className="survey-item">
-                        <h4>CRAFFT Survey</h4>
-                        <p>
-                          A screening tool for adolescents to assess
-                          risky alcohol and drug use behaviors
-                        </p>
-                        <span className="survey-link">
-                          Take Survey →
-                        </span>
-                      </Link>
-
-                      <Link
-                        to="/education/surveys/post-program"
-                        className="survey-item">
-                        <h4>Post-Program Evaluation</h4>
-                        <p>
-                          Measure your progress after completing a
-                          prevention program
-                        </p>
-                        <span className="survey-link">
-                          Take Survey →
-                        </span>
-                      </Link>
-                    </div>
+                    ))}
                   </div>
-                </div>
+                ) : (
+                  <div className="empty-state-container card">
+                    <p>Bạn chưa hoàn thành khảo sát nào.</p>
+                    <Link to="/education/surveys" className="btn">
+                      Làm Khảo Sát
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -42,19 +42,19 @@ const LoginPage = () => {
     const newErrors = {};
 
     if (!formData.email) {
-      newErrors.email = "Email is required";
+      newErrors.email = "Email là bắt buộc";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid";
+      newErrors.email = "Email không hợp lệ";
     }
 
     if (!formData.password) {
-      newErrors.password = "Password is required";
+      newErrors.password = "Mật khẩu là bắt buộc";
     } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
     }
 
     if (!isLogin && !formData.name) {
-      newErrors.name = "Name is required";
+      newErrors.name = "Họ tên là bắt buộc";
     }
 
     return newErrors;
@@ -87,10 +87,11 @@ const LoginPage = () => {
       <div className="login-container">
         <div className="login-image secondary-bg">
           <div className="image-content">
-            <h2>Welcome to DrugFree Community</h2>
+            <h2>Chào mừng đến với Cộng Đồng BrightChoice</h2>
             <p>
-              Join our community of volunteers and make a positive
-              impact in the fight against substance abuse.
+              Tham gia cộng đồng tình nguyện viên của chúng tôi và tạo
+              ra tác động tích cực trong cuộc chiến chống lại lạm dụng
+              chất gây nghiện.
             </p>
           </div>
         </div>
@@ -100,26 +101,26 @@ const LoginPage = () => {
             <button
               className={`switcher-btn ${isLogin ? "active" : ""}`}
               onClick={() => setIsLogin(true)}>
-              Login
+              Đăng Nhập
             </button>
             <button
               className={`switcher-btn ${!isLogin ? "active" : ""}`}
               onClick={() => setIsLogin(false)}>
-              Sign Up
+              Đăng Ký
             </button>
           </div>
 
           <form className="login-form" onSubmit={handleSubmit}>
             <h2>
               {isLogin
-                ? "Log In to Your Account"
-                : "Create an Account"}
+                ? "Đăng Nhập Vào Tài Khoản Của Bạn"
+                : "Tạo Tài Khoản Mới"}
             </h2>
 
             {!isLogin && (
               <div className="form-group">
                 <label htmlFor="name">
-                  <FontAwesomeIcon icon={faUser} /> Full Name
+                  <FontAwesomeIcon icon={faUser} /> Họ và Tên
                 </label>
                 <input
                   type="text"
@@ -137,7 +138,7 @@ const LoginPage = () => {
 
             <div className="form-group">
               <label htmlFor="email">
-                <FontAwesomeIcon icon={faEnvelope} /> Email Address
+                <FontAwesomeIcon icon={faEnvelope} /> Địa Chỉ Email
               </label>
               <input
                 type="email"
@@ -154,7 +155,7 @@ const LoginPage = () => {
 
             <div className="form-group">
               <label htmlFor="password">
-                <FontAwesomeIcon icon={faLock} /> Password
+                <FontAwesomeIcon icon={faLock} /> Mật Khẩu
               </label>
               <input
                 type="password"
@@ -173,12 +174,12 @@ const LoginPage = () => {
               <div className="form-options">
                 <div className="remember-me">
                   <input type="checkbox" id="remember" />
-                  <label htmlFor="remember">Remember me</label>
+                  <label htmlFor="remember">Ghi nhớ đăng nhập</label>
                 </div>
                 <Link
                   to="/forgot-password"
                   className="forgot-password">
-                  Forgot password?
+                  Quên mật khẩu?
                 </Link>
               </div>
             )}
@@ -186,19 +187,17 @@ const LoginPage = () => {
             <button
               type="submit"
               className="btn btn-primary submit-btn">
-              {isLogin ? "Log In" : "Sign Up"}
+              {isLogin ? "Đăng Nhập" : "Đăng Ký"}
             </button>
 
             <div className="form-footer">
               <p>
-                {isLogin
-                  ? "Don't have an account?"
-                  : "Already have an account?"}
+                {isLogin ? "Chưa có tài khoản?" : "Đã có tài khoản?"}
                 <button
                   type="button"
                   className="toggle-btn"
                   onClick={toggleForm}>
-                  {isLogin ? "Sign Up" : "Log In"}
+                  {isLogin ? "Đăng Ký" : "Đăng Nhập"}
                 </button>
               </p>
             </div>

@@ -8,10 +8,10 @@ import {
 import "./Header.css";
 
 const Header = () => {
-  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const toggleDropdown = (dropdown) => {
-    setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   return (
@@ -19,99 +19,83 @@ const Header = () => {
       <div className="container">
         <div className="header-content flex-between">
           <div className="logo-container secondary-bg">
-            <Link to="/">
+            <Link to="/" className="logo-link">
+              <img
+                src="/Dlogo.jpg"
+                alt="Logo BrightChoice"
+                className="logo-image"
+              />
               <h1>BrightChoice</h1>
             </Link>
           </div>
 
           <nav className="main-nav">
             <ul className="nav-list">
-              <li className="nav-item dropdown">
-                <button
-                  className="dropdown-toggle"
-                  onClick={() => toggleDropdown("courses")}>
-                  Courses <FontAwesomeIcon icon={faChevronDown} />
-                </button>
-                {activeDropdown === "courses" && (
-                  <div className="dropdown-menu">
-                    <Link to="/education?group=students">
-                      For Students
-                    </Link>
-                    <Link to="/education?group=parents">
-                      For Parents
-                    </Link>
-                    <Link to="/education?group=teachers">
-                      For Teachers
-                    </Link>
-                  </div>
-                )}
+              <li className="nav-item">
+                <Link to="/education" className="nav-link">
+                  Khóa Học
+                </Link>
               </li>
 
-              <li className="nav-item dropdown">
-                <button
-                  className="dropdown-toggle"
-                  onClick={() => toggleDropdown("assessments")}>
-                  Assessments <FontAwesomeIcon icon={faChevronDown} />
-                </button>
-                {activeDropdown === "assessments" && (
-                  <div className="dropdown-menu">
-                    <Link to="/education/surveys/assist">
-                      ASSIST Survey
-                    </Link>
-                    <Link to="/education/surveys/crafft">
-                      CRAFFT Survey
-                    </Link>
-                    <Link to="/education/surveys/pre-program">
-                      Pre-Program Survey
-                    </Link>
-                  </div>
-                )}
+              <li className="nav-item">
+                <Link to="/education/surveys" className="nav-link">
+                  Đánh Giá
+                </Link>
               </li>
 
-              <li className="nav-item dropdown">
-                <button
-                  className="dropdown-toggle"
-                  onClick={() => toggleDropdown("counseling")}>
-                  Book Counseling{" "}
-                  <FontAwesomeIcon icon={faChevronDown} />
-                </button>
-                {activeDropdown === "counseling" && (
-                  <div className="dropdown-menu">
-                    <Link to="/counseling/profiles">
-                      Counselor Profiles
-                    </Link>
-                    <Link to="/counseling/booking">
-                      Book Appointment
-                    </Link>
-                  </div>
-                )}
+              <li className="nav-item">
+                <Link to="/counseling" className="nav-link">
+                  Đặt Lịch Tư Vấn
+                </Link>
               </li>
 
-              <li className="nav-item dropdown">
-                <button
-                  className="dropdown-toggle"
-                  onClick={() => toggleDropdown("programs")}>
-                  Programs <FontAwesomeIcon icon={faChevronDown} />
-                </button>
-                {activeDropdown === "programs" && (
-                  <div className="dropdown-menu">
-                    <Link to="/programs/upcoming">
-                      Upcoming Events
-                    </Link>
-                    <Link to="/programs/community">
-                      Community Initiatives
-                    </Link>
-                  </div>
-                )}
+              <li className="nav-item">
+                <Link to="/programs" className="nav-link">
+                  Chương Trình
+                </Link>
               </li>
             </ul>
           </nav>
 
+          <div
+            className="mobile-menu-button"
+            onClick={toggleMobileMenu}>
+            <div
+              className={`hamburger ${
+                isMobileMenuOpen ? "active" : ""
+              }`}>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+
           <div className="auth-buttons">
             <Link to="/login" className="btn">
-              <FontAwesomeIcon icon={faUser} /> Login / Signup
+              <FontAwesomeIcon icon={faUser} /> Đăng Nhập / Đăng Ký
             </Link>
           </div>
+        </div>
+      </div>
+
+      <div
+        className={`mobile-menu ${isMobileMenuOpen ? "active" : ""}`}>
+        <div className="mobile-nav">
+          <Link to="/education" className="mobile-nav-link">
+            Khóa Học
+          </Link>
+          <Link to="/education/surveys" className="mobile-nav-link">
+            Đánh Giá
+          </Link>
+          <Link to="/counseling" className="mobile-nav-link">
+            Đặt Lịch Tư Vấn
+          </Link>
+          <Link to="/programs" className="mobile-nav-link">
+            Chương Trình
+          </Link>
+          <Link to="/login" className="mobile-nav-link login">
+            <FontAwesomeIcon icon={faUser} /> Đăng Nhập / Đăng Ký
+          </Link>
         </div>
       </div>
     </header>

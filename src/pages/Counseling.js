@@ -16,79 +16,79 @@ import "./Counseling.css";
 const counselorsData = [
   {
     id: 1,
-    name: "Dr. Sarah Johnson",
-    title: "Clinical Psychologist",
+    name: "TS. Nguyễn Thị Hương",
+    title: "Nhà Tâm Lý Học Lâm Sàng",
     specialties: [
-      "Adolescent Counseling",
-      "Substance Abuse",
-      "Family Therapy",
+      "Tư Vấn Thanh Thiếu Niên",
+      "Lạm Dụng Chất Gây Nghiện",
+      "Trị Liệu Gia Đình",
     ],
-    experience: "12 years",
-    bio: "Dr. Johnson specializes in working with adolescents and families affected by substance abuse. Her approach combines cognitive-behavioral therapy with family systems work.",
+    experience: "12 năm",
+    bio: "TS. Hương chuyên về làm việc với thanh thiếu niên và gia đình bị ảnh hưởng bởi lạm dụng chất gây nghiện. Phương pháp của cô kết hợp liệu pháp nhận thức-hành vi với công việc hệ thống gia đình.",
     rating: 4.8,
     reviews: 56,
-    image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=SJ",
-    availableDays: ["Monday", "Tuesday", "Thursday"],
+    image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=NH",
+    availableDays: ["Thứ Hai", "Thứ Ba", "Thứ Năm"],
   },
   {
     id: 2,
-    name: "Mark Robinson, LCSW",
-    title: "Licensed Clinical Social Worker",
+    name: "Trần Văn Minh, LCSW",
+    title: "Nhân Viên Xã Hội Lâm Sàng",
     specialties: [
-      "Group Therapy",
-      "Recovery Support",
-      "Crisis Intervention",
+      "Trị Liệu Nhóm",
+      "Hỗ Trợ Phục Hồi",
+      "Can Thiệp Khủng Hoảng",
     ],
-    experience: "8 years",
-    bio: "Mark facilitates recovery support groups and provides individual counseling with a focus on building coping skills and preventing relapse.",
+    experience: "8 năm",
+    bio: "Minh điều phối các nhóm hỗ trợ phục hồi và cung cấp tư vấn cá nhân với trọng tâm là xây dựng kỹ năng đối phó và ngăn ngừa tái phát.",
     rating: 4.6,
     reviews: 42,
-    image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=MR",
-    availableDays: ["Wednesday", "Friday", "Saturday"],
+    image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=VM",
+    availableDays: ["Thứ Tư", "Thứ Sáu", "Thứ Bảy"],
   },
   {
     id: 3,
-    name: "Dr. Michelle Lee",
-    title: "Psychiatrist",
+    name: "TS. Lê Thị Mai",
+    title: "Bác Sĩ Tâm Thần",
     specialties: [
-      "Dual Diagnosis",
-      "Medication Management",
-      "Mental Health",
+      "Chẩn Đoán Kép",
+      "Quản Lý Thuốc",
+      "Sức Khỏe Tâm Thần",
     ],
-    experience: "15 years",
-    bio: "Dr. Lee specializes in treating patients with co-occurring disorders, providing both medication management and therapeutic support.",
+    experience: "15 năm",
+    bio: "TS. Mai chuyên điều trị cho bệnh nhân có rối loạn đồng thời, cung cấp cả quản lý thuốc và hỗ trợ trị liệu.",
     rating: 4.9,
     reviews: 78,
-    image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=ML",
-    availableDays: ["Monday", "Wednesday", "Friday"],
+    image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=LM",
+    availableDays: ["Thứ Hai", "Thứ Tư", "Thứ Sáu"],
   },
   {
     id: 4,
-    name: "James Wilson, LPC",
-    title: "Licensed Professional Counselor",
+    name: "Phạm Văn Hùng, LPC",
+    title: "Cố Vấn Chuyên Nghiệp",
     specialties: [
-      "Young Adult Counseling",
-      "Addiction Recovery",
-      "Trauma",
+      "Tư Vấn Người Trưởng Thành Trẻ",
+      "Phục Hồi Sau Nghiện",
+      "Chấn Thương Tâm Lý",
     ],
-    experience: "6 years",
-    bio: "James works primarily with young adults navigating substance use issues, focusing on building resilience and healthy coping mechanisms.",
+    experience: "6 năm",
+    bio: "Hùng chủ yếu làm việc với người trưởng thành trẻ đang đối mặt với các vấn đề sử dụng chất gây nghiện, tập trung vào xây dựng khả năng phục hồi và cơ chế đối phó lành mạnh.",
     rating: 4.7,
     reviews: 35,
-    image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=JW",
-    availableDays: ["Tuesday", "Thursday", "Saturday"],
+    image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=PH",
+    availableDays: ["Thứ Ba", "Thứ Năm", "Thứ Bảy"],
   },
 ];
 
 // Available time slots
 const timeSlots = [
-  "9:00 AM",
-  "10:00 AM",
-  "11:00 AM",
-  "1:00 PM",
-  "2:00 PM",
-  "3:00 PM",
-  "4:00 PM",
+  "9:00 Sáng",
+  "10:00 Sáng",
+  "11:00 Sáng",
+  "1:00 Chiều",
+  "2:00 Chiều",
+  "3:00 Chiều",
+  "4:00 Chiều",
 ];
 
 const Counseling = () => {
@@ -161,29 +161,29 @@ const Counseling = () => {
     const errors = {};
 
     if (!bookingForm.name.trim()) {
-      errors.name = "Name is required";
+      errors.name = "Họ tên là bắt buộc";
     }
 
     if (!bookingForm.email.trim()) {
-      errors.email = "Email is required";
+      errors.email = "Email là bắt buộc";
     } else if (!/\S+@\S+\.\S+/.test(bookingForm.email)) {
-      errors.email = "Email is invalid";
+      errors.email = "Email không hợp lệ";
     }
 
     if (!bookingForm.phone.trim()) {
-      errors.phone = "Phone number is required";
+      errors.phone = "Số điện thoại là bắt buộc";
     }
 
     if (!bookingForm.reason.trim()) {
-      errors.reason = "Reason for visit is required";
+      errors.reason = "Lý do thăm khám là bắt buộc";
     }
 
     if (!selectedDate) {
-      errors.date = "Please select a date";
+      errors.date = "Vui lòng chọn ngày";
     }
 
     if (!selectedTime) {
-      errors.time = "Please select a time";
+      errors.time = "Vui lòng chọn giờ";
     }
 
     return errors;
@@ -237,13 +237,13 @@ const Counseling = () => {
     const availableDaysOfWeek = selectedCounselor.availableDays.map(
       (day) => {
         const days = [
-          "Sunday",
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
+          "Chủ Nhật",
+          "Thứ Hai",
+          "Thứ Ba",
+          "Thứ Tư",
+          "Thứ Năm",
+          "Thứ Sáu",
+          "Thứ Bảy",
         ];
         return days.indexOf(day);
       }
@@ -256,7 +256,7 @@ const Counseling = () => {
       if (availableDaysOfWeek.includes(date.getDay())) {
         dates.push({
           date: date,
-          formatted: date.toLocaleDateString("en-US", {
+          formatted: date.toLocaleDateString("vi-VN", {
             weekday: "short",
             month: "short",
             day: "numeric",
@@ -272,10 +272,10 @@ const Counseling = () => {
     <div className="counseling-page">
       <div className="page-header secondary-bg">
         <div className="container">
-          <h1>Counseling Services</h1>
+          <h1>Dịch Vụ Tư Vấn</h1>
           <p>
-            Connect with professional counselors specializing in
-            substance abuse prevention and treatment
+            Kết nối với các cố vấn chuyên nghiệp chuyên về phòng ngừa
+            và điều trị lạm dụng chất gây nghiện
           </p>
         </div>
       </div>
@@ -287,7 +287,7 @@ const Counseling = () => {
               activeTab === "profiles" ? "active" : ""
             }`}
             onClick={() => setActiveTab("profiles")}>
-            Counselor Profiles
+            Hồ Sơ Cố Vấn
           </button>
           {selectedCounselor && (
             <button
@@ -295,7 +295,7 @@ const Counseling = () => {
                 activeTab === "booking" ? "active" : ""
               }`}
               onClick={() => setActiveTab("booking")}>
-              Book Appointment
+              Đặt Lịch Hẹn
             </button>
           )}
         </div>
@@ -306,7 +306,7 @@ const Counseling = () => {
               <div className="search-box">
                 <input
                   type="text"
-                  placeholder="Search by name or specialty..."
+                  placeholder="Tìm kiếm theo tên hoặc chuyên môn..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyUp={(e) => e.key === "Enter" && handleSearch()}
@@ -318,8 +318,8 @@ const Counseling = () => {
 
               <div className="specialty-filter">
                 <span className="filter-label">
-                  <FontAwesomeIcon icon={faFilter} /> Filter by
-                  specialty:
+                  <FontAwesomeIcon icon={faFilter} /> Lọc theo chuyên
+                  môn:
                 </span>
                 <select
                   value={selectedSpecialty}
@@ -327,7 +327,7 @@ const Counseling = () => {
                     setSelectedSpecialty(e.target.value);
                     setTimeout(handleSearch, 0);
                   }}>
-                  <option value="all">All Specialties</option>
+                  <option value="all">Tất Cả Chuyên Môn</option>
                   {allSpecialties.map((specialty, index) => (
                     <option key={index} value={specialty}>
                       {specialty}
@@ -362,7 +362,7 @@ const Counseling = () => {
                           />
                           <span>{counselor.rating}</span>
                           <span className="review-count">
-                            ({counselor.reviews} reviews)
+                            ({counselor.reviews} đánh giá)
                           </span>
                         </div>
                       </div>
@@ -381,27 +381,27 @@ const Counseling = () => {
                     <p className="counselor-bio">{counselor.bio}</p>
 
                     <div className="counselor-experience">
-                      <strong>Experience:</strong>{" "}
+                      <strong>Kinh nghiệm:</strong>{" "}
                       {counselor.experience}
                     </div>
 
                     <div className="counselor-availability">
-                      <strong>Available:</strong>{" "}
+                      <strong>Lịch làm việc:</strong>{" "}
                       {counselor.availableDays.join(", ")}
                     </div>
 
                     <button
                       className="btn btn-primary book-btn"
                       onClick={() => initiateBooking(counselor)}>
-                      <FontAwesomeIcon icon={faCalendarAlt} /> Book
-                      Appointment
+                      <FontAwesomeIcon icon={faCalendarAlt} /> Đặt
+                      Lịch Hẹn
                     </button>
                   </div>
                 ))
               ) : (
                 <div className="no-results">
-                  <h3>No counselors found</h3>
-                  <p>Try adjusting your search criteria</p>
+                  <h3>Không tìm thấy cố vấn</h3>
+                  <p>Hãy điều chỉnh tiêu chí tìm kiếm của bạn</p>
                 </div>
               )}
             </div>
@@ -419,7 +419,7 @@ const Counseling = () => {
                       alt={selectedCounselor.name}
                     />
                     <div>
-                      <h3>Booking with {selectedCounselor.name}</h3>
+                      <h3>Đặt lịch với {selectedCounselor.name}</h3>
                       <p>{selectedCounselor.title}</p>
                     </div>
                   </div>
@@ -427,10 +427,10 @@ const Counseling = () => {
 
                 <div className="booking-form-container">
                   <div className="date-time-selection card">
-                    <h3>Select Date & Time</h3>
+                    <h3>Chọn Ngày & Giờ</h3>
 
                     <div className="date-selector">
-                      <h4>Available Dates</h4>
+                      <h4>Ngày Có Sẵn</h4>
                       <div className="dates-grid">
                         {getAvailableDates().map((dateObj, index) => (
                           <button
@@ -456,7 +456,7 @@ const Counseling = () => {
 
                     {selectedDate && (
                       <div className="time-selector">
-                        <h4>Available Times for {selectedDate}</h4>
+                        <h4>Giờ Có Sẵn cho {selectedDate}</h4>
                         <div className="times-grid">
                           {timeSlots.map((time, index) => (
                             <button
@@ -483,10 +483,10 @@ const Counseling = () => {
                   <form
                     className="booking-form card"
                     onSubmit={handleBookingSubmit}>
-                    <h3>Your Information</h3>
+                    <h3>Thông Tin Của Bạn</h3>
 
                     <div className="form-group">
-                      <label htmlFor="name">Full Name</label>
+                      <label htmlFor="name">Họ Tên</label>
                       <input
                         type="text"
                         id="name"
@@ -503,7 +503,7 @@ const Counseling = () => {
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="email">Email Address</label>
+                      <label htmlFor="email">Địa Chỉ Email</label>
                       <input
                         type="email"
                         id="email"
@@ -520,7 +520,7 @@ const Counseling = () => {
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="phone">Phone Number</label>
+                      <label htmlFor="phone">Số Điện Thoại</label>
                       <input
                         type="tel"
                         id="phone"
@@ -537,7 +537,7 @@ const Counseling = () => {
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="reason">Reason for Visit</label>
+                      <label htmlFor="reason">Lý Do Thăm Khám</label>
                       <textarea
                         id="reason"
                         name="reason"
@@ -555,19 +555,19 @@ const Counseling = () => {
                     </div>
 
                     <div className="booking-summary">
-                      <h4>Appointment Summary</h4>
+                      <h4>Tóm Tắt Cuộc Hẹn</h4>
                       <div className="summary-details">
                         <div className="summary-item">
-                          <strong>Counselor:</strong>{" "}
+                          <strong>Cố vấn:</strong>{" "}
                           {selectedCounselor.name}
                         </div>
                         <div className="summary-item">
-                          <strong>Date:</strong>{" "}
-                          {selectedDate || "Not selected"}
+                          <strong>Ngày:</strong>{" "}
+                          {selectedDate || "Chưa chọn"}
                         </div>
                         <div className="summary-item">
-                          <strong>Time:</strong>{" "}
-                          {selectedTime || "Not selected"}
+                          <strong>Giờ:</strong>{" "}
+                          {selectedTime || "Chưa chọn"}
                         </div>
                       </div>
                     </div>
@@ -575,7 +575,7 @@ const Counseling = () => {
                     <button
                       type="submit"
                       className="btn btn-primary submit-btn">
-                      Confirm Booking
+                      Xác Nhận Đặt Lịch
                     </button>
                   </form>
                 </div>
@@ -585,28 +585,27 @@ const Counseling = () => {
                 <div className="confirmation-icon">
                   <FontAwesomeIcon icon={faCheck} />
                 </div>
-                <h2>Booking Confirmed!</h2>
+                <h2>Đã Xác Nhận Đặt Lịch!</h2>
                 <p>
-                  Your appointment with {selectedCounselor.name} has
-                  been scheduled for:
+                  Cuộc hẹn của bạn với {selectedCounselor.name} đã
+                  được lên lịch vào:
                 </p>
                 <div className="confirmation-details">
                   <p className="detail-item">
-                    <strong>Date:</strong> {selectedDate}
+                    <strong>Ngày:</strong> {selectedDate}
                   </p>
                   <p className="detail-item">
-                    <strong>Time:</strong> {selectedTime}
+                    <strong>Giờ:</strong> {selectedTime}
                   </p>
                 </div>
                 <p className="confirmation-message">
-                  A confirmation email has been sent to{" "}
-                  {bookingForm.email}. Please check your inbox for
-                  details.
+                  Email xác nhận đã được gửi đến {bookingForm.email}.
+                  Vui lòng kiểm tra hộp thư của bạn để biết chi tiết.
                 </p>
                 <div className="contact-info">
                   <p>
-                    If you need to reschedule or cancel, please
-                    contact us:
+                    Nếu bạn cần đổi lịch hoặc hủy, vui lòng liên hệ
+                    với chúng tôi:
                   </p>
                   <div className="contact-methods">
                     <a
@@ -616,17 +615,17 @@ const Counseling = () => {
                       456-7890
                     </a>
                     <a
-                      href="mailto:contact@drugfreecommunity.org"
+                      href="mailto:contact@brightchoice.org"
                       className="contact-method">
                       <FontAwesomeIcon icon={faEnvelope} />{" "}
-                      contact@drugfreecommunity.org
+                      contact@brightchoice.org
                     </a>
                   </div>
                 </div>
                 <button
                   className="btn btn-primary"
                   onClick={() => setActiveTab("profiles")}>
-                  Return to Counselor Profiles
+                  Quay Lại Hồ Sơ Cố Vấn
                 </button>
               </div>
             )}

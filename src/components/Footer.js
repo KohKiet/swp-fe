@@ -16,21 +16,21 @@ const Footer = () => {
       <div className="container">
         <div className="footer-content">
           <div className="footer-logo secondary-bg">
-            <h2>DrugFree Community</h2>
+            <h2>Cộng Đồng BrightChoice</h2>
             <p>
-              Empowering communities through education and support
+              Trao quyền cho cộng đồng thông qua giáo dục và hỗ trợ
             </p>
           </div>
 
           <div className="footer-links">
             <div className="footer-links-column">
-              <h3>Resources</h3>
+              <h3>Tài Nguyên</h3>
               <ul>
                 <li>
-                  <Link to="/education">Education Hub</Link>
+                  <Link to="/education">Trung Tâm Giáo Dục</Link>
                 </li>
                 <li>
-                  <Link to="/education/surveys">Assessments</Link>
+                  <Link to="/education/surveys">Đánh Giá</Link>
                 </li>
                 <li>
                   <Link to="/blog">Blog</Link>
@@ -39,31 +39,33 @@ const Footer = () => {
             </div>
 
             <div className="footer-links-column">
-              <h3>Support</h3>
+              <h3>Hỗ Trợ</h3>
               <ul>
                 <li>
-                  <Link to="/counseling">Counseling</Link>
+                  <Link to="/counseling">Tư Vấn</Link>
                 </li>
                 <li>
-                  <Link to="/programs">Programs</Link>
+                  <Link to="/programs">Chương Trình</Link>
                 </li>
                 <li>
-                  <Link to="/contact">Contact Us</Link>
+                  <Link to="/contact">Liên Hệ</Link>
                 </li>
               </ul>
             </div>
 
             <div className="footer-links-column">
-              <h3>Legal</h3>
+              <h3>Pháp Lý</h3>
               <ul>
                 <li>
-                  <Link to="/privacy">Privacy Policy</Link>
+                  <Link to="/privacy">Chính Sách Bảo Mật</Link>
                 </li>
                 <li>
-                  <Link to="/terms">Terms of Service</Link>
+                  <Link to="/terms">Điều Khoản Dịch Vụ</Link>
                 </li>
                 <li>
-                  <Link to="/disclaimer">Health Disclaimer</Link>
+                  <Link to="/disclaimer">
+                    Miễn Trừ Trách Nhiệm Sức Khỏe
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -72,8 +74,8 @@ const Footer = () => {
 
         <div className="footer-bottom">
           <div className="copyright">
-            &copy; {currentYear} DrugFree Community. All rights
-            reserved.
+            &copy; {currentYear} Cộng Đồng BrightChoice. Đã đăng ký
+            bản quyền.
           </div>
           <div className="social-links">
             <a
