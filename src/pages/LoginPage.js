@@ -85,7 +85,7 @@ const LoginPage = () => {
   return (
     <div className="login-page">
       <div className="login-container">
-        <div className="login-image secondary-bg">
+        <div className="login-image">
           <div className="image-content">
             <h2>Chào mừng đến với Cộng Đồng BrightChoice</h2>
             <p>

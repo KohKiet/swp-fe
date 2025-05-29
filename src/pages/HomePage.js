@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -73,6 +73,56 @@ const courseCategories = [
 ];
 
 const HomePage = () => {
+  // Refs for sections that will animate on scroll
+  const categorySectionRef = useRef(null);
+  const blogSectionRef = useRef(null);
+  const statsSectionRef = useRef(null);
+  const ctaSectionRef = useRef(null);
+
+  useEffect(() => {
+    // Initialize intersection observer for fade-in animations
+    const observerOptions = {
+      root: null, // Use viewport as root
+      rootMargin: "0px",
+      threshold: 0.1, // Trigger when at least 10% of the element is visible
+    };
+
+    const handleIntersect = (entries, observer) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          // Add the 'visible' class to all fade-in elements in this section
+          const fadeElements =
+            entry.target.querySelectorAll(".fade-in");
+          fadeElements.forEach((el) => {
+            el.classList.add("visible");
+          });
+          // Once animation is triggered, we don't need to observe this section anymore
+          observer.unobserve(entry.target);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(
+      handleIntersect,
+      observerOptions
+    );
+
+    // Observe each section
+    if (categorySectionRef.current)
+      observer.observe(categorySectionRef.current);
+    if (blogSectionRef.current)
+      observer.observe(blogSectionRef.current);
+    if (statsSectionRef.current)
+      observer.observe(statsSectionRef.current);
+    if (ctaSectionRef.current)
+      observer.observe(ctaSectionRef.current);
+
+    // Cleanup function
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   return (
     <div className="home-page">
       {/* Hero Section */}
@@ -100,17 +150,21 @@ const HomePage = () => {
       </section>
 
       {/* Course Categories Section */}
-      <section className="course-categories">
+      <section className="course-categories" ref={categorySectionRef}>
         <div className="container">
-          <h2 className="section-title">Giáo Dục Cho Mọi Người</h2>
-          <p className="section-subtitle">
+          <h2 className="section-title fade-in">
+            Giáo Dục Cho Mọi Người
+          </h2>
+          <p className="section-subtitle fade-in">
             Tài nguyên được điều chỉnh cho các nhóm tuổi và vai trò
             khác nhau
           </p>
 
           <div className="grid">
             {courseCategories.map((category) => (
-              <div className="category-card card" key={category.id}>
+              <div
+                className="category-card card fade-in"
+                key={category.id}>
                 <div className="category-icon">
                   <FontAwesomeIcon icon={category.icon} />
                 </div>
@@ -126,19 +180,19 @@ const HomePage = () => {
       </section>
 
       {/* Blog/News Section */}
-      <section className="blog-section secondary-bg">
+      <section className="blog-section" ref={blogSectionRef}>
         <div className="container">
-          <h2 className="section-title">
+          <h2 className="section-title fade-in">
             Câu Chuyện & Tin Tức Cộng Đồng
           </h2>
-          <p className="section-subtitle">
+          <p className="section-subtitle fade-in">
             Trải nghiệm thực tế và cập nhật mới nhất từ cộng đồng của
             chúng tôi
           </p>
 
           <div className="grid">
             {blogPosts.map((post) => (
-              <div className="blog-card card" key={post.id}>
+              <div className="blog-card card fade-in" key={post.id}>
                 <div className="blog-image">
                   <img src={post.image} alt={post.title} />
                 </div>
@@ -156,7 +210,7 @@ const HomePage = () => {
             ))}
           </div>
 
-          <div className="view-all-container">
+          <div className="view-all-container fade-in">
             <Link to="/blog" className="btn">
               Xem Tất Cả Bài Viết
             </Link>
@@ -165,28 +219,30 @@ const HomePage = () => {
       </section>
 
       {/* Impact Statistics Section */}
-      <section className="impact-section">
+      <section className="impact-section" ref={statsSectionRef}>
         <div className="container">
-          <h2 className="section-title">Tác Động Của Chúng Tôi</h2>
-          <p className="section-subtitle">
+          <h2 className="section-title fade-in">
+            Tác Động Của Chúng Tôi
+          </h2>
+          <p className="section-subtitle fade-in">
             Tạo nên sự khác biệt trong cộng đồng thông qua giáo dục và
             hỗ trợ
           </p>
 
           <div className="stats-container">
-            <div className="stat-item">
+            <div className="stat-item fade-in">
               <div className="stat-number">5,000+</div>
               <div className="stat-label">Học Sinh Được Giáo Dục</div>
             </div>
-            <div className="stat-item">
+            <div className="stat-item fade-in">
               <div className="stat-number">500+</div>
               <div className="stat-label">Buổi Tư Vấn</div>
             </div>
-            <div className="stat-item">
+            <div className="stat-item fade-in">
               <div className="stat-number">25+</div>
               <div className="stat-label">Chương Trình Cộng Đồng</div>
             </div>
-            <div className="stat-item">
+            <div className="stat-item fade-in">
               <div className="stat-number">95%</div>
               <div className="stat-label">Phản Hồi Tích Cực</div>
             </div>
@@ -195,9 +251,9 @@ const HomePage = () => {
       </section>
 
       {/* Call to Action Section */}
-      <section className="cta-section">
+      <section className="cta-section" ref={ctaSectionRef}>
         <div className="container">
-          <div className="cta-card card">
+          <div className="cta-card card fade-in">
             <h2>Sẵn sàng để bước đi bước đầu tiên?</h2>
             <p>
               Bắt đầu hành trình hướng tới một cộng đồng khỏe mạnh hơn

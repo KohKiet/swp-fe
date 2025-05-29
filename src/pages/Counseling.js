@@ -8,7 +8,8 @@ import {
   faPhone,
   faEnvelope,
   faCheck,
-  faTimes,
+  faClock,
+  faCalendarDay,
 } from "@fortawesome/free-solid-svg-icons";
 import "./Counseling.css";
 
@@ -29,6 +30,11 @@ const counselorsData = [
     reviews: 56,
     image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=NH",
     availableDays: ["Thứ Hai", "Thứ Ba", "Thứ Năm"],
+    availableTimeSlots: {
+      "Thứ Hai": ["9:00 - 10:30", "13:00 - 14:30", "15:00 - 16:30"],
+      "Thứ Ba": ["10:00 - 11:30", "14:00 - 15:30"],
+      "Thứ Năm": ["9:00 - 10:30", "11:00 - 12:30", "14:00 - 15:30"],
+    },
   },
   {
     id: 2,
@@ -45,6 +51,11 @@ const counselorsData = [
     reviews: 42,
     image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=VM",
     availableDays: ["Thứ Tư", "Thứ Sáu", "Thứ Bảy"],
+    availableTimeSlots: {
+      "Thứ Tư": ["8:30 - 10:00", "10:30 - 12:00", "15:00 - 16:30"],
+      "Thứ Sáu": ["9:00 - 10:30", "13:30 - 15:00"],
+      "Thứ Bảy": ["8:30 - 10:00", "10:30 - 12:00"],
+    },
   },
   {
     id: 3,
@@ -61,6 +72,11 @@ const counselorsData = [
     reviews: 78,
     image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=LM",
     availableDays: ["Thứ Hai", "Thứ Tư", "Thứ Sáu"],
+    availableTimeSlots: {
+      "Thứ Hai": ["8:00 - 9:30", "10:00 - 11:30", "14:00 - 15:30"],
+      "Thứ Tư": ["9:00 - 10:30", "13:00 - 14:30"],
+      "Thứ Sáu": ["8:00 - 9:30", "10:00 - 11:30", "15:00 - 16:30"],
+    },
   },
   {
     id: 4,
@@ -77,18 +93,12 @@ const counselorsData = [
     reviews: 35,
     image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=PH",
     availableDays: ["Thứ Ba", "Thứ Năm", "Thứ Bảy"],
+    availableTimeSlots: {
+      "Thứ Ba": ["9:00 - 10:30", "11:00 - 12:30", "15:00 - 16:30"],
+      "Thứ Năm": ["10:00 - 11:30", "13:30 - 15:00"],
+      "Thứ Bảy": ["9:00 - 10:30", "11:00 - 12:30"],
+    },
   },
-];
-
-// Available time slots
-const timeSlots = [
-  "9:00 Sáng",
-  "10:00 Sáng",
-  "11:00 Sáng",
-  "1:00 Chiều",
-  "2:00 Chiều",
-  "3:00 Chiều",
-  "4:00 Chiều",
 ];
 
 const Counseling = () => {
@@ -103,13 +113,14 @@ const Counseling = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [bookingForm, setBookingForm] = useState({
-    name: "",
     email: "",
     phone: "",
     reason: "",
   });
   const [formErrors, setFormErrors] = useState({});
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [availableDates, setAvailableDates] = useState([]);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
 
   // Get all unique specialties from counselors
   const allSpecialties = [
@@ -160,10 +171,6 @@ const Counseling = () => {
   const validateForm = () => {
     const errors = {};
 
-    if (!bookingForm.name.trim()) {
-      errors.name = "Họ tên là bắt buộc";
-    }
-
     if (!bookingForm.email.trim()) {
       errors.email = "Email là bắt buộc";
     } else if (!/\S+@\S+\.\S+/.test(bookingForm.email)) {
@@ -211,32 +218,31 @@ const Counseling = () => {
     setBookingConfirmed(true);
   };
 
-  // Initiate booking for a specific counselor
-  const initiateBooking = (counselor) => {
-    setSelectedCounselor(counselor);
-    setActiveTab("booking");
-    setBookingConfirmed(false);
-    // Reset form
-    setSelectedDate("");
-    setSelectedTime("");
-    setBookingForm({
-      name: "",
-      email: "",
-      phone: "",
-      reason: "",
-    });
-    setFormErrors({});
-  };
-
   // Generate available dates (next 14 days)
-  const getAvailableDates = () => {
-    if (!selectedCounselor) return [];
+  const getAvailableDates = (counselor) => {
+    if (!counselor) return [];
 
     const dates = [];
     const today = new Date();
-    const availableDaysOfWeek = selectedCounselor.availableDays.map(
-      (day) => {
-        const days = [
+    const availableDaysOfWeek = counselor.availableDays.map((day) => {
+      const days = [
+        "Chủ Nhật",
+        "Thứ Hai",
+        "Thứ Ba",
+        "Thứ Tư",
+        "Thứ Năm",
+        "Thứ Sáu",
+        "Thứ Bảy",
+      ];
+      return days.indexOf(day);
+    });
+
+    for (let i = 0; i < 30; i++) {
+      const date = new Date();
+      date.setDate(today.getDate() + i);
+
+      if (availableDaysOfWeek.includes(date.getDay())) {
+        const dayName = [
           "Chủ Nhật",
           "Thứ Hai",
           "Thứ Ba",
@@ -244,18 +250,11 @@ const Counseling = () => {
           "Thứ Năm",
           "Thứ Sáu",
           "Thứ Bảy",
-        ];
-        return days.indexOf(day);
-      }
-    );
+        ][date.getDay()];
 
-    for (let i = 1; i <= 14; i++) {
-      const date = new Date();
-      date.setDate(today.getDate() + i);
-
-      if (availableDaysOfWeek.includes(date.getDay())) {
         dates.push({
           date: date,
+          dayName: dayName,
           formatted: date.toLocaleDateString("vi-VN", {
             weekday: "short",
             month: "short",
@@ -268,14 +267,49 @@ const Counseling = () => {
     return dates;
   };
 
+  // Initiate booking for a specific counselor
+  const initiateBooking = (counselor) => {
+    setSelectedCounselor(counselor);
+    setActiveTab("booking");
+    setBookingConfirmed(false);
+
+    // Reset form
+    setSelectedDate("");
+    setSelectedTime("");
+    setBookingForm({
+      email: "",
+      phone: "",
+      reason: "",
+    });
+    setFormErrors({});
+
+    // Set available dates for the selected counselor
+    const dates = getAvailableDates(counselor);
+    setAvailableDates(dates);
+    setAvailableTimeSlots([]);
+  };
+
+  // Handle date selection
+  const handleDateSelection = (dateObj) => {
+    setSelectedDate(dateObj.formatted);
+    setSelectedTime("");
+
+    // Get available time slots for the selected date
+    if (selectedCounselor && dateObj.dayName) {
+      setAvailableTimeSlots(
+        selectedCounselor.availableTimeSlots[dateObj.dayName] || []
+      );
+    }
+  };
+
   return (
     <div className="counseling-page">
       <div className="page-header secondary-bg">
         <div className="container">
           <h1>Dịch Vụ Tư Vấn</h1>
           <p>
-            Kết nối với các cố vấn chuyên nghiệp chuyên về phòng ngừa
-            và điều trị lạm dụng chất gây nghiện
+            Kết nối với các tư vấn viên chuyên nghiệp chuyên về phòng
+            ngừa và điều trị lạm dụng chất gây nghiện
           </p>
         </div>
       </div>
@@ -287,7 +321,7 @@ const Counseling = () => {
               activeTab === "profiles" ? "active" : ""
             }`}
             onClick={() => setActiveTab("profiles")}>
-            Hồ Sơ Cố Vấn
+            Đội Ngũ Tư Vấn Viên
           </button>
           {selectedCounselor && (
             <button
@@ -400,7 +434,7 @@ const Counseling = () => {
                 ))
               ) : (
                 <div className="no-results">
-                  <h3>Không tìm thấy cố vấn</h3>
+                  <h3>Không tìm thấy tư vấn viên</h3>
                   <p>Hãy điều chỉnh tiêu chí tìm kiếm của bạn</p>
                 </div>
               )}
@@ -426,13 +460,16 @@ const Counseling = () => {
                 </div>
 
                 <div className="booking-form-container">
-                  <div className="date-time-selection card">
-                    <h3>Chọn Ngày & Giờ</h3>
+                  <div className="availability-selection card">
+                    <h3>Thời Gian Tư Vấn</h3>
 
                     <div className="date-selector">
-                      <h4>Ngày Có Sẵn</h4>
+                      <h4>
+                        <FontAwesomeIcon icon={faCalendarDay} /> Chọn
+                        Ngày
+                      </h4>
                       <div className="dates-grid">
-                        {getAvailableDates().map((dateObj, index) => (
+                        {availableDates.map((dateObj, index) => (
                           <button
                             key={index}
                             className={`date-btn ${
@@ -441,7 +478,7 @@ const Counseling = () => {
                                 : ""
                             }`}
                             onClick={() =>
-                              setSelectedDate(dateObj.formatted)
+                              handleDateSelection(dateObj)
                             }>
                             {dateObj.formatted}
                           </button>
@@ -456,9 +493,11 @@ const Counseling = () => {
 
                     {selectedDate && (
                       <div className="time-selector">
-                        <h4>Giờ Có Sẵn cho {selectedDate}</h4>
+                        <h4>
+                          <FontAwesomeIcon icon={faClock} /> Chọn Giờ
+                        </h4>
                         <div className="times-grid">
-                          {timeSlots.map((time, index) => (
+                          {availableTimeSlots.map((time, index) => (
                             <button
                               key={index}
                               className={`time-btn ${
@@ -480,104 +519,89 @@ const Counseling = () => {
                     )}
                   </div>
 
-                  <form
-                    className="booking-form card"
-                    onSubmit={handleBookingSubmit}>
-                    <h3>Thông Tin Của Bạn</h3>
+                  {selectedDate && selectedTime && (
+                    <form
+                      className="booking-form card"
+                      onSubmit={handleBookingSubmit}>
+                      <h3>Thông Tin Liên Hệ</h3>
 
-                    <div className="form-group">
-                      <label htmlFor="name">Họ Tên</label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={bookingForm.name}
-                        onChange={handleInputChange}
-                        className={formErrors.name ? "error" : ""}
-                      />
-                      {formErrors.name && (
-                        <div className="error-text">
-                          {formErrors.name}
-                        </div>
-                      )}
-                    </div>
+                      <div className="form-group">
+                        <label htmlFor="email">Địa Chỉ Email</label>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          value={bookingForm.email}
+                          onChange={handleInputChange}
+                          className={formErrors.email ? "error" : ""}
+                        />
+                        {formErrors.email && (
+                          <div className="error-text">
+                            {formErrors.email}
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="form-group">
-                      <label htmlFor="email">Địa Chỉ Email</label>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={bookingForm.email}
-                        onChange={handleInputChange}
-                        className={formErrors.email ? "error" : ""}
-                      />
-                      {formErrors.email && (
-                        <div className="error-text">
-                          {formErrors.email}
-                        </div>
-                      )}
-                    </div>
+                      <div className="form-group">
+                        <label htmlFor="phone">Số Điện Thoại</label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          value={bookingForm.phone}
+                          onChange={handleInputChange}
+                          className={formErrors.phone ? "error" : ""}
+                        />
+                        {formErrors.phone && (
+                          <div className="error-text">
+                            {formErrors.phone}
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="form-group">
-                      <label htmlFor="phone">Số Điện Thoại</label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={bookingForm.phone}
-                        onChange={handleInputChange}
-                        className={formErrors.phone ? "error" : ""}
-                      />
-                      {formErrors.phone && (
-                        <div className="error-text">
-                          {formErrors.phone}
-                        </div>
-                      )}
-                    </div>
+                      <div className="form-group">
+                        <label htmlFor="reason">
+                          Lý Do Thăm Khám
+                        </label>
+                        <textarea
+                          id="reason"
+                          name="reason"
+                          rows="3"
+                          value={bookingForm.reason}
+                          onChange={handleInputChange}
+                          className={
+                            formErrors.reason ? "error" : ""
+                          }></textarea>
+                        {formErrors.reason && (
+                          <div className="error-text">
+                            {formErrors.reason}
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="form-group">
-                      <label htmlFor="reason">Lý Do Thăm Khám</label>
-                      <textarea
-                        id="reason"
-                        name="reason"
-                        rows="3"
-                        value={bookingForm.reason}
-                        onChange={handleInputChange}
-                        className={
-                          formErrors.reason ? "error" : ""
-                        }></textarea>
-                      {formErrors.reason && (
-                        <div className="error-text">
-                          {formErrors.reason}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="booking-summary">
-                      <h4>Tóm Tắt Cuộc Hẹn</h4>
-                      <div className="summary-details">
-                        <div className="summary-item">
-                          <strong>Cố vấn:</strong>{" "}
-                          {selectedCounselor.name}
-                        </div>
-                        <div className="summary-item">
-                          <strong>Ngày:</strong>{" "}
-                          {selectedDate || "Chưa chọn"}
-                        </div>
-                        <div className="summary-item">
-                          <strong>Giờ:</strong>{" "}
-                          {selectedTime || "Chưa chọn"}
+                      <div className="booking-summary">
+                        <h4>Tóm Tắt Lịch Hẹn</h4>
+                        <div className="summary-details">
+                          <div className="summary-item">
+                            <strong>Tư vấn viên:</strong>{" "}
+                            {selectedCounselor.name}
+                          </div>
+                          <div className="summary-item">
+                            <strong>Ngày:</strong> {selectedDate}
+                          </div>
+                          <div className="summary-item">
+                            <strong>Giờ:</strong> {selectedTime}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <button
-                      type="submit"
-                      className="btn btn-primary submit-btn">
-                      Xác Nhận Đặt Lịch
-                    </button>
-                  </form>
+                      <button
+                        type="submit"
+                        className="btn btn-primary submit-btn">
+                        Xác Nhận Đặt Lịch
+                      </button>
+                    </form>
+                  )}
                 </div>
               </>
             ) : (
@@ -625,7 +649,7 @@ const Counseling = () => {
                 <button
                   className="btn btn-primary"
                   onClick={() => setActiveTab("profiles")}>
-                  Quay Lại Hồ Sơ Cố Vấn
+                  Quay Lại Đội Ngũ Tư Vấn Viên
                 </button>
               </div>
             )}

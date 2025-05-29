@@ -18,7 +18,7 @@ const Header = () => {
     <header className="header">
       <div className="container">
         <div className="header-content flex-between">
-          <div className="logo-container secondary-bg">
+          <div className="logo-container">
             <Link to="/" className="logo-link">
               <img
                 src="/Dlogo.jpg"

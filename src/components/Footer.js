@@ -15,10 +15,13 @@ const Footer = () => {
     <footer className="footer">
       <div className="container">
         <div className="footer-content">
-          <div className="footer-logo secondary-bg">
+          <div className="footer-logo">
             <h2>Cộng Đồng BrightChoice</h2>
             <p>
-              Trao quyền cho cộng đồng thông qua giáo dục và hỗ trợ
+              <span className="highlight-text">
+                Trao quyền cho cộng đồng
+              </span>{" "}
+              thông qua giáo dục và hỗ trợ
             </p>
           </div>
 
