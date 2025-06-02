@@ -1,17 +1,32 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
   faChevronDown,
+  faSignOutAlt,
+  faTachometerAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import "./Header.css";
+import { useAuth } from "../context/AuthContext";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { currentUser, logout, isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
   return (
@@ -54,6 +69,15 @@ const Header = () => {
                   Chương Trình
                 </Link>
               </li>
+
+              {isAdmin() && (
+                <li className="nav-item">
+                  <Link to="/dashboard" className="nav-link">
+                    <FontAwesomeIcon icon={faTachometerAlt} />{" "}
+                    Dashboard
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
 
@@ -71,9 +95,37 @@ const Header = () => {
           </div>
 
           <div className="auth-buttons">
-            <Link to="/login" className="btn">
-              <FontAwesomeIcon icon={faUser} /> Đăng Nhập / Đăng Ký
-            </Link>
+            {currentUser ? (
+              <div className="user-dropdown">
+                <button
+                  className="dropdown-toggle"
+                  onClick={toggleDropdown}>
+                  <FontAwesomeIcon icon={faUser} />
+                  {currentUser.name || currentUser.email}
+                  <FontAwesomeIcon icon={faChevronDown} />
+                </button>
+                {isDropdownOpen && (
+                  <div className="dropdown-menu">
+                    {isAdmin() && (
+                      <Link to="/dashboard" className="dropdown-item">
+                        <FontAwesomeIcon icon={faTachometerAlt} />{" "}
+                        Dashboard
+                      </Link>
+                    )}
+                    <button
+                      className="dropdown-item"
+                      onClick={handleLogout}>
+                      <FontAwesomeIcon icon={faSignOutAlt} /> Đăng
+                      Xuất
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link to="/login" className="btn">
+                <FontAwesomeIcon icon={faUser} /> Đăng Nhập / Đăng Ký
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -93,9 +145,22 @@ const Header = () => {
           <Link to="/programs" className="mobile-nav-link">
             Chương Trình
           </Link>
-          <Link to="/login" className="mobile-nav-link login">
-            <FontAwesomeIcon icon={faUser} /> Đăng Nhập / Đăng Ký
-          </Link>
+          {isAdmin() && (
+            <Link to="/dashboard" className="mobile-nav-link">
+              <FontAwesomeIcon icon={faTachometerAlt} /> Dashboard
+            </Link>
+          )}
+          {currentUser ? (
+            <button
+              className="mobile-nav-link"
+              onClick={handleLogout}>
+              <FontAwesomeIcon icon={faSignOutAlt} /> Đăng Xuất
+            </button>
+          ) : (
+            <Link to="/login" className="mobile-nav-link login">
+              <FontAwesomeIcon icon={faUser} /> Đăng Nhập / Đăng Ký
+            </Link>
+          )}
         </div>
       </div>
     </header>

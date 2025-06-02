@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
@@ -7,8 +7,11 @@ import {
   faEnvelope,
 } from "@fortawesome/free-solid-svg-icons";
 import "./LoginPage.css";
+import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: "",
@@ -16,10 +19,12 @@ const LoginPage = () => {
     name: "",
   });
   const [errors, setErrors] = useState({});
+  const [loginError, setLoginError] = useState("");
 
   const toggleForm = () => {
     setIsLogin(!isLogin);
     setErrors({});
+    setLoginError("");
   };
 
   const handleChange = (e) => {
@@ -35,6 +40,10 @@ const LoginPage = () => {
         ...errors,
         [name]: "",
       });
+    }
+
+    if (loginError) {
+      setLoginError("");
     }
   };
 
@@ -69,17 +78,24 @@ const LoginPage = () => {
       return;
     }
 
-    // Here we would normally send the data to the server
-    console.log("Form submitted:", formData);
-
-    // Clear form
-    setFormData({
-      email: "",
-      password: "",
-      name: "",
-    });
-
-    // Redirect would happen here after authentication
+    if (isLogin) {
+      const loginSuccess = login(formData.email, formData.password);
+      if (loginSuccess) {
+        navigate("/dashboard");
+      } else {
+        setLoginError("Email hoặc mật khẩu không đúng");
+      }
+    } else {
+      // Here we would handle registration
+      console.log("Register form submitted:", formData);
+      // For now, just toggle to login form after registration
+      setIsLogin(true);
+      setFormData({
+        email: "",
+        password: "",
+        name: "",
+      });
+    }
   };
 
   return (
@@ -116,6 +132,10 @@ const LoginPage = () => {
                 ? "Đăng Nhập Vào Tài Khoản Của Bạn"
                 : "Tạo Tài Khoản Mới"}
             </h2>
+
+            {loginError && (
+              <div className="error-alert">{loginError}</div>
+            )}
 
             {!isLogin && (
               <div className="form-group">

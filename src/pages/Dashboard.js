@@ -1,535 +1,365 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faBook,
-  faCalendarCheck,
-  faClipboardList,
   faUser,
-  faChartLine,
-  faExclamationTriangle,
+  faTrash,
+  faEdit,
+  faUsers,
   faCheckCircle,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import "./Dashboard.css";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
-// Mock data for the dashboard
-const userData = {
-  name: "Koh Vy Kiet",
-  email: "KietKVSE160864@fpt.edu.vn",
-  joinDate: "18/04/2025",
-  role: "Nhân viên",
-  lastLogin: "Hôm nay lúc 9:30 Sáng",
-};
-
-const courseProgress = [
+// Mock data for users
+const initialUsers = [
   {
     id: 1,
-    title: "Hiểu Về Áp Lực Bạn Bè",
-    progress: 75,
-    lastAccessed: "Hôm qua",
-    nextLesson: "Kỹ Thuật Từ Chối",
-    completed: false,
+    name: "Nguyễn Văn A",
+    email: "nguyenvana@example.com",
+    role: "Member",
+    joinDate: "15/03/2023",
   },
   {
     id: 2,
-    title: "Nhận Biết Ma Túy Cho Phụ Huynh",
-    progress: 100,
-    lastAccessed: "15/04/2023",
-    completed: true,
-    certificate: true,
+    name: "Trần Thị B",
+    email: "tranthib@example.com",
+    role: "Staff",
+    joinDate: "20/04/2023",
   },
   {
     id: 3,
-    title: "Cơ Chế Đối Phó Lành Mạnh",
-    progress: 30,
-    lastAccessed: "Hôm nay",
-    nextLesson: "Quản Lý Căng Thẳng",
-    completed: false,
+    name: "Lê Văn C",
+    email: "levanc@example.com",
+    role: "Consultant",
+    joinDate: "10/01/2023",
+  },
+  {
+    id: 4,
+    name: "Phạm Thị D",
+    email: "phamthid@example.com",
+    role: "Manager",
+    joinDate: "05/02/2023",
+  },
+  {
+    id: 5,
+    name: "Admin",
+    email: "admin@gmail.com",
+    role: "Admin",
+    joinDate: "01/01/2023",
   },
 ];
 
-const upcomingAppointments = [
-  {
-    id: 1,
-    counselor: "TS. Nguyễn Thị Hương",
-    date: "10/05/2023",
-    time: "2:00 Chiều",
-    type: "Tư Vấn Ban Đầu",
-  },
-  {
-    id: 2,
-    counselor: "Trần Văn Minh, LCSW",
-    date: "24/05/2023",
-    time: "10:00 Sáng",
-    type: "Buổi Theo Dõi",
-  },
+const roleOptions = [
+  "Member",
+  "Staff",
+  "Consultant",
+  "Manager",
+  "Admin",
 ];
-
-const surveyResults = [
-  {
-    id: 1,
-    name: "Khảo Sát ASSIST",
-    date: "02/04/2023",
-    riskLevel: "Thấp",
-    recommendations: [
-      "Tiếp tục với giáo dục phòng ngừa",
-      "Tham gia khóa học 'Cơ Chế Đối Phó Lành Mạnh'",
-    ],
-  },
-  {
-    id: 2,
-    name: "Khảo Sát CRAFFT",
-    date: "15/04/2023",
-    riskLevel: "Trung bình",
-    recommendations: [
-      "Lên lịch buổi tư vấn",
-      "Tham gia nhóm hỗ trợ đồng đẳng",
-    ],
-  },
-];
-
-const programStatistics = {
-  participantsHelped: 528,
-  activeCourses: 8,
-  counselingSessions: 125,
-  surveysCompleted: 721,
-  successRate: 93,
-};
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState("overview");
+  const { currentUser, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const [users, setUsers] = useState(initialUsers);
+  const [editingUser, setEditingUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [notification, setNotification] = useState({
+    show: false,
+    message: "",
+    type: "",
+  });
+
+  useEffect(() => {
+    // Redirect if not admin
+    if (!isAdmin()) {
+      navigate("/login");
+    }
+  }, [isAdmin, navigate]);
+
+  useEffect(() => {
+    // Auto-hide notification after 3 seconds
+    if (notification.show) {
+      const timer = setTimeout(() => {
+        setNotification({ show: false, message: "", type: "" });
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  const showNotification = (message, type) => {
+    setNotification({ show: true, message, type });
+  };
+
+  const handleRoleChange = (userId, newRole) => {
+    setUsers(
+      users.map((user) =>
+        user.id === userId ? { ...user, role: newRole } : user
+      )
+    );
+  };
+
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+  };
+
+  const handleSaveEdit = () => {
+    setUsers(
+      users.map((user) =>
+        user.id === editingUser.id ? editingUser : user
+      )
+    );
+    setEditingUser(null);
+    showNotification(
+      `Đã cập nhật thông tin người dùng "${editingUser.name}" thành công!`,
+      "success"
+    );
+  };
+
+  const handleCancelEdit = () => {
+    setEditingUser(null);
+  };
+
+  const handleDeleteUser = (userId) => {
+    setConfirmDelete(userId);
+  };
+
+  const confirmDeleteUser = () => {
+    const userToDelete = users.find(
+      (user) => user.id === confirmDelete
+    );
+    setUsers(users.filter((user) => user.id !== confirmDelete));
+    setConfirmDelete(null);
+    showNotification(
+      `Đã xóa người dùng "${userToDelete.name}" thành công!`,
+      "success"
+    );
+  };
+
+  const cancelDelete = () => {
+    setConfirmDelete(null);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditingUser({
+      ...editingUser,
+      [name]: value,
+    });
+  };
+
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.role.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="dashboard-page">
+      {notification.show && (
+        <div className={`notification ${notification.type}`}>
+          <div className="notification-content">
+            <FontAwesomeIcon
+              icon={
+                notification.type === "success"
+                  ? faCheckCircle
+                  : faTimes
+              }
+              className="notification-icon"
+            />
+            <span>{notification.message}</span>
+          </div>
+          <button
+            className="notification-close"
+            onClick={() =>
+              setNotification({ show: false, message: "", type: "" })
+            }>
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
+      )}
+
       <div className="page-header secondary-bg">
         <div className="container">
-          <h1>Bảng Điều Khiển Của Tôi</h1>
-          <p>
-            Theo dõi tiến trình và quản lý hành trình phòng ngừa ma
-            túy của bạn
-          </p>
+          <h1>Admin Dashboard</h1>
+          <p>Quản lý người dùng và phân quyền trong hệ thống</p>
         </div>
       </div>
 
       <div className="container">
         <div className="dashboard-grid">
           <div className="dashboard-sidebar">
-            <div className="user-profile card">
-              <div className="user-avatar">
-                <FontAwesomeIcon icon={faUser} />
-              </div>
-              <h3>{userData.name}</h3>
-              <p className="user-role">{userData.role}</p>
-              <div className="user-details">
-                <p>
-                  <strong>Email:</strong> {userData.email}
-                </p>
-                <p>
-                  <strong>Thành viên từ:</strong> {userData.joinDate}
-                </p>
-                <p>
-                  <strong>Đăng nhập lần cuối:</strong>{" "}
-                  {userData.lastLogin}
-                </p>
-              </div>
-              <Link to="/profile/edit" className="btn">
-                Chỉnh Sửa Hồ Sơ
-              </Link>
-            </div>
-
             <div className="dashboard-nav">
-              <button
-                className={`nav-item ${
-                  activeTab === "overview" ? "active" : ""
-                }`}
-                onClick={() => setActiveTab("overview")}>
-                <FontAwesomeIcon icon={faChartLine} /> Tổng Quan
-              </button>
-              <button
-                className={`nav-item ${
-                  activeTab === "courses" ? "active" : ""
-                }`}
-                onClick={() => setActiveTab("courses")}>
-                <FontAwesomeIcon icon={faBook} /> Khóa Học Của Tôi
-              </button>
-              <button
-                className={`nav-item ${
-                  activeTab === "appointments" ? "active" : ""
-                }`}
-                onClick={() => setActiveTab("appointments")}>
-                <FontAwesomeIcon icon={faCalendarCheck} /> Lịch Hẹn
-              </button>
-              <button
-                className={`nav-item ${
-                  activeTab === "surveys" ? "active" : ""
-                }`}
-                onClick={() => setActiveTab("surveys")}>
-                <FontAwesomeIcon icon={faClipboardList} /> Kết Quả
-                Khảo Sát
+              <button className="nav-item active">
+                <FontAwesomeIcon icon={faUsers} /> Quản Lý Người Dùng
               </button>
             </div>
           </div>
 
           <div className="dashboard-main">
-            {activeTab === "overview" && (
-              <div className="dashboard-overview">
-                <div className="stats-row">
-                  <div className="stat-card card">
-                    <h3>Tác Động Chương Trình</h3>
-                    <div className="stat-highlight">
-                      <div className="stat-number">
-                        {programStatistics.participantsHelped}
-                      </div>
-                      <div className="stat-label">
-                        Người Tham Gia Được Hỗ Trợ
-                      </div>
-                    </div>
-                    <div className="stat-details">
-                      <div className="stat-detail">
-                        <span>Khóa Học Đang Hoạt Động</span>
-                        <span>{programStatistics.activeCourses}</span>
-                      </div>
-                      <div className="stat-detail">
-                        <span>Buổi Tư Vấn</span>
-                        <span>
-                          {programStatistics.counselingSessions}
-                        </span>
-                      </div>
-                      <div className="stat-detail">
-                        <span>Khảo Sát Đã Hoàn Thành</span>
-                        <span>
-                          {programStatistics.surveysCompleted}
-                        </span>
-                      </div>
-                      <div className="stat-detail">
-                        <span>Tỷ Lệ Thành Công</span>
-                        <span>{programStatistics.successRate}%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <h2 className="section-title">Hoạt Động Gần Đây</h2>
-
-                <div className="recent-activities">
-                  <div className="recent-courses card">
-                    <h3>Khóa Học Của Tôi</h3>
-                    {courseProgress.length > 0 ? (
-                      <div className="course-list">
-                        {courseProgress.slice(0, 2).map((course) => (
-                          <div
-                            className="course-item"
-                            key={course.id}>
-                            <div className="course-info">
-                              <h4>{course.title}</h4>
-                              <div className="progress-container">
-                                <div
-                                  className="progress-bar"
-                                  style={{
-                                    width: `${course.progress}%`,
-                                  }}></div>
-                              </div>
-                              <div className="progress-details">
-                                <span>
-                                  {course.progress}% hoàn thành
-                                </span>
-                                <span>
-                                  Truy cập lần cuối:{" "}
-                                  {course.lastAccessed}
-                                </span>
-                              </div>
-                            </div>
-                            <Link
-                              to={`/education/courses/${course.id}`}
-                              className="btn btn-small">
-                              {course.completed
-                                ? "Xem Lại"
-                                : "Tiếp Tục"}
-                            </Link>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="empty-state">
-                        Bạn chưa đăng ký khóa học nào.
-                      </p>
-                    )}
-                    <Link to="/education" className="view-all-link">
-                      Xem Tất Cả Khóa Học
-                    </Link>
-                  </div>
-
-                  <div className="recent-appointments card">
-                    <h3>Lịch Hẹn Sắp Tới</h3>
-                    {upcomingAppointments.length > 0 ? (
-                      <div className="appointment-list">
-                        {upcomingAppointments
-                          .slice(0, 1)
-                          .map((appointment) => (
-                            <div
-                              className="appointment-item"
-                              key={appointment.id}>
-                              <div className="appointment-info">
-                                <h4>{appointment.counselor}</h4>
-                                <p className="appointment-type">
-                                  {appointment.type}
-                                </p>
-                                <p className="appointment-datetime">
-                                  <strong>Ngày:</strong>{" "}
-                                  {appointment.date}
-                                </p>
-                                <p className="appointment-datetime">
-                                  <strong>Giờ:</strong>{" "}
-                                  {appointment.time}
-                                </p>
-                              </div>
-                              <div className="appointment-actions">
-                                <Link
-                                  to={`/appointments/${appointment.id}`}
-                                  className="btn btn-small">
-                                  Chi Tiết
-                                </Link>
-                                <button className="btn btn-small btn-outline">
-                                  Đổi Lịch
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    ) : (
-                      <p className="empty-state">
-                        Bạn không có lịch hẹn sắp tới nào.
-                      </p>
-                    )}
-                    <Link
-                      to="/counseling/booking"
-                      className="view-all-link">
-                      Quản Lý Lịch Hẹn
-                    </Link>
-                  </div>
+            <div className="manage-users-tab">
+              <div className="tab-header">
+                <h2>Quản Lý Người Dùng</h2>
+                <div className="search-container">
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm người dùng..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="search-input"
+                  />
                 </div>
               </div>
-            )}
 
-            {activeTab === "courses" && (
-              <div className="courses-tab">
-                <div className="tab-header">
-                  <h2>Khóa Học Của Tôi</h2>
-                  <Link to="/education" className="btn">
-                    Khám Phá Khóa Học Mới
-                  </Link>
-                </div>
-
-                {courseProgress.length > 0 ? (
-                  <div className="courses-list">
-                    {courseProgress.map((course) => (
-                      <div
-                        className="course-card card"
-                        key={course.id}>
-                        <div className="course-header">
-                          <h3>{course.title}</h3>
-                          {course.completed ? (
-                            <span className="status-badge completed">
-                              <FontAwesomeIcon icon={faCheckCircle} />{" "}
-                              Hoàn Thành
-                            </span>
+              <div className="users-table-container card">
+                <table className="users-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Tên</th>
+                      <th>Email</th>
+                      <th>Vai Trò</th>
+                      <th>Ngày Tham Gia</th>
+                      <th>Thao Tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((user) => (
+                      <tr key={user.id}>
+                        <td>{user.id}</td>
+                        <td>
+                          {editingUser &&
+                          editingUser.id === user.id ? (
+                            <input
+                              type="text"
+                              name="name"
+                              value={editingUser.name}
+                              onChange={handleInputChange}
+                              className="edit-input"
+                            />
                           ) : (
-                            <span className="status-badge in-progress">
-                              Đang Tiến Hành
+                            user.name
+                          )}
+                        </td>
+                        <td>
+                          {editingUser &&
+                          editingUser.id === user.id ? (
+                            <input
+                              type="email"
+                              name="email"
+                              value={editingUser.email}
+                              onChange={handleInputChange}
+                              className="edit-input"
+                            />
+                          ) : (
+                            user.email
+                          )}
+                        </td>
+                        <td>
+                          {editingUser &&
+                          editingUser.id === user.id ? (
+                            <select
+                              name="role"
+                              value={editingUser.role}
+                              onChange={handleInputChange}
+                              className="role-select">
+                              {roleOptions.map((role) => (
+                                <option key={role} value={role}>
+                                  {role}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span
+                              className={`role-badge ${user.role.toLowerCase()}`}>
+                              {user.role}
                             </span>
                           )}
-                        </div>
-
-                        <div className="progress-container">
-                          <div
-                            className="progress-bar"
-                            style={{
-                              width: `${course.progress}%`,
-                            }}></div>
-                        </div>
-                        <div className="progress-details">
-                          <span>{course.progress}% hoàn thành</span>
-                        </div>
-
-                        <div className="course-details">
-                          <div className="detail-item">
-                            <strong>Truy cập lần cuối:</strong>{" "}
-                            {course.lastAccessed}
-                          </div>
-                          {!course.completed && (
-                            <div className="detail-item">
-                              <strong>Bài học tiếp theo:</strong>{" "}
-                              {course.nextLesson}
+                        </td>
+                        <td>{user.joinDate}</td>
+                        <td>
+                          {editingUser &&
+                          editingUser.id === user.id ? (
+                            <div className="action-buttons">
+                              <button
+                                className="btn btn-small btn-success"
+                                onClick={handleSaveEdit}>
+                                Lưu
+                              </button>
+                              <button
+                                className="btn btn-small btn-secondary"
+                                onClick={handleCancelEdit}>
+                                Hủy
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="action-buttons">
+                              <button
+                                className="btn btn-small btn-primary"
+                                onClick={() => handleEditUser(user)}>
+                                <FontAwesomeIcon icon={faEdit} /> Sửa
+                              </button>
+                              {user.email !== "admin@gmail.com" && (
+                                <button
+                                  className="btn btn-small btn-danger"
+                                  onClick={() =>
+                                    handleDeleteUser(user.id)
+                                  }>
+                                  <FontAwesomeIcon icon={faTrash} />{" "}
+                                  Xóa
+                                </button>
+                              )}
                             </div>
                           )}
-                          {course.certificate && (
-                            <div className="detail-item certificate">
-                              <strong>Chứng Chỉ:</strong>{" "}
-                              <Link to={`/certificates/${course.id}`}>
-                                Xem Chứng Chỉ
-                              </Link>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="course-actions">
-                          <Link
-                            to={`/education/courses/${course.id}`}
-                            className="btn">
-                            {course.completed
-                              ? "Xem Lại Khóa Học"
-                              : "Tiếp Tục Học"}
-                          </Link>
-                        </div>
-                      </div>
+                        </td>
+                      </tr>
                     ))}
-                  </div>
-                ) : (
-                  <div className="empty-state-container card">
-                    <p>Bạn chưa đăng ký khóa học nào.</p>
-                    <Link to="/education" className="btn">
-                      Khám Phá Khóa Học
-                    </Link>
+                  </tbody>
+                </table>
+
+                {filteredUsers.length === 0 && (
+                  <div className="empty-state">
+                    <p>Không tìm thấy người dùng nào phù hợp.</p>
                   </div>
                 )}
               </div>
-            )}
-
-            {activeTab === "appointments" && (
-              <div className="appointments-tab">
-                <div className="tab-header">
-                  <h2>Lịch Hẹn Của Tôi</h2>
-                  <Link to="/counseling" className="btn">
-                    Đặt Lịch Hẹn Mới
-                  </Link>
-                </div>
-
-                {upcomingAppointments.length > 0 ? (
-                  <div className="appointments-list">
-                    {upcomingAppointments.map((appointment) => (
-                      <div
-                        className="appointment-card card"
-                        key={appointment.id}>
-                        <div className="appointment-header">
-                          <h3>{appointment.counselor}</h3>
-                          <span className="appointment-type">
-                            {appointment.type}
-                          </span>
-                        </div>
-
-                        <div className="appointment-details">
-                          <div className="detail-item">
-                            <strong>Ngày:</strong> {appointment.date}
-                          </div>
-                          <div className="detail-item">
-                            <strong>Giờ:</strong> {appointment.time}
-                          </div>
-                        </div>
-
-                        <div className="appointment-actions">
-                          <Link
-                            to={`/appointments/${appointment.id}`}
-                            className="btn">
-                            Xem Chi Tiết
-                          </Link>
-                          <button className="btn btn-outline">
-                            Đổi Lịch
-                          </button>
-                          <button className="btn btn-outline btn-danger">
-                            Hủy
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="empty-state-container card">
-                    <p>Bạn không có lịch hẹn nào.</p>
-                    <Link to="/counseling" className="btn">
-                      Đặt Lịch Tư Vấn
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === "surveys" && (
-              <div className="surveys-tab">
-                <div className="tab-header">
-                  <h2>Kết Quả Khảo Sát Của Tôi</h2>
-                  <Link to="/education/surveys" className="btn">
-                    Làm Khảo Sát Mới
-                  </Link>
-                </div>
-
-                {surveyResults.length > 0 ? (
-                  <div className="surveys-list">
-                    {surveyResults.map((survey) => (
-                      <div
-                        className="survey-card card"
-                        key={survey.id}>
-                        <div className="survey-header">
-                          <h3>{survey.name}</h3>
-                          <span
-                            className={`risk-level ${survey.riskLevel.toLowerCase()}`}>
-                            {survey.riskLevel === "Low" && (
-                              <FontAwesomeIcon icon={faCheckCircle} />
-                            )}
-                            {survey.riskLevel === "Medium" && (
-                              <FontAwesomeIcon
-                                icon={faExclamationTriangle}
-                              />
-                            )}
-                            {survey.riskLevel === "High" && (
-                              <FontAwesomeIcon
-                                icon={faExclamationTriangle}
-                              />
-                            )}
-                            Mức Độ Rủi Ro: {survey.riskLevel}
-                          </span>
-                        </div>
-
-                        <div className="survey-details">
-                          <div className="detail-item">
-                            <strong>Ngày Hoàn Thành:</strong>{" "}
-                            {survey.date}
-                          </div>
-                        </div>
-
-                        <div className="recommendations">
-                          <h4>Khuyến Nghị:</h4>
-                          <ul>
-                            {survey.recommendations.map(
-                              (recommendation, index) => (
-                                <li key={index}>{recommendation}</li>
-                              )
-                            )}
-                          </ul>
-                        </div>
-
-                        <div className="survey-actions">
-                          <Link
-                            to={`/education/surveys/results/${survey.id}`}
-                            className="btn">
-                            Xem Kết Quả Chi Tiết
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="empty-state-container card">
-                    <p>Bạn chưa hoàn thành khảo sát nào.</p>
-                    <Link to="/education/surveys" className="btn">
-                      Làm Khảo Sát
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Confirm Delete Modal */}
+      {confirmDelete && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <h3>Xác nhận xóa</h3>
+            </div>
+            <div className="modal-body">
+              <p>
+                Bạn có chắc chắn muốn xóa người dùng này? Hành động
+                này không thể hoàn tác.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn btn-secondary"
+                onClick={cancelDelete}>
+                Hủy
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={confirmDeleteUser}>
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
