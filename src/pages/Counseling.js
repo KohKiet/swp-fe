@@ -1,15 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faCalendarAlt,
-  faFilter,
-  faSearch,
   faStar,
   faPhone,
   faEnvelope,
   faCheck,
   faClock,
   faCalendarDay,
+  faSpinner,
+  faTimesCircle,
+  faUser,
+  faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import "./Counseling.css";
 
@@ -102,7 +103,7 @@ const counselorsData = [
 ];
 
 const Counseling = () => {
-  const [activeTab, setActiveTab] = useState("profiles");
+  const [activeTab, setActiveTab] = useState("booking");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
   const [filteredCounselors, setFilteredCounselors] =
@@ -121,33 +122,173 @@ const Counseling = () => {
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [availableDates, setAvailableDates] = useState([]);
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [currentWeek, setCurrentWeek] = useState([]);
+  const [nextWeek, setNextWeek] = useState([]);
+  const [availableConsultants, setAvailableConsultants] = useState(
+    []
+  );
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Refs for scrolling
+  const timeSelectRef = useRef(null);
+  const consultantsRef = useRef(null);
+  const bookingFormRef = useRef(null);
+  const confirmationRef = useRef(null);
 
   // Get all unique specialties from counselors
   const allSpecialties = [
     ...new Set(counselorsData.flatMap((c) => c.specialties)),
   ];
 
-  // Handle search and filter
-  const handleSearch = () => {
-    let filtered = counselorsData;
+  // Helper function to format date as "Day Date" (e.g. "Mon 3")
+  const formatDateShort = (date) => {
+    const day = date.toLocaleDateString("en-US", {
+      weekday: "short",
+    });
+    const dayNum = date.getDate();
+    const formatted = `${day} ${dayNum}`;
+    return formatted;
+  };
 
-    if (searchQuery.trim() !== "") {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (c) =>
-          c.name.toLowerCase().includes(query) ||
-          c.bio.toLowerCase().includes(query) ||
-          c.specialties.some((s) => s.toLowerCase().includes(query))
-      );
+  // Helper function to check if a date is today
+  const isToday = (date) => {
+    const today = new Date();
+    return (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    );
+  };
+
+  // Helper function to check if a date is in the past
+  const isPastDate = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date < today;
+  };
+
+  // Generate time slots from 8:00 AM to 8:00 PM
+  const generateTimeSlots = () => {
+    const slots = [];
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    for (let hour = 8; hour < 20; hour++) {
+      const startTime = `${hour}:00`;
+      const endTime = `${hour + 1}:00`;
+      const formattedStartTime = new Date().setHours(hour, 0, 0, 0);
+      const startTimeStr = new Date(
+        formattedStartTime
+      ).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+      const formattedEndTime = new Date().setHours(hour + 1, 0, 0, 0);
+      const endTimeStr = new Date(
+        formattedEndTime
+      ).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+
+      const timeSlot = {
+        id: hour - 8,
+        display: `${startTimeStr} - ${endTimeStr}`,
+        start: hour,
+        end: hour + 1,
+        isPast:
+          isToday(new Date(selectedDate)) &&
+          (hour < currentHour ||
+            (hour === currentHour && currentMinute > 0)),
+      };
+
+      slots.push(timeSlot);
     }
 
-    if (selectedSpecialty !== "all") {
-      filtered = filtered.filter((c) =>
-        c.specialties.includes(selectedSpecialty)
-      );
+    return slots;
+  };
+
+  // Generate current week and next week dates
+  useEffect(() => {
+    const today = new Date();
+    console.log("Today's date:", today.toDateString());
+    const currentWeekDates = [];
+    const nextWeekDates = [];
+
+    // Start with today
+    const startDate = new Date(today);
+
+    // Generate current week (from today to end of week)
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+
+      // Stop when we reach next week
+      if (date.getDay() === 0 && i > 0) break;
+
+      const isCurrentDay = isToday(date);
+      if (isCurrentDay) {
+        console.log("Marking as today:", date.toDateString());
+      }
+
+      currentWeekDates.push({
+        date: date,
+        formatted: formatDateShort(date),
+        isToday: isCurrentDay,
+        isPast: isPastDate(date),
+        dayName: date.toLocaleDateString("en-US", {
+          weekday: "long",
+        }),
+      });
     }
 
-    setFilteredCounselors(filtered);
+    // Generate next week (from next Sunday to next Saturday)
+    const nextSunday = new Date(startDate);
+    while (nextSunday.getDay() !== 0) {
+      nextSunday.setDate(nextSunday.getDate() + 1);
+    }
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(nextSunday);
+      date.setDate(nextSunday.getDate() + i);
+
+      nextWeekDates.push({
+        date: date,
+        formatted: formatDateShort(date),
+        isToday: false,
+        isPast: false,
+        dayName: date.toLocaleDateString("en-US", {
+          weekday: "long",
+        }),
+      });
+    }
+
+    setCurrentWeek(currentWeekDates);
+    setNextWeek(nextWeekDates);
+  }, []);
+
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Format current time as HH:MM:SS
+  const formatCurrentTime = () => {
+    return currentTime.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
   };
 
   // Handle form input changes
@@ -193,6 +334,10 @@ const Counseling = () => {
       errors.time = "Vui lòng chọn giờ";
     }
 
+    if (!selectedCounselor) {
+      errors.counselor = "Vui lòng chọn tư vấn viên";
+    }
+
     return errors;
   };
 
@@ -206,455 +351,575 @@ const Counseling = () => {
       return;
     }
 
-    // Here you would typically send this to your backend
-    console.log("Booking submitted:", {
-      counselor: selectedCounselor.name,
-      date: selectedDate,
-      time: selectedTime,
-      ...bookingForm,
-    });
+    // Check if user has reached maximum bookings (1 per week)
+    // In a real app, this would be checked against the database
+    const hasReachedMaxBookings = false; // Simulate this check
 
-    // Show confirmation
-    setBookingConfirmed(true);
-  };
-
-  // Generate available dates (next 14 days)
-  const getAvailableDates = (counselor) => {
-    if (!counselor) return [];
-
-    const dates = [];
-    const today = new Date();
-    const availableDaysOfWeek = counselor.availableDays.map((day) => {
-      const days = [
-        "Chủ Nhật",
-        "Thứ Hai",
-        "Thứ Ba",
-        "Thứ Tư",
-        "Thứ Năm",
-        "Thứ Sáu",
-        "Thứ Bảy",
-      ];
-      return days.indexOf(day);
-    });
-
-    for (let i = 0; i < 30; i++) {
-      const date = new Date();
-      date.setDate(today.getDate() + i);
-
-      if (availableDaysOfWeek.includes(date.getDay())) {
-        const dayName = [
-          "Chủ Nhật",
-          "Thứ Hai",
-          "Thứ Ba",
-          "Thứ Tư",
-          "Thứ Năm",
-          "Thứ Sáu",
-          "Thứ Bảy",
-        ][date.getDay()];
-
-        dates.push({
-          date: date,
-          dayName: dayName,
-          formatted: date.toLocaleDateString("vi-VN", {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-          }),
-        });
-      }
+    if (hasReachedMaxBookings) {
+      setErrorMessage(
+        "Bạn đã đạt đến số lượng đặt lịch tối đa trong tuần này (1 lịch hẹn)"
+      );
+      return;
     }
 
-    return dates;
-  };
+    setIsLoading(true);
 
-  // Initiate booking for a specific counselor
-  const initiateBooking = (counselor) => {
-    setSelectedCounselor(counselor);
-    setActiveTab("booking");
-    setBookingConfirmed(false);
+    // Simulate API call
+    setTimeout(() => {
+      // Here you would typically send this to your backend
+      console.log("Booking submitted:", {
+        counselor: selectedCounselor.name,
+        date: selectedDate,
+        time: selectedTime,
+        ...bookingForm,
+      });
 
-    // Reset form
-    setSelectedDate("");
-    setSelectedTime("");
-    setBookingForm({
-      email: "",
-      phone: "",
-      reason: "",
-    });
-    setFormErrors({});
-
-    // Set available dates for the selected counselor
-    const dates = getAvailableDates(counselor);
-    setAvailableDates(dates);
-    setAvailableTimeSlots([]);
+      setIsLoading(false);
+      // Show confirmation
+      setBookingConfirmed(true);
+    }, 1000);
   };
 
   // Handle date selection
   const handleDateSelection = (dateObj) => {
-    setSelectedDate(dateObj.formatted);
-    setSelectedTime("");
+    // Format the date consistently
+    const formattedDate = dateObj.formatted;
+    console.log("Selected date:", formattedDate);
 
-    // Get available time slots for the selected date
-    if (selectedCounselor && dateObj.dayName) {
-      setAvailableTimeSlots(
-        selectedCounselor.availableTimeSlots[dateObj.dayName] || []
+    setSelectedDate(formattedDate);
+    setSelectedTime("");
+    setErrorMessage("");
+    setSelectedCounselor(null);
+
+    // Generate time slots
+    setAvailableTimeSlots(generateTimeSlots());
+
+    // Filter available consultants for this date
+    filterAvailableConsultants(dateObj);
+
+    // Scroll to time selector after a short delay
+    setTimeout(() => {
+      if (timeSelectRef.current) {
+        timeSelectRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+    }, 300);
+  };
+
+  // Filter consultants available on selected date and time
+  const filterAvailableConsultants = (dateObj) => {
+    setIsLoading(true);
+
+    // Simulate API call
+    setTimeout(() => {
+      // In a real implementation, you would fetch this from an API
+      // For now, we'll just filter the mock data
+      const dayName = dateObj.dayName;
+      const availableConsultants = counselorsData.filter(
+        (counselor) => counselor.availableDays.includes(dayName)
       );
+
+      setAvailableConsultants(availableConsultants);
+      setIsLoading(false);
+    }, 500);
+  };
+
+  // Handle time slot selection
+  const handleTimeSelection = (timeSlot) => {
+    if (timeSlot.isPast) return;
+
+    setSelectedTime(timeSlot.display);
+    setErrorMessage("");
+
+    // Scroll to consultants section after a short delay
+    setTimeout(() => {
+      if (consultantsRef.current) {
+        consultantsRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+    }, 300);
+  };
+
+  // Scroll to booking form when consultant is selected
+  useEffect(() => {
+    if (selectedCounselor && bookingFormRef.current) {
+      setTimeout(() => {
+        bookingFormRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }, 300);
+    }
+  }, [selectedCounselor]);
+
+  // Scroll to confirmation when booking is confirmed
+  useEffect(() => {
+    if (bookingConfirmed && confirmationRef.current) {
+      setTimeout(() => {
+        confirmationRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 300);
+    }
+  }, [bookingConfirmed]);
+
+  // Function to check if we can proceed to booking
+  const canProceedToBooking = () => {
+    return selectedDate && selectedTime && selectedCounselor;
+  };
+
+  // Function to handle proceed to booking
+  const handleProceedToBooking = () => {
+    // Scroll to the booking form
+    if (bookingFormRef.current) {
+      bookingFormRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
     }
   };
 
   return (
     <div className="counseling-page">
-      <div className="page-header secondary-bg">
+      <div className="page-header secondary-bg fade-in">
         <div className="container">
           <h1>Dịch Vụ Tư Vấn</h1>
           <p>
-            Kết nối với các tư vấn viên chuyên nghiệp chuyên về phòng
-            ngừa và điều trị lạm dụng chất gây nghiện
+            Đặt lịch hẹn tư vấn trực tuyến với các tư vấn viên chuyên
+            nghiệp
           </p>
         </div>
       </div>
 
       <div className="container">
-        <div className="tab-navigation">
-          <button
-            className={`tab-btn ${
-              activeTab === "profiles" ? "active" : ""
-            }`}
-            onClick={() => setActiveTab("profiles")}>
-            Đội Ngũ Tư Vấn Viên
-          </button>
-          {selectedCounselor && (
-            <button
-              className={`tab-btn ${
-                activeTab === "booking" ? "active" : ""
-              }`}
-              onClick={() => setActiveTab("booking")}>
-              Đặt Lịch Hẹn
-            </button>
-          )}
+        <div className="tab-navigation fade-in delay-100">
+          <button className="tab-btn active">Đặt Lịch Hẹn</button>
         </div>
 
-        {activeTab === "profiles" && (
-          <div className="profiles-section">
-            <div className="search-filters">
-              <div className="search-box">
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm theo tên hoặc chuyên môn..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyUp={(e) => e.key === "Enter" && handleSearch()}
-                />
-                <button onClick={handleSearch}>
-                  <FontAwesomeIcon icon={faSearch} />
-                </button>
-              </div>
+        <div className="booking-section">
+          {!bookingConfirmed ? (
+            <>
+              <div className="booking-layout fade-in delay-200">
+                {/* Left side - Time selection */}
+                <div className="availability-selection card">
+                  <h3>Chọn Thời Gian Tư Vấn</h3>
 
-              <div className="specialty-filter">
-                <span className="filter-label">
-                  <FontAwesomeIcon icon={faFilter} /> Lọc theo chuyên
-                  môn:
-                </span>
-                <select
-                  value={selectedSpecialty}
-                  onChange={(e) => {
-                    setSelectedSpecialty(e.target.value);
-                    setTimeout(handleSearch, 0);
-                  }}>
-                  <option value="all">Tất Cả Chuyên Môn</option>
-                  {allSpecialties.map((specialty, index) => (
-                    <option key={index} value={specialty}>
-                      {specialty}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                  <div className="date-selector">
+                    <h4>
+                      <FontAwesomeIcon icon={faCalendarDay} /> Chọn
+                      Ngày
+                    </h4>
 
-            <div className="counselors-grid">
-              {filteredCounselors.length > 0 ? (
-                filteredCounselors.map((counselor) => (
-                  <div
-                    className="counselor-card card"
-                    key={counselor.id}>
-                    <div className="counselor-header">
-                      <div className="counselor-image">
-                        <img
-                          src={counselor.image}
-                          alt={counselor.name}
-                        />
+                    {errorMessage && (
+                      <div className="error-message">
+                        <FontAwesomeIcon icon={faTimesCircle} />{" "}
+                        {errorMessage}
                       </div>
-                      <div className="counselor-info">
-                        <h3>{counselor.name}</h3>
-                        <p className="counselor-title">
-                          {counselor.title}
-                        </p>
-                        <div className="counselor-rating">
-                          <FontAwesomeIcon
-                            icon={faStar}
-                            className="star-icon"
-                          />
-                          <span>{counselor.rating}</span>
-                          <span className="review-count">
-                            ({counselor.reviews} đánh giá)
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    )}
 
-                    <div className="counselor-specialties">
-                      {counselor.specialties.map(
-                        (specialty, index) => (
-                          <span className="specialty-tag" key={index}>
-                            {specialty}
-                          </span>
-                        )
-                      )}
-                    </div>
-
-                    <p className="counselor-bio">{counselor.bio}</p>
-
-                    <div className="counselor-experience">
-                      <strong>Kinh nghiệm:</strong>{" "}
-                      {counselor.experience}
-                    </div>
-
-                    <div className="counselor-availability">
-                      <strong>Lịch làm việc:</strong>{" "}
-                      {counselor.availableDays.join(", ")}
-                    </div>
-
-                    <button
-                      className="btn btn-primary book-btn"
-                      onClick={() => initiateBooking(counselor)}>
-                      <FontAwesomeIcon icon={faCalendarAlt} /> Đặt
-                      Lịch Hẹn
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div className="no-results">
-                  <h3>Không tìm thấy tư vấn viên</h3>
-                  <p>Hãy điều chỉnh tiêu chí tìm kiếm của bạn</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === "booking" && selectedCounselor && (
-          <div className="booking-section">
-            {!bookingConfirmed ? (
-              <>
-                <div className="selected-counselor card">
-                  <div className="counselor-quick-info">
-                    <img
-                      src={selectedCounselor.image}
-                      alt={selectedCounselor.name}
-                    />
-                    <div>
-                      <h3>Đặt lịch với {selectedCounselor.name}</h3>
-                      <p>{selectedCounselor.title}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="booking-form-container">
-                  <div className="availability-selection card">
-                    <h3>Thời Gian Tư Vấn</h3>
-
-                    <div className="date-selector">
-                      <h4>
-                        <FontAwesomeIcon icon={faCalendarDay} /> Chọn
-                        Ngày
-                      </h4>
+                    <div className="calendar-wrapper fade-in delay-300">
+                      <div className="week-header">Tuần Này</div>
                       <div className="dates-grid">
-                        {availableDates.map((dateObj, index) => (
+                        {currentWeek.map((dateObj, index) => (
                           <button
                             key={index}
-                            className={`date-btn ${
-                              selectedDate === dateObj.formatted
-                                ? "selected"
-                                : ""
-                            }`}
+                            className={`date-btn 
+                              ${dateObj.isPast ? "past" : ""} 
+                              ${dateObj.isToday ? "today" : ""}
+                              ${
+                                selectedDate === dateObj.formatted
+                                  ? "selected"
+                                  : ""
+                              }
+                            `}
                             onClick={() =>
+                              !dateObj.isPast &&
                               handleDateSelection(dateObj)
-                            }>
-                            {dateObj.formatted}
+                            }
+                            disabled={dateObj.isPast}>
+                            <span className="day-name">
+                              {dateObj.formatted.split(" ")[0]}
+                            </span>
+                            <span className="day-number">
+                              {dateObj.formatted.split(" ")[1]}
+                            </span>
                           </button>
                         ))}
                       </div>
-                      {formErrors.date && (
-                        <div className="error-text">
-                          {formErrors.date}
-                        </div>
-                      )}
-                    </div>
 
-                    {selectedDate && (
-                      <div className="time-selector">
-                        <h4>
-                          <FontAwesomeIcon icon={faClock} /> Chọn Giờ
-                        </h4>
-                        <div className="times-grid">
-                          {availableTimeSlots.map((time, index) => (
-                            <button
-                              key={index}
-                              className={`time-btn ${
-                                selectedTime === time
+                      <div className="week-header">Tuần Sau</div>
+                      <div className="dates-grid">
+                        {nextWeek.map((dateObj, index) => (
+                          <button
+                            key={index}
+                            className={`date-btn 
+                              ${dateObj.isPast ? "past" : ""} 
+                              ${dateObj.isToday ? "today" : ""}
+                              ${
+                                selectedDate === dateObj.formatted
                                   ? "selected"
                                   : ""
-                              }`}
-                              onClick={() => setSelectedTime(time)}>
-                              {time}
-                            </button>
-                          ))}
-                        </div>
-                        {formErrors.time && (
-                          <div className="error-text">
-                            {formErrors.time}
-                          </div>
-                        )}
+                              }
+                            `}
+                            onClick={() =>
+                              handleDateSelection(dateObj)
+                            }>
+                            <span className="day-name">
+                              {dateObj.formatted.split(" ")[0]}
+                            </span>
+                            <span className="day-number">
+                              {dateObj.formatted.split(" ")[1]}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {formErrors.date && (
+                      <div className="error-text">
+                        {formErrors.date}
                       </div>
                     )}
                   </div>
 
-                  {selectedDate && selectedTime && (
-                    <form
-                      className="booking-form card"
-                      onSubmit={handleBookingSubmit}>
-                      <h3>Thông Tin Liên Hệ</h3>
-
-                      <div className="form-group">
-                        <label htmlFor="email">Địa Chỉ Email</label>
-                        <input
-                          type="email"
-                          id="email"
-                          name="email"
-                          value={bookingForm.email}
-                          onChange={handleInputChange}
-                          className={formErrors.email ? "error" : ""}
-                        />
-                        {formErrors.email && (
-                          <div className="error-text">
-                            {formErrors.email}
-                          </div>
-                        )}
+                  {selectedDate && (
+                    <div
+                      className="time-selector fade-in"
+                      ref={timeSelectRef}>
+                      <h4>
+                        <FontAwesomeIcon icon={faClock} /> Chọn Giờ
+                      </h4>
+                      <div className="times-grid">
+                        {availableTimeSlots.map((timeSlot, index) => (
+                          <button
+                            key={index}
+                            className={`time-btn ${
+                              selectedTime === timeSlot.display
+                                ? "selected"
+                                : ""
+                            } ${timeSlot.isPast ? "past" : ""}`}
+                            onClick={() =>
+                              handleTimeSelection(timeSlot)
+                            }
+                            disabled={timeSlot.isPast}>
+                            {timeSlot.display}
+                            {timeSlot.isPast && (
+                              <FontAwesomeIcon
+                                icon={faTimesCircle}
+                                className="slot-icon past-icon"
+                              />
+                            )}
+                          </button>
+                        ))}
                       </div>
-
-                      <div className="form-group">
-                        <label htmlFor="phone">Số Điện Thoại</label>
-                        <input
-                          type="tel"
-                          id="phone"
-                          name="phone"
-                          value={bookingForm.phone}
-                          onChange={handleInputChange}
-                          className={formErrors.phone ? "error" : ""}
-                        />
-                        {formErrors.phone && (
-                          <div className="error-text">
-                            {formErrors.phone}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="form-group">
-                        <label htmlFor="reason">
-                          Lý Do Thăm Khám
-                        </label>
-                        <textarea
-                          id="reason"
-                          name="reason"
-                          rows="3"
-                          value={bookingForm.reason}
-                          onChange={handleInputChange}
-                          className={
-                            formErrors.reason ? "error" : ""
-                          }></textarea>
-                        {formErrors.reason && (
-                          <div className="error-text">
-                            {formErrors.reason}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="booking-summary">
-                        <h4>Tóm Tắt Lịch Hẹn</h4>
-                        <div className="summary-details">
-                          <div className="summary-item">
-                            <strong>Tư vấn viên:</strong>{" "}
-                            {selectedCounselor.name}
-                          </div>
-                          <div className="summary-item">
-                            <strong>Ngày:</strong> {selectedDate}
-                          </div>
-                          <div className="summary-item">
-                            <strong>Giờ:</strong> {selectedTime}
-                          </div>
+                      {formErrors.time && (
+                        <div className="error-text">
+                          {formErrors.time}
                         </div>
-                      </div>
-
-                      <button
-                        type="submit"
-                        className="btn btn-primary submit-btn">
-                        Xác Nhận Đặt Lịch
-                      </button>
-                    </form>
+                      )}
+                    </div>
                   )}
                 </div>
-              </>
-            ) : (
-              <div className="booking-confirmation card">
-                <div className="confirmation-icon">
-                  <FontAwesomeIcon icon={faCheck} />
-                </div>
-                <h2>Đã Xác Nhận Đặt Lịch!</h2>
-                <p>
-                  Cuộc hẹn của bạn với {selectedCounselor.name} đã
-                  được lên lịch vào:
-                </p>
-                <div className="confirmation-details">
-                  <p className="detail-item">
-                    <strong>Ngày:</strong> {selectedDate}
-                  </p>
-                  <p className="detail-item">
-                    <strong>Giờ:</strong> {selectedTime}
-                  </p>
-                </div>
-                <p className="confirmation-message">
-                  Email xác nhận đã được gửi đến {bookingForm.email}.
-                  Vui lòng kiểm tra hộp thư của bạn để biết chi tiết.
-                </p>
-                <div className="contact-info">
-                  <p>
-                    Nếu bạn cần đổi lịch hoặc hủy, vui lòng liên hệ
-                    với chúng tôi:
-                  </p>
-                  <div className="contact-methods">
-                    <a
-                      href="tel:+1234567890"
-                      className="contact-method">
-                      <FontAwesomeIcon icon={faPhone} /> (123)
-                      456-7890
-                    </a>
-                    <a
-                      href="mailto:contact@brightchoice.org"
-                      className="contact-method">
-                      <FontAwesomeIcon icon={faEnvelope} />{" "}
-                      contact@brightchoice.org
-                    </a>
+
+                {/* Right side - Selection summary and confirmation */}
+                <div className="selection-summary-card">
+                  <h3>Thông Tin Đã Chọn</h3>
+
+                  <div className="selection-summary fade-in">
+                    <div className="selection-item current-time">
+                      <FontAwesomeIcon icon={faClock} />
+                      <span>Thời gian hiện tại:</span>{" "}
+                      {formatCurrentTime()}
+                    </div>
+
+                    {selectedDate ? (
+                      <div className="selection-item">
+                        <FontAwesomeIcon icon={faCalendarDay} />
+                        <span>Ngày:</span> {selectedDate}
+                      </div>
+                    ) : (
+                      <div className="selection-item">
+                        <FontAwesomeIcon icon={faInfoCircle} />
+                        <span>Ngày:</span> Chưa chọn
+                      </div>
+                    )}
+
+                    {selectedTime ? (
+                      <div className="selection-item">
+                        <FontAwesomeIcon icon={faClock} />
+                        <span>Giờ đã chọn:</span> {selectedTime}
+                      </div>
+                    ) : (
+                      <div className="selection-item">
+                        <FontAwesomeIcon icon={faInfoCircle} />
+                        <span>Giờ:</span> Chưa chọn
+                      </div>
+                    )}
+
+                    {selectedCounselor ? (
+                      <div className="selection-item">
+                        <FontAwesomeIcon icon={faUser} />
+                        <span>Tư vấn viên:</span>{" "}
+                        {selectedCounselor.name}
+                      </div>
+                    ) : (
+                      <div className="selection-item">
+                        <FontAwesomeIcon icon={faInfoCircle} />
+                        <span>Tư vấn viên:</span> Chưa chọn
+                      </div>
+                    )}
                   </div>
+
+                  <button
+                    className="confirmation-btn"
+                    disabled={!canProceedToBooking()}
+                    onClick={handleProceedToBooking}>
+                    {selectedCounselor ? (
+                      <>
+                        <FontAwesomeIcon icon={faCheck} />
+                        Đặt Lịch Hẹn
+                      </>
+                    ) : (
+                      <>
+                        <FontAwesomeIcon icon={faInfoCircle} />
+                        Vui lòng chọn đầy đủ thông tin
+                      </>
+                    )}
+                  </button>
                 </div>
+              </div>
+
+              {/* Consultants selection */}
+              {selectedDate && selectedTime && (
+                <div
+                  className="available-consultants card fade-in"
+                  ref={consultantsRef}>
+                  <h3>Tư Vấn Viên Khả Dụng</h3>
+
+                  {isLoading ? (
+                    <div className="loading-spinner">
+                      <FontAwesomeIcon icon={faSpinner} spin />
+                      <span>Đang tải danh sách tư vấn viên...</span>
+                    </div>
+                  ) : availableConsultants.length > 0 ? (
+                    <div className="consultants-grid">
+                      {availableConsultants.map((consultant) => (
+                        <div
+                          key={consultant.id}
+                          className={`consultant-card ${
+                            selectedCounselor?.id === consultant.id
+                              ? "selected"
+                              : ""
+                          }`}
+                          onClick={() =>
+                            setSelectedCounselor(consultant)
+                          }>
+                          <div className="consultant-image">
+                            <img
+                              src={consultant.image}
+                              alt={consultant.name}
+                            />
+                          </div>
+                          <div className="consultant-details">
+                            <h4>{consultant.name}</h4>
+                            <p>{consultant.title}</p>
+                            <div className="consultant-rating">
+                              <FontAwesomeIcon
+                                icon={faStar}
+                                className="star-icon"
+                              />
+                              <span>{consultant.rating}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="no-consultants">
+                      <FontAwesomeIcon icon={faTimesCircle} />
+                      <p>
+                        Không có tư vấn viên khả dụng vào thời gian
+                        này
+                      </p>
+                    </div>
+                  )}
+
+                  {formErrors.counselor && (
+                    <div className="error-text">
+                      {formErrors.counselor}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Booking form */}
+              {selectedCounselor && (
+                <form
+                  className="booking-form card fade-in"
+                  onSubmit={handleBookingSubmit}
+                  ref={bookingFormRef}>
+                  <h3>Thông Tin Liên Hệ</h3>
+
+                  <div className="form-group">
+                    <label htmlFor="email">Địa Chỉ Email</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={bookingForm.email}
+                      onChange={handleInputChange}
+                      className={formErrors.email ? "error" : ""}
+                    />
+                    {formErrors.email && (
+                      <div className="error-text">
+                        {formErrors.email}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="phone">Số Điện Thoại</label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={bookingForm.phone}
+                      onChange={handleInputChange}
+                      className={formErrors.phone ? "error" : ""}
+                    />
+                    {formErrors.phone && (
+                      <div className="error-text">
+                        {formErrors.phone}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="reason">Lý Do Thăm Khám</label>
+                    <textarea
+                      id="reason"
+                      name="reason"
+                      rows="3"
+                      value={bookingForm.reason}
+                      onChange={handleInputChange}
+                      className={
+                        formErrors.reason ? "error" : ""
+                      }></textarea>
+                    {formErrors.reason && (
+                      <div className="error-text">
+                        {formErrors.reason}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="booking-summary">
+                    <h4>Tóm Tắt Lịch Hẹn</h4>
+                    <div className="summary-details">
+                      <div className="summary-item">
+                        <strong>Tư vấn viên:</strong>{" "}
+                        {selectedCounselor.name}
+                      </div>
+                      <div className="summary-item">
+                        <strong>Ngày:</strong> {selectedDate}
+                      </div>
+                      <div className="summary-item">
+                        <strong>Giờ:</strong> {selectedTime}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary submit-btn">
+                    {isLoading ? (
+                      <>
+                        <FontAwesomeIcon icon={faSpinner} spin /> Đang
+                        xử lý...
+                      </>
+                    ) : (
+                      "Đặt Lịch Hẹn"
+                    )}
+                  </button>
+                </form>
+              )}
+            </>
+          ) : (
+            <div
+              className="booking-confirmation card fade-in"
+              ref={confirmationRef}>
+              <div className="confirmation-icon">
+                <FontAwesomeIcon icon={faCheck} />
+              </div>
+              <h2>Đã Đặt Lịch Thành Công!</h2>
+              <p>
+                Bạn đã đặt lịch thành công với{" "}
+                {selectedCounselor.name} vào:
+              </p>
+              <div className="confirmation-details">
+                <p className="detail-item">
+                  <strong>Ngày:</strong> {selectedDate}
+                </p>
+                <p className="detail-item">
+                  <strong>Giờ:</strong> {selectedTime}
+                </p>
+              </div>
+              <p className="confirmation-message">
+                Bạn đã đặt lịch hẹn thành công với{" "}
+                {selectedCounselor.name} vào {selectedDate} lúc{" "}
+                {selectedTime}. Đang chờ xác nhận từ tư vấn viên.
+              </p>
+              <div className="appointment-status">
+                <span className="status-badge pending">
+                  Đang chờ xác nhận
+                </span>
+              </div>
+              <div className="contact-info">
+                <p>
+                  Nếu bạn cần đổi lịch hoặc hủy, vui lòng liên hệ với
+                  chúng tôi:
+                </p>
+                <div className="contact-methods">
+                  <a
+                    href="tel:+1234567890"
+                    className="contact-method">
+                    <FontAwesomeIcon icon={faPhone} /> (123) 456-7890
+                  </a>
+                  <a
+                    href="mailto:contact@brightchoice.org"
+                    className="contact-method">
+                    <FontAwesomeIcon icon={faEnvelope} />{" "}
+                    contact@brightchoice.org
+                  </a>
+                </div>
+              </div>
+              <div className="action-buttons">
                 <button
                   className="btn btn-primary"
-                  onClick={() => setActiveTab("profiles")}>
-                  Quay Lại Đội Ngũ Tư Vấn Viên
+                  onClick={() => {
+                    setBookingConfirmed(false);
+                    setSelectedDate("");
+                    setSelectedTime("");
+                    setSelectedCounselor(null);
+                    setBookingForm({
+                      email: "",
+                      phone: "",
+                      reason: "",
+                    });
+                  }}>
+                  Đặt Lịch Hẹn Mới
+                </button>
+                <button className="btn btn-outline cancel-btn">
+                  Hủy Lịch Hẹn
                 </button>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
