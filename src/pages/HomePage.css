@@ -1,6 +1,7 @@
 /* Hero Section */
 .hero {
-    background: linear-gradient(135deg, #3f51b5 0%, #2196f3 50%, #1976d2 100%);
+    background-image: 
+    url('https://i.pinimg.com/736x/40/27/bb/4027bb9c6304a4deec0067f43b0b6c2d.jpg');
     color: white;
     padding: 5rem 0;
     margin-bottom: 3rem;
