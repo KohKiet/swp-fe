@@ -16,7 +16,7 @@ const blogPosts = [
     title: "Hành Trình Hồi Phục Của Tôi: Một Câu Chuyện Cá Nhân",
     excerpt:
       "Làm thế nào mà sự hỗ trợ và giáo dục từ cộng đồng đã thay đổi cuộc sống của tôi và giúp tôi vượt qua nghiện ngập.",
-    author: "Nguyễn Thị Hoa",
+    author: "Nguyễn Văn B",
     date: "15/05/2023",
     image:
       "https://placehold.co/300x200/e8f5e9/2D7DD2?text=Recovery+Story",
@@ -190,24 +190,67 @@ const HomePage = () => {
             chúng tôi
           </p>
 
-          <div className="grid">
-            {blogPosts.map((post) => (
-              <div className="blog-card card fade-in" key={post.id}>
+          <div className="blog-layout">
+            {/* Featured post (larger, on the left) */}
+            <div className="featured-post fade-in">
+              <div className="blog-card">
                 <div className="blog-image">
-                  <img src={post.image} alt={post.title} />
+                  <img
+                    src={blogPosts[0].image}
+                    alt={blogPosts[0].title}
+                  />
                 </div>
                 <div className="blog-content">
-                  <h3>{post.title}</h3>
-                  <p className="blog-meta">
-                    Bởi {post.author} | {post.date}
-                  </p>
-                  <p>{post.excerpt}</p>
-                  <Link to={`/blog/${post.id}`} className="blog-link">
-                    Đọc Thêm <FontAwesomeIcon icon={faArrowRight} />
-                  </Link>
+                  <div>
+                    <h3>{blogPosts[0].title}</h3>
+                    <p className="blog-excerpt">
+                      {blogPosts[0].excerpt}
+                    </p>
+                  </div>
+                  <div className="blog-footer">
+                    <div className="blog-meta">
+                      <span>{blogPosts[0].author}</span>
+                      <span>{blogPosts[0].date}</span>
+                    </div>
+                    <Link
+                      to={`/blog/${blogPosts[0].id}`}
+                      className="blog-link">
+                      Đọc Thêm <FontAwesomeIcon icon={faArrowRight} />
+                    </Link>
+                  </div>
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Secondary posts (stacked on the right) */}
+            <div className="secondary-posts">
+              {blogPosts.slice(1, 3).map((post, index) => (
+                <div
+                  className={`blog-card secondary-card fade-in`}
+                  key={post.id}>
+                  <div className="blog-content">
+                    <div>
+                      <h3>{post.title}</h3>
+                    </div>
+                    <div className="blog-footer">
+                      <div className="blog-meta">
+                        <span>{post.author}</span>
+                        <span>{post.date}</span>
+                      </div>
+                      <Link
+                        to={`/blog/${post.id}`}
+                        className="blog-link">
+                        Đọc Thêm{" "}
+                        <FontAwesomeIcon icon={faArrowRight} />
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="blog-image">
+                    <img src={post.image} alt={post.title} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="view-all-container fade-in">
