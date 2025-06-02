@@ -172,8 +172,8 @@ const EducationHub = () => {
     <div className="education-hub">
       <div className="page-header secondary-bg">
         <div className="container">
-          <h1>Trung Tâm Giáo Dục</h1>
-          <p>
+          <h1 className="animated-header">Trung Tâm Giáo Dục</h1>
+          <p className="animated-subheader">
             Truy cập khóa học, tài nguyên và đánh giá để củng cố kiến
             thức phòng ngừa ma túy
           </p>
