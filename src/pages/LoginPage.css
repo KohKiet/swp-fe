@@ -22,7 +22,8 @@
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    background: linear-gradient(135deg, #3f51b5 0%, #2196f3 50%, #1976d2 100%);
+    background-image: url('https://i.pinimg.com/736x/92/bd/48/92bd4820d687557bf42f8ca201d524e8.jpg');
+    background-size: cover;
     position: relative;
     overflow: hidden;
 }
