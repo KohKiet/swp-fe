@@ -169,45 +169,62 @@ const Counseling = () => {
     return date < today;
   };
 
+  // Helper function to check if a time slot is at least 1 hour in the future
+  const isOneHourInFuture = (hour) => {
+    const now = new Date();
+    const oneHourFromNow = new Date(now);
+    oneHourFromNow.setHours(now.getHours() + 1, 0, 0, 0);
+
+    const slotTime = new Date();
+    slotTime.setHours(hour, 0, 0, 0);
+
+    return slotTime >= oneHourFromNow;
+  };
+
   // Generate time slots from 8:00 AM to 8:00 PM
   const generateTimeSlots = () => {
     const slots = [];
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
 
     for (let hour = 8; hour < 20; hour++) {
-      const startTime = `${hour}:00`;
-      const endTime = `${hour + 1}:00`;
-      const formattedStartTime = new Date().setHours(hour, 0, 0, 0);
-      const startTimeStr = new Date(
-        formattedStartTime
-      ).toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
-      const formattedEndTime = new Date().setHours(hour + 1, 0, 0, 0);
-      const endTimeStr = new Date(
-        formattedEndTime
-      ).toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
+      // Check if this time slot is at least 1 hour in the future (for today)
+      // For future dates, all slots are available
+      const shouldShowTimeSlot =
+        !isToday(new Date(selectedDate)) || isOneHourInFuture(hour);
 
-      const timeSlot = {
-        id: hour - 8,
-        display: `${startTimeStr} - ${endTimeStr}`,
-        start: hour,
-        end: hour + 1,
-        isPast:
-          isToday(new Date(selectedDate)) &&
-          (hour < currentHour ||
-            (hour === currentHour && currentMinute > 0)),
-      };
+      if (shouldShowTimeSlot) {
+        const formattedStartTime = new Date().setHours(hour, 0, 0, 0);
+        const startTimeStr = new Date(
+          formattedStartTime
+        ).toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+        const formattedEndTime = new Date().setHours(
+          hour + 1,
+          0,
+          0,
+          0
+        );
+        const endTimeStr = new Date(
+          formattedEndTime
+        ).toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
 
-      slots.push(timeSlot);
+        const timeSlot = {
+          id: hour - 8,
+          display: `${startTimeStr} - ${endTimeStr}`,
+          start: hour,
+          end: hour + 1,
+          isPast: false, // No longer needed as we're filtering slots
+        };
+
+        slots.push(timeSlot);
+      }
     }
 
     return slots;
@@ -428,8 +445,6 @@ const Counseling = () => {
 
   // Handle time slot selection
   const handleTimeSelection = (timeSlot) => {
-    if (timeSlot.isPast) return;
-
     setSelectedTime(timeSlot.display);
     setErrorMessage("");
 
@@ -602,18 +617,11 @@ const Counseling = () => {
                               selectedTime === timeSlot.display
                                 ? "selected"
                                 : ""
-                            } ${timeSlot.isPast ? "past" : ""}`}
+                            }`}
                             onClick={() =>
                               handleTimeSelection(timeSlot)
-                            }
-                            disabled={timeSlot.isPast}>
+                            }>
                             {timeSlot.display}
-                            {timeSlot.isPast && (
-                              <FontAwesomeIcon
-                                icon={faTimesCircle}
-                                className="slot-icon past-icon"
-                              />
-                            )}
                           </button>
                         ))}
                       </div>
