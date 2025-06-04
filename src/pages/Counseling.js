@@ -172,19 +172,25 @@ const Counseling = () => {
   // Helper function to check if a time slot is at least 1 hour in the future
   const isOneHourInFuture = (hour) => {
     const now = new Date();
-    const oneHourFromNow = new Date(now);
-    oneHourFromNow.setHours(now.getHours() + 1, 0, 0, 0);
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
 
-    const slotTime = new Date();
-    slotTime.setHours(hour, 0, 0, 0);
+    // Convert the target hour to minutes since midnight
+    const targetTimeInMinutes = hour * 60;
 
-    return slotTime >= oneHourFromNow;
+    // Convert current time to minutes since midnight
+    const currentTimeInMinutes = currentHour * 60 + currentMinute;
+
+    // A slot is bookable only if it starts at least 60 minutes from now
+    return targetTimeInMinutes - currentTimeInMinutes >= 60;
   };
 
-  // Generate time slots from 8:00 AM to 8:00 PM
-  const generateTimeSlots = () => {
+  // Memoize the generateTimeSlots function
+  const memoizedGenerateTimeSlots = React.useCallback(() => {
     const slots = [];
     const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
 
     for (let hour = 8; hour < 20; hour++) {
       // Check if this time slot is at least 1 hour in the future (for today)
@@ -220,7 +226,7 @@ const Counseling = () => {
           display: `${startTimeStr} - ${endTimeStr}`,
           start: hour,
           end: hour + 1,
-          isPast: false, // No longer needed as we're filtering slots
+          isPast: false,
         };
 
         slots.push(timeSlot);
@@ -228,7 +234,10 @@ const Counseling = () => {
     }
 
     return slots;
-  };
+  }, [selectedDate, isOneHourInFuture]);
+
+  // Replace the original generateTimeSlots function
+  const generateTimeSlots = memoizedGenerateTimeSlots;
 
   // Generate current week and next week dates
   useEffect(() => {
@@ -289,14 +298,20 @@ const Counseling = () => {
     setNextWeek(nextWeekDates);
   }, []);
 
-  // Update current time every second
+  // Update current time every second and refresh time slots for today
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(new Date());
+      const newTime = new Date();
+      setCurrentTime(newTime);
+
+      // If today is selected, refresh available time slots when the time changes
+      if (selectedDate && isToday(new Date(selectedDate))) {
+        setAvailableTimeSlots(memoizedGenerateTimeSlots());
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [selectedDate, memoizedGenerateTimeSlots]);
 
   // Format current time as HH:MM:SS
   const formatCurrentTime = () => {
@@ -409,7 +424,7 @@ const Counseling = () => {
     setSelectedCounselor(null);
 
     // Generate time slots
-    setAvailableTimeSlots(generateTimeSlots());
+    setAvailableTimeSlots(memoizedGenerateTimeSlots());
 
     // Filter available consultants for this date
     filterAvailableConsultants(dateObj);
