@@ -169,36 +169,25 @@ const Counseling = () => {
     return date < today;
   };
 
-  // Helper function to check if a time slot is at least 1 hour in the future
-  const isOneHourInFuture = (hour) => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-
-    // Convert the target hour to minutes since midnight
-    const targetTimeInMinutes = hour * 60;
-
-    // Convert current time to minutes since midnight
-    const currentTimeInMinutes = currentHour * 60 + currentMinute;
-
-    // A slot is bookable only if it starts at least 60 minutes from now
-    return targetTimeInMinutes - currentTimeInMinutes >= 60;
-  };
-
   // Memoize the generateTimeSlots function
   const memoizedGenerateTimeSlots = React.useCallback(() => {
     const slots = [];
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
 
-    for (let hour = 8; hour < 20; hour++) {
-      // Check if this time slot is at least 1 hour in the future (for today)
-      // For future dates, all slots are available
-      const shouldShowTimeSlot =
-        !isToday(new Date(selectedDate)) || isOneHourInFuture(hour);
+    // For today, implement strict time slot filtering
+    if (selectedDate && isToday(new Date(selectedDate))) {
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
 
-      if (shouldShowTimeSlot) {
+      // Calculate the next possible time slot (current hour + 2 at minimum)
+      // If we're at 8:00, the earliest slot should be 10:00
+      let minimumHour = currentHour + 2;
+
+      console.log(
+        `Current time: ${currentHour}:${currentMinute}, minimum bookable hour: ${minimumHour}:00`
+      );
+
+      for (let hour = 8; hour < 20; hour++) {
         const formattedStartTime = new Date().setHours(hour, 0, 0, 0);
         const startTimeStr = new Date(
           formattedStartTime
@@ -207,6 +196,46 @@ const Counseling = () => {
           minute: "2-digit",
           hour12: true,
         });
+
+        const formattedEndTime = new Date().setHours(
+          hour + 1,
+          0,
+          0,
+          0
+        );
+        const endTimeStr = new Date(
+          formattedEndTime
+        ).toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+        // Check if this time slot is at least 2 hours in the future
+        const isPast = hour < minimumHour;
+
+        const timeSlot = {
+          id: hour - 8,
+          display: `${startTimeStr} - ${endTimeStr}`,
+          start: hour,
+          end: hour + 1,
+          isPast: isPast,
+        };
+
+        slots.push(timeSlot);
+      }
+    } else {
+      // For future dates, show all time slots
+      for (let hour = 8; hour < 20; hour++) {
+        const formattedStartTime = new Date().setHours(hour, 0, 0, 0);
+        const startTimeStr = new Date(
+          formattedStartTime
+        ).toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+
         const formattedEndTime = new Date().setHours(
           hour + 1,
           0,
@@ -234,7 +263,7 @@ const Counseling = () => {
     }
 
     return slots;
-  }, [selectedDate, isOneHourInFuture]);
+  }, [selectedDate]);
 
   // Replace the original generateTimeSlots function
   const generateTimeSlots = memoizedGenerateTimeSlots;
@@ -298,20 +327,54 @@ const Counseling = () => {
     setNextWeek(nextWeekDates);
   }, []);
 
-  // Update current time every second and refresh time slots for today
+  // Update current time every second for the clock display
   useEffect(() => {
-    const timer = setInterval(() => {
-      const newTime = new Date();
-      setCurrentTime(newTime);
+    const clockTimer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000); // Update every second for smooth clock display
 
-      // If today is selected, refresh available time slots when the time changes
+    return () => clearInterval(clockTimer);
+  }, []);
+
+  // Handle time slot updates separately at a longer interval
+  useEffect(() => {
+    // Initial update of time slots
+    if (selectedDate && isToday(new Date(selectedDate))) {
+      setAvailableTimeSlots(memoizedGenerateTimeSlots());
+    }
+
+    // Update time slots every 30 seconds
+    const timeSlotTimer = setInterval(() => {
+      // Always refresh time slots for today to ensure past slots disappear
       if (selectedDate && isToday(new Date(selectedDate))) {
-        setAvailableTimeSlots(memoizedGenerateTimeSlots());
-      }
-    }, 1000);
+        const updatedSlots = memoizedGenerateTimeSlots();
+        console.log(
+          "Updating time slots:",
+          updatedSlots.length,
+          "slots available"
+        );
+        setAvailableTimeSlots(updatedSlots);
 
-    return () => clearInterval(timer);
-  }, [selectedDate, memoizedGenerateTimeSlots]);
+        // If the currently selected time is no longer available, clear it
+        if (selectedTime) {
+          const isTimeStillAvailable = updatedSlots.some(
+            (slot) => slot.display === selectedTime
+          );
+
+          if (!isTimeStillAvailable) {
+            console.log(
+              "Selected time is no longer available:",
+              selectedTime
+            );
+            setSelectedTime("");
+            setSelectedCounselor(null);
+          }
+        }
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(timeSlotTimer);
+  }, [selectedDate, memoizedGenerateTimeSlots, selectedTime]);
 
   // Format current time as HH:MM:SS
   const formatCurrentTime = () => {
@@ -423,8 +486,14 @@ const Counseling = () => {
     setErrorMessage("");
     setSelectedCounselor(null);
 
-    // Generate time slots
-    setAvailableTimeSlots(memoizedGenerateTimeSlots());
+    // Force regeneration of time slots with a slight delay to ensure state update
+    setTimeout(() => {
+      const slots = memoizedGenerateTimeSlots();
+      console.log(
+        `Generated ${slots.length} time slots for ${formattedDate}`
+      );
+      setAvailableTimeSlots(slots);
+    }, 10);
 
     // Filter available consultants for this date
     filterAvailableConsultants(dateObj);
@@ -632,10 +701,12 @@ const Counseling = () => {
                               selectedTime === timeSlot.display
                                 ? "selected"
                                 : ""
-                            }`}
+                            } ${timeSlot.isPast ? "past" : ""}`}
                             onClick={() =>
+                              !timeSlot.isPast &&
                               handleTimeSelection(timeSlot)
-                            }>
+                            }
+                            disabled={timeSlot.isPast}>
                             {timeSlot.display}
                           </button>
                         ))}
