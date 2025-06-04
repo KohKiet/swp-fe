@@ -12,16 +12,11 @@ import { useAuth } from "../context/AuthContext";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { currentUser, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
   };
 
   const handleLogout = () => {
@@ -53,20 +48,20 @@ const Header = () => {
               </li>
 
               <li className="nav-item">
-                <Link to="/education/surveys" className="nav-link">
-                  Đánh Giá
-                </Link>
-              </li>
-
-              <li className="nav-item">
                 <Link to="/counseling" className="nav-link">
                   Đặt Lịch Tư Vấn
                 </Link>
               </li>
 
               <li className="nav-item">
+                <Link to="/education/surveys" className="nav-link">
+                  Khảo Sát
+                </Link>
+              </li>
+
+              <li className="nav-item">
                 <Link to="/programs" className="nav-link">
-                  Chương Trình
+                  Sự Kiện
                 </Link>
               </li>
 
@@ -97,29 +92,24 @@ const Header = () => {
           <div className="auth-buttons">
             {currentUser ? (
               <div className="user-dropdown">
-                <button
-                  className="dropdown-toggle"
-                  onClick={toggleDropdown}>
+                <button className="dropdown-toggle">
                   <FontAwesomeIcon icon={faUser} />
                   {currentUser.name || currentUser.email}
                   <FontAwesomeIcon icon={faChevronDown} />
                 </button>
-                {isDropdownOpen && (
-                  <div className="dropdown-menu">
-                    {isAdmin() && (
-                      <Link to="/dashboard" className="dropdown-item">
-                        <FontAwesomeIcon icon={faTachometerAlt} />{" "}
-                        Dashboard
-                      </Link>
-                    )}
-                    <button
-                      className="dropdown-item"
-                      onClick={handleLogout}>
-                      <FontAwesomeIcon icon={faSignOutAlt} /> Đăng
-                      Xuất
-                    </button>
-                  </div>
-                )}
+                <div className="dropdown-menu">
+                  {isAdmin() && (
+                    <Link to="/dashboard" className="dropdown-item">
+                      <FontAwesomeIcon icon={faTachometerAlt} />{" "}
+                      Dashboard
+                    </Link>
+                  )}
+                  <button
+                    className="dropdown-item"
+                    onClick={handleLogout}>
+                    <FontAwesomeIcon icon={faSignOutAlt} /> Đăng Xuất
+                  </button>
+                </div>
               </div>
             ) : (
               <Link to="/login" className="btn">

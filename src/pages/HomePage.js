@@ -17,7 +17,7 @@ const blogPosts = [
     excerpt:
       "Làm thế nào mà sự hỗ trợ và giáo dục từ cộng đồng đã thay đổi cuộc sống của tôi và giúp tôi vượt qua nghiện ngập.",
     author: "Nguyễn Văn B",
-    date: "15/05/2023",
+    date: "15/05/2025",
     image:
       "https://placehold.co/300x200/e8f5e9/2D7DD2?text=Recovery+Story",
   },
@@ -153,11 +153,11 @@ const HomePage = () => {
       <section className="course-categories" ref={categorySectionRef}>
         <div className="container">
           <h2 className="section-title fade-in">
-            Giáo Dục Cho Mọi Người
+            Chương Trình Giáo Dục
           </h2>
           <p className="section-subtitle fade-in">
-            Tài nguyên được điều chỉnh cho các nhóm tuổi và vai trò
-            khác nhau
+            Chúng tôi cung cấp các chương trình phòng chống ma túy
+            dành cho mọi đối tượng
           </p>
 
           <div className="grid">
