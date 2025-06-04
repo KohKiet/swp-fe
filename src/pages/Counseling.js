@@ -188,6 +188,12 @@ const Counseling = () => {
       );
 
       for (let hour = 8; hour < 20; hour++) {
+        // Check if this time slot is at least 2 hours in the future
+        const isPast = hour < minimumHour;
+
+        // Only include future time slots if we want to completely hide past slots
+        // This option keeps past slots but marks them as disabled
+        // if (!isPast) {
         const formattedStartTime = new Date().setHours(hour, 0, 0, 0);
         const startTimeStr = new Date(
           formattedStartTime
@@ -211,9 +217,6 @@ const Counseling = () => {
           hour12: true,
         });
 
-        // Check if this time slot is at least 2 hours in the future
-        const isPast = hour < minimumHour;
-
         const timeSlot = {
           id: hour - 8,
           display: `${startTimeStr} - ${endTimeStr}`,
@@ -223,6 +226,7 @@ const Counseling = () => {
         };
 
         slots.push(timeSlot);
+        // }
       }
     } else {
       // For future dates, show all time slots
@@ -492,7 +496,22 @@ const Counseling = () => {
       console.log(
         `Generated ${slots.length} time slots for ${formattedDate}`
       );
-      setAvailableTimeSlots(slots);
+
+      // Filter out past slots for today to ensure they don't appear at all
+      if (dateObj.isToday) {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const minimumHour = currentHour + 2;
+        const filteredSlots = slots.filter(
+          (slot) => slot.start >= minimumHour
+        );
+        console.log(
+          `Filtered to ${filteredSlots.length} available slots after removing past times`
+        );
+        setAvailableTimeSlots(filteredSlots);
+      } else {
+        setAvailableTimeSlots(slots);
+      }
     }, 10);
 
     // Filter available consultants for this date
