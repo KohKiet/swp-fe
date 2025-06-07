@@ -11,7 +11,7 @@ import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: "",
@@ -20,11 +20,13 @@ const LoginPage = () => {
   });
   const [errors, setErrors] = useState({});
   const [loginError, setLoginError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const toggleForm = () => {
     setIsLogin(!isLogin);
     setErrors({});
     setLoginError("");
+    setSuccessMessage("");
   };
 
   const handleChange = (e) => {
@@ -44,6 +46,10 @@ const LoginPage = () => {
 
     if (loginError) {
       setLoginError("");
+    }
+
+    if (successMessage) {
+      setSuccessMessage("");
     }
   };
 
@@ -81,20 +87,28 @@ const LoginPage = () => {
     if (isLogin) {
       const loginSuccess = login(formData.email, formData.password);
       if (loginSuccess) {
-        navigate("/dashboard");
+        navigate("/");
       } else {
         setLoginError("Email hoặc mật khẩu không đúng");
       }
     } else {
-      // Here we would handle registration
-      console.log("Register form submitted:", formData);
-      // For now, just toggle to login form after registration
-      setIsLogin(true);
-      setFormData({
-        email: "",
-        password: "",
-        name: "",
-      });
+      // Handle registration
+      const result = register(formData);
+      if (result.success) {
+        setSuccessMessage(result.message);
+        setFormData({
+          email: "",
+          password: "",
+          name: "",
+        });
+        // Auto switch to login form after successful registration
+        setTimeout(() => {
+          setIsLogin(true);
+          setSuccessMessage("");
+        }, 2000);
+      } else {
+        setLoginError(result.message);
+      }
     }
   };
 
@@ -135,6 +149,10 @@ const LoginPage = () => {
 
             {loginError && (
               <div className="error-alert">{loginError}</div>
+            )}
+
+            {successMessage && (
+              <div className="success-alert">{successMessage}</div>
             )}
 
             {!isLogin && (

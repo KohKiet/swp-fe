@@ -6,6 +6,7 @@ import {
   faChevronDown,
   faSignOutAlt,
   faTachometerAlt,
+  faUserCog,
 } from "@fortawesome/free-solid-svg-icons";
 import "./Header.css";
 import { useAuth } from "../context/AuthContext";
@@ -93,11 +94,29 @@ const Header = () => {
             {currentUser ? (
               <div className="user-dropdown">
                 <button className="dropdown-toggle">
-                  <FontAwesomeIcon icon={faUser} />
-                  {currentUser.name || currentUser.email}
+                  <div className="user-avatar">
+                    {currentUser.profilePicture ? (
+                      <img
+                        src={currentUser.profilePicture}
+                        alt="Profile"
+                        className="user-profile-pic"
+                      />
+                    ) : (
+                      <FontAwesomeIcon icon={faUser} />
+                    )}
+                  </div>
+                  <span className="user-name">
+                    {currentUser.name || currentUser.email}
+                  </span>
                   <FontAwesomeIcon icon={faChevronDown} />
                 </button>
                 <div className="dropdown-menu">
+                  {!isAdmin() && (
+                    <Link to="/profile" className="dropdown-item">
+                      <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá
+                      Nhân
+                    </Link>
+                  )}
                   {isAdmin() && (
                     <Link to="/dashboard" className="dropdown-item">
                       <FontAwesomeIcon icon={faTachometerAlt} />{" "}
@@ -135,6 +154,11 @@ const Header = () => {
           <Link to="/programs" className="mobile-nav-link">
             Chương Trình
           </Link>
+          {currentUser && !isAdmin() && (
+            <Link to="/profile" className="mobile-nav-link">
+              <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá Nhân
+            </Link>
+          )}
           {isAdmin() && (
             <Link to="/dashboard" className="mobile-nav-link">
               <FontAwesomeIcon icon={faTachometerAlt} /> Dashboard
