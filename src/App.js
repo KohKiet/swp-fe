@@ -17,6 +17,7 @@ import EducationHub from "./pages/EducationHub";
 import Counseling from "./pages/Counseling";
 import Dashboard from "./pages/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
+import AssessmentPage from "./pages/AssessmentPage";  
 
 // Components
 import Header from "./components/Header";
@@ -58,6 +59,7 @@ function AppContent() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/education" element={<EducationHub />} />
           <Route path="/counseling" element={<Counseling />} />
+          <Route path="/assessment" element={<AssessmentPage/>} />
           <Route
             path="/profile"
             element={<UserProtectedRoute element={<ProfilePage />} />}
