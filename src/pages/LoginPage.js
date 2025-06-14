@@ -5,13 +5,14 @@ import {
   faUser,
   faLock,
   faEnvelope,
+  faEye,
+  faEyeSlash,
 } from "@fortawesome/free-solid-svg-icons";
 import "./LoginPage.css";
-import { useAuth } from "../context/AuthContext";
+import authService from "../services/authService";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, register } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: "",
@@ -21,12 +22,24 @@ const LoginPage = () => {
   const [errors, setErrors] = useState({});
   const [loginError, setLoginError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const toggleForm = () => {
     setIsLogin(!isLogin);
     setErrors({});
     setLoginError("");
     setSuccessMessage("");
+    // Reset form data when switching
+    setFormData({
+      email: "",
+      password: "",
+      name: "",
+    });
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleChange = (e) => {
@@ -75,7 +88,7 @@ const LoginPage = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const formErrors = validateForm();
@@ -84,31 +97,61 @@ const LoginPage = () => {
       return;
     }
 
-    if (isLogin) {
-      const loginSuccess = login(formData.email, formData.password);
-      if (loginSuccess) {
-        navigate("/");
+    setIsLoading(true);
+    setLoginError("");
+    setSuccessMessage("");
+
+    try {
+      if (isLogin) {
+        // Handle login
+        const result = await authService.login(
+          formData.email,
+          formData.password
+        );
+
+        if (result.success) {
+          setSuccessMessage("Đăng nhập thành công!");
+          // Navigate to home page after successful login
+          setTimeout(() => {
+            navigate("/");
+          }, 1500);
+        } else {
+          setLoginError(
+            result.error || "Email hoặc mật khẩu không đúng"
+          );
+        }
       } else {
-        setLoginError("Email hoặc mật khẩu không đúng");
+        // Handle registration
+        const result = await authService.register(
+          formData.email,
+          formData.password,
+          formData.name
+        );
+
+        if (result.success) {
+          setSuccessMessage(
+            "Đăng ký thành công! Vui lòng đăng nhập."
+          );
+          // Reset form and switch to login
+          setFormData({
+            email: formData.email, // Keep email for convenience
+            password: "",
+            name: "",
+          });
+          // Auto switch to login form after successful registration
+          setTimeout(() => {
+            setIsLogin(true);
+            setSuccessMessage("");
+          }, 2000);
+        } else {
+          setLoginError(result.error || "Có lỗi xảy ra khi đăng ký");
+        }
       }
-    } else {
-      // Handle registration
-      const result = register(formData);
-      if (result.success) {
-        setSuccessMessage(result.message);
-        setFormData({
-          email: "",
-          password: "",
-          name: "",
-        });
-        // Auto switch to login form after successful registration
-        setTimeout(() => {
-          setIsLogin(true);
-          setSuccessMessage("");
-        }, 2000);
-      } else {
-        setLoginError(result.message);
-      }
+    } catch (error) {
+      setLoginError("Có lỗi xảy ra. Vui lòng thử lại.");
+      console.error("Auth error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -195,14 +238,29 @@ const LoginPage = () => {
               <label htmlFor="password">
                 <FontAwesomeIcon icon={faLock} /> Mật Khẩu
               </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className={errors.password ? "error" : ""}
-              />
+              <div className="password-input-container">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`password-input-with-toggle ${
+                    errors.password ? "error" : ""
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="password-toggle-btn"
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }>
+                  <FontAwesomeIcon
+                    icon={showPassword ? faEyeSlash : faEye}
+                  />
+                </button>
+              </div>
               {errors.password && (
                 <div className="error-text">{errors.password}</div>
               )}
@@ -224,8 +282,15 @@ const LoginPage = () => {
 
             <button
               type="submit"
-              className="btn btn-primary submit-btn">
-              {isLogin ? "Đăng Nhập" : "Đăng Ký"}
+              className="btn btn-primary submit-btn"
+              disabled={isLoading}>
+              {isLogin
+                ? isLoading
+                  ? "Đang đăng nhập..."
+                  : "Đăng Nhập"
+                : isLoading
+                ? "Đang đăng ký..."
+                : "Đăng Ký"}
             </button>
 
             <div className="form-footer">

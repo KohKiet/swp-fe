@@ -21,6 +21,7 @@ import ProfilePage from "./pages/ProfilePage";
 // Components
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import ApiTest from "./components/ApiTest";
 
 // Protected route component
 const ProtectedRoute = ({ element }) => {
@@ -54,6 +55,7 @@ function AppContent() {
       <Header />
       <main>
         <Routes>
+          <Route path="/Apitest" element={<ApiTest />} />
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/education" element={<EducationHub />} />
