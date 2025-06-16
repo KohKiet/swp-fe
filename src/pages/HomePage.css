@@ -41,10 +41,48 @@
     opacity: 0.9;
 }
 
+/* Material-UI Button Container Styles */
 .hero-buttons {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
+    margin: 2rem 0 !important;
+}
+
+.cta-buttons {
+    margin: 1.5rem 0 !important;
+}
+
+/* Responsive adjustments for Material-UI buttons */
+@media (max-width: 768px) {
+    .hero-buttons .MuiButton-root {
+        font-size: 0.85rem !important;
+        padding: 6px 20px !important;
+        min-width: 140px !important;
+    }
+
+    .cta-buttons .MuiButton-root {
+        font-size: 0.9rem !important;
+        padding: 8px 24px !important;
+        min-width: 160px !important;
+    }
+
+    .view-all-container .MuiButton-root {
+        font-size: 0.85rem !important;
+        padding: 6px 20px !important;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .hero-buttons .MuiButton-root,
+    .cta-buttons .MuiButton-root {
+        width: 100% !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .hero-buttons,
+    .cta-buttons {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
 }
 
 /* Button Styles */
@@ -551,7 +589,7 @@
 /* Media Queries */
 @media (max-width: 768px) {
     .hero {
-        padding: 3rem 0;
+        padding: 3rem 0; 
     }
 
     .hero h1 {

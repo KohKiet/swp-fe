@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -20,20 +20,25 @@ import "./ProfilePage.css";
 import { useAuth } from "../context/AuthContext";
 
 const ProfilePage = () => {
-  const { currentUser, updateProfile, changePassword, isAdmin } =
-    useAuth();
+  const {
+    currentUser,
+    updateProfile,
+    changePassword,
+    isAdmin,
+    logout,
+  } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
   const [profileData, setProfileData] = useState({
-    name: currentUser?.name || "",
-    group: currentUser?.group || "Nhóm trẻ vị thành niên",
-    gender: currentUser?.gender || "",
-    phone: currentUser?.phone || "",
-    address: currentUser?.address || "",
-    profilePicture: currentUser?.profilePicture || null,
+    fullname: "",
+    phone: "",
+    gender: "",
+    address: "",
+    dateOfBirth: "",
+    profilePicture: null,
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -42,7 +47,21 @@ const ProfilePage = () => {
     confirmPassword: "",
   });
 
-  const groups = ["Nhóm vị thành niên", "Nhóm thành niên"];
+  // Update profileData when currentUser changes
+  useEffect(() => {
+    if (currentUser) {
+      setProfileData({
+        fullname: currentUser.fullname || "",
+        phone: currentUser.phone || "",
+        gender: currentUser.gender || "",
+        address: currentUser.address || "",
+        dateOfBirth: currentUser.dateOfBirth
+          ? currentUser.dateOfBirth.split("T")[0]
+          : "",
+        profilePicture: currentUser.profilePicture || null,
+      });
+    }
+  }, [currentUser]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -74,18 +93,25 @@ const ProfilePage = () => {
     }
   };
 
-  const handleSaveProfile = () => {
-    const result = updateProfile(profileData);
-    if (result.success) {
-      setMessage({ type: "success", text: result.message });
-      setIsEditing(false);
-    } else {
-      setMessage({ type: "error", text: result.message });
+  const handleSaveProfile = async () => {
+    try {
+      const result = await updateProfile(profileData);
+      if (result.success) {
+        setMessage({ type: "success", text: result.message });
+        setIsEditing(false);
+      } else {
+        setMessage({ type: "error", text: result.message });
+      }
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: "Có lỗi xảy ra khi cập nhật",
+      });
     }
     setTimeout(() => setMessage({ type: "", text: "" }), 3000);
   };
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -103,33 +129,45 @@ const ProfilePage = () => {
       return;
     }
 
-    const result = changePassword(
-      passwordData.oldPassword,
-      passwordData.newPassword
-    );
-    if (result.success) {
-      setMessage({ type: "success", text: result.message });
-      setShowPasswordForm(false);
-      setPasswordData({
-        oldPassword: "",
-        newPassword: "",
-        confirmPassword: "",
+    try {
+      const result = await changePassword(
+        passwordData.oldPassword,
+        passwordData.newPassword
+      );
+      if (result.success) {
+        setMessage({ type: "success", text: result.message });
+        setShowPasswordForm(false);
+        setPasswordData({
+          oldPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+      } else {
+        setMessage({ type: "error", text: result.message });
+      }
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: "Có lỗi xảy ra khi đổi mật khẩu",
       });
-    } else {
-      setMessage({ type: "error", text: result.message });
     }
     setTimeout(() => setMessage({ type: "", text: "" }), 3000);
   };
 
   const handleCancel = () => {
-    setProfileData({
-      name: currentUser?.name || "",
-      group: currentUser?.group || "Nhóm trẻ vị thành niên",
-      gender: currentUser?.gender || "",
-      phone: currentUser?.phone || "",
-      address: currentUser?.address || "",
-      profilePicture: currentUser?.profilePicture || null,
-    });
+    // Reset to original user data
+    if (currentUser) {
+      setProfileData({
+        fullname: currentUser.fullname || "",
+        phone: currentUser.phone || "",
+        gender: currentUser.gender || "",
+        address: currentUser.address || "",
+        dateOfBirth: currentUser.dateOfBirth
+          ? currentUser.dateOfBirth.split("T")[0]
+          : "",
+        profilePicture: currentUser.profilePicture || null,
+      });
+    }
     setIsEditing(false);
     setShowPasswordForm(false);
     setPasswordData({
@@ -137,6 +175,16 @@ const ProfilePage = () => {
       newPassword: "",
       confirmPassword: "",
     });
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      navigate("/");
+    }
   };
 
   if (!currentUser) {
@@ -175,17 +223,14 @@ const ProfilePage = () => {
           </div>
 
           <div className="profile-info">
-            <h1>{currentUser.name}</h1>
+            <h1>{currentUser.fullname || currentUser.email}</h1>
             <p className="user-email">
               <FontAwesomeIcon icon={faEnvelope} />
               {currentUser.email}
             </p>
-            <p className="join-date">
-              <FontAwesomeIcon icon={faCalendar} />
-              Ngày tham gia:{" "}
-              {new Date(currentUser.joinDate).toLocaleDateString(
-                "vi-VN"
-              )}
+            <p className="user-role">
+              <FontAwesomeIcon icon={faUsers} />
+              Vai trò: {currentUser.role || "User"}
             </p>
           </div>
 
@@ -290,33 +335,29 @@ const ProfilePage = () => {
               {isEditing ? (
                 <input
                   type="text"
-                  name="name"
-                  value={profileData.name}
+                  name="fullname"
+                  value={profileData.fullname}
                   onChange={handleInputChange}
                 />
               ) : (
-                <span>{currentUser.name}</span>
+                <span>{currentUser.fullname || "Chưa cập nhật"}</span>
               )}
             </div>
 
             <div className="detail-item">
               <label>
-                <FontAwesomeIcon icon={faUsers} />
-                Nhóm
+                <FontAwesomeIcon icon={faPhone} />
+                Số điện thoại
               </label>
               {isEditing ? (
-                <select
-                  name="group"
-                  value={profileData.group}
-                  onChange={handleInputChange}>
-                  {groups.map((group) => (
-                    <option key={group} value={group}>
-                      {group}
-                    </option>
-                  ))}
-                </select>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={profileData.phone}
+                  onChange={handleInputChange}
+                />
               ) : (
-                <span>{currentUser.group}</span>
+                <span>{currentUser.phone || "Chưa cập nhật"}</span>
               )}
             </div>
 
@@ -342,18 +383,24 @@ const ProfilePage = () => {
 
             <div className="detail-item">
               <label>
-                <FontAwesomeIcon icon={faPhone} />
-                Số điện thoại
+                <FontAwesomeIcon icon={faCalendar} />
+                Ngày sinh
               </label>
               {isEditing ? (
                 <input
-                  type="tel"
-                  name="phone"
-                  value={profileData.phone}
+                  type="date"
+                  name="dateOfBirth"
+                  value={profileData.dateOfBirth}
                   onChange={handleInputChange}
                 />
               ) : (
-                <span>{currentUser.phone || "Chưa cập nhật"}</span>
+                <span>
+                  {currentUser.dateOfBirth
+                    ? new Date(
+                        currentUser.dateOfBirth
+                      ).toLocaleDateString("vi-VN")
+                    : "Chưa cập nhật"}
+                </span>
               )}
             </div>
 
@@ -376,15 +423,27 @@ const ProfilePage = () => {
           </div>
 
           {isEditing && (
-            <div className="save-actions">
+            <div className="form-actions">
               <button
                 className="btn btn-primary"
                 onClick={handleSaveProfile}>
                 <FontAwesomeIcon icon={faSave} />
                 Lưu thay đổi
               </button>
+              <button
+                className="btn btn-cancel"
+                onClick={handleCancel}>
+                <FontAwesomeIcon icon={faTimes} />
+                Hủy
+              </button>
             </div>
           )}
+        </div>
+
+        <div className="profile-actions-footer">
+          <button className="btn btn-danger" onClick={handleLogout}>
+            Đăng xuất
+          </button>
         </div>
       </div>
     </div>
