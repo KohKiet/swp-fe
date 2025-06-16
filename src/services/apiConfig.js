@@ -5,7 +5,7 @@ export const API_CONFIG = {
     LOGIN: "/api/auth/login",
     REGISTER: "/api/auth/register",
     REFRESH_TOKEN: "/api/auth/refresh-token",
-    LOGOUT: "/api/auth/logout",
+    LOGOUT: "/api/Auth/logout",
   },
 };
 

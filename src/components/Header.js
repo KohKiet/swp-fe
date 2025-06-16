@@ -20,9 +20,20 @@ const Header = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      navigate("/");
+    }
+  };
+
+  // Function to get display name - prefer fullname, fallback to email
+  const getDisplayName = () => {
+    if (!currentUser) return "";
+    return currentUser.fullname || currentUser.email;
   };
 
   return (
@@ -106,7 +117,7 @@ const Header = () => {
                     )}
                   </div>
                   <span className="user-name">
-                    {currentUser.name || currentUser.email}
+                    {getDisplayName()}
                   </span>
                   <FontAwesomeIcon icon={faChevronDown} />
                 </button>

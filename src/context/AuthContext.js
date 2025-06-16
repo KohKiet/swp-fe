@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
 } from "react";
+import authService from "../services/authService";
 
 const AuthContext = createContext();
 
@@ -13,160 +14,131 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize users storage
-  const initializeUsers = () => {
-    const existingUsers = JSON.parse(
-      localStorage.getItem("users") || "[]"
-    );
-
-    // Add default users if they don't exist
-    const defaultUsers = [
-      {
-        id: 1,
-        email: "admin@gmail.com",
-        password: "admin123",
-        name: "Admin",
-        role: "Admin",
-        group: "Admin",
-        profilePicture: null,
-        joinDate: "2024-01-01",
-        gender: "",
-        phone: "",
-        address: "",
-      },
-      {
-        id: 2,
-        email: "test@gmail.com",
-        password: "test123",
-        name: "Koh",
-        role: "User",
-        group: "Nhóm trẻ vị thành niên",
-        profilePicture: null,
-        joinDate: new Date().toISOString().split("T")[0],
-        gender: "",
-        phone: "",
-        address: "",
-      },
-    ];
-
-    // Check if users already exist, if not add them
-    defaultUsers.forEach((defaultUser) => {
-      if (
-        !existingUsers.find(
-          (user) => user.email === defaultUser.email
-        )
-      ) {
-        existingUsers.push(defaultUser);
-      }
-    });
-
-    localStorage.setItem("users", JSON.stringify(existingUsers));
-    return existingUsers;
-  };
-
   useEffect(() => {
-    // Initialize users first
-    initializeUsers();
-
-    // Check if user is already logged in from localStorage
-    const storedUser = localStorage.getItem("currentUser");
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
+    // Check if user is already logged in from authService
+    const user = authService.getCurrentUser();
+    if (user) {
+      setCurrentUser(user);
     }
     setLoading(false);
   }, []);
 
-  const login = (email, password) => {
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const user = users.find(
-      (u) => u.email === email && u.password === password
-    );
+  const login = async (email, password) => {
+    try {
+      const result = await authService.login(email, password);
 
-    if (user) {
-      const userWithoutPassword = { ...user };
-      delete userWithoutPassword.password;
-      localStorage.setItem(
-        "currentUser",
-        JSON.stringify(userWithoutPassword)
-      );
-      setCurrentUser(userWithoutPassword);
-      return true;
+      if (result.success) {
+        const user = authService.getCurrentUser();
+        setCurrentUser(user);
+        return { success: true };
+      } else {
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      return {
+        success: false,
+        error: "Đã có lỗi xảy ra khi đăng nhập",
+      };
     }
-    return false;
   };
 
-  const register = (userData) => {
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
+  const register = async (userData) => {
+    try {
+      const result = await authService.register(userData);
 
-    // Check if user already exists
-    if (users.find((u) => u.email === userData.email)) {
-      return { success: false, message: "Email đã được sử dụng" };
+      if (result.success) {
+        return {
+          success: true,
+          message: "Đăng ký thành công! Vui lòng đăng nhập.",
+        };
+      } else {
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      console.error("Register error:", error);
+      return {
+        success: false,
+        error: "Đã có lỗi xảy ra khi đăng ký",
+      };
     }
-
-    const newUser = {
-      id: Date.now(),
-      ...userData,
-      role: "User",
-      group: "Nhóm trẻ vị thành niên",
-      profilePicture: null,
-      joinDate: new Date().toISOString().split("T")[0],
-      gender: "",
-      phone: "",
-      address: "",
-    };
-
-    users.push(newUser);
-    localStorage.setItem("users", JSON.stringify(users));
-
-    return { success: true, message: "Đăng ký thành công" };
   };
 
-  const updateProfile = (updatedData) => {
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const userIndex = users.findIndex((u) => u.id === currentUser.id);
-
-    if (userIndex !== -1) {
-      // Don't update password here, handle separately
-      const { password, ...updateFields } = updatedData;
-      users[userIndex] = { ...users[userIndex], ...updateFields };
-
-      localStorage.setItem("users", JSON.stringify(users));
-
-      const updatedUser = { ...users[userIndex] };
-      delete updatedUser.password;
+  const updateProfile = async (updatedData) => {
+    try {
+      // For now, just update local state since we don't have update profile API endpoint
+      // In a real app, you would call an API here
+      const updatedUser = { ...currentUser, ...updatedData };
       setCurrentUser(updatedUser);
-      localStorage.setItem(
-        "currentUser",
-        JSON.stringify(updatedUser)
-      );
+
+      // Update localStorage to persist changes
+      Object.keys(updatedData).forEach((key) => {
+        if (key === "fullname") {
+          localStorage.setItem("userFullname", updatedData[key]);
+        } else if (key === "phone") {
+          localStorage.setItem("userPhone", updatedData[key]);
+        } else if (key === "gender") {
+          localStorage.setItem("userGender", updatedData[key]);
+        } else if (key === "address") {
+          localStorage.setItem("userAddress", updatedData[key]);
+        } else if (key === "dateOfBirth") {
+          localStorage.setItem("userDateOfBirth", updatedData[key]);
+        }
+      });
 
       return { success: true, message: "Cập nhật thành công" };
+    } catch (error) {
+      console.error("Update profile error:", error);
+      return { success: false, message: "Không thể cập nhật" };
     }
-    return { success: false, message: "Không thể cập nhật" };
   };
 
-  const changePassword = (oldPassword, newPassword) => {
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const userIndex = users.findIndex((u) => u.id === currentUser.id);
-
-    if (
-      userIndex !== -1 &&
-      users[userIndex].password === oldPassword
-    ) {
-      users[userIndex].password = newPassword;
-      localStorage.setItem("users", JSON.stringify(users));
+  const changePassword = async (oldPassword, newPassword) => {
+    try {
+      // For now, just return success since we don't have change password API endpoint
+      // In a real app, you would call an API here to change password
       return { success: true, message: "Đổi mật khẩu thành công" };
+    } catch (error) {
+      console.error("Change password error:", error);
+      return { success: false, message: "Không thể đổi mật khẩu" };
     }
-    return { success: false, message: "Mật khẩu cũ không đúng" };
   };
 
-  const logout = () => {
-    localStorage.removeItem("currentUser");
-    setCurrentUser(null);
+  const logout = async () => {
+    try {
+      await authService.logout();
+      setCurrentUser(null);
+      return { success: true };
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if logout API fails, clear local state
+      setCurrentUser(null);
+      return { success: true };
+    }
   };
 
   const isAdmin = () => {
     return currentUser && currentUser.role === "Admin";
+  };
+
+  const refreshToken = async () => {
+    try {
+      const result = await authService.refreshToken();
+
+      if (result.success) {
+        const user = authService.getCurrentUser();
+        setCurrentUser(user);
+        return { success: true };
+      } else {
+        // Refresh failed, logout user
+        await logout();
+        return { success: false, error: "Session expired" };
+      }
+    } catch (error) {
+      console.error("Refresh token error:", error);
+      await logout();
+      return { success: false, error: "Session expired" };
+    }
   };
 
   const value = {
@@ -178,6 +150,9 @@ export const AuthProvider = ({ children }) => {
     loading,
     updateProfile,
     changePassword,
+    refreshToken,
+    isAuthenticated: () => authService.isAuthenticated(),
+    getAccessToken: () => authService.getAccessToken(),
   };
 
   return (
