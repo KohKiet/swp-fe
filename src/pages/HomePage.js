@@ -7,6 +7,13 @@ import {
   faUsers,
   faChalkboardTeacher,
 } from "@fortawesome/free-solid-svg-icons";
+import { Button, Box } from "@mui/material";
+import {
+  SchoolOutlined,
+  CalendarTodayOutlined,
+  AssessmentOutlined,
+  ExploreOutlined,
+} from "@mui/icons-material";
 import "./HomePage.css";
 
 // Mock data for our application
@@ -137,14 +144,67 @@ const HomePage = () => {
               giúp cá nhân và cộng đồng phòng ngừa lạm dụng chất gây
               nghiện và thúc đẩy cuộc sống khỏe mạnh hơn.
             </p>
-            <div className="hero-buttons">
-              <Link to="/education" className="btn btn-primary">
+            <Box
+              className="hero-buttons"
+              sx={{
+                display: "flex",
+                gap: 2,
+                justifyContent: "center",
+                flexWrap: "wrap",
+              }}>
+              <Button
+                component={Link}
+                to="/education"
+                variant="contained"
+                size="medium"
+                startIcon={<SchoolOutlined />}
+                sx={{
+                  background:
+                    "linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)",
+                  color: "white",
+                  borderRadius: "25px",
+                  padding: "8px 24px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  textTransform: "none",
+                  boxShadow: "0 4px 12px rgba(63, 81, 181, 0.3)",
+                  transition: "all 0.3s ease-in-out",
+                  "&:hover": {
+                    background:
+                      "linear-gradient(45deg, #303f9f 30%, #3f51b5 90%)",
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 6px 16px rgba(63, 81, 181, 0.4)",
+                  },
+                }}>
                 Khám Phá Khóa Học
-              </Link>
-              <Link to="/counseling" className="btn">
+              </Button>
+              <Button
+                component={Link}
+                to="/counseling"
+                variant="outlined"
+                size="medium"
+                startIcon={<CalendarTodayOutlined />}
+                sx={{
+                  color: "white",
+                  borderColor: "rgba(255, 255, 255, 0.8)",
+                  borderRadius: "25px",
+                  padding: "8px 24px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  textTransform: "none",
+                  backdropFilter: "blur(10px)",
+                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  transition: "all 0.3s ease-in-out",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    borderColor: "white",
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 6px 16px rgba(255, 255, 255, 0.2)",
+                  },
+                }}>
                 Đặt Lịch Tư Vấn
-              </Link>
-            </div>
+              </Button>
+            </Box>
           </div>
         </div>
       </section>
@@ -253,11 +313,34 @@ const HomePage = () => {
             </div>
           </div>
 
-          <div className="view-all-container fade-in">
-            <Link to="/blog" className="btn">
+          <Box
+            className="view-all-container fade-in"
+            sx={{ textAlign: "center", mt: 3 }}>
+            <Button
+              component={Link}
+              to="/blog"
+              variant="outlined"
+              size="medium"
+              sx={{
+                color: "#3f51b5",
+                borderColor: "#3f51b5",
+                borderRadius: "20px",
+                padding: "8px 24px",
+                fontSize: "0.9rem",
+                fontWeight: 600,
+                textTransform: "none",
+                transition: "all 0.3s ease-in-out",
+                "&:hover": {
+                  backgroundColor: "rgba(63, 81, 181, 0.08)",
+                  borderColor: "#303f9f",
+                  color: "#303f9f",
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 4px 12px rgba(63, 81, 181, 0.2)",
+                },
+              }}>
               Xem Tất Cả Bài Viết
-            </Link>
-          </div>
+            </Button>
+          </Box>
         </div>
       </section>
 
@@ -303,16 +386,66 @@ const HomePage = () => {
               bằng cách thực hiện đánh giá rủi ro hoặc đăng ký một
               trong các khóa học giáo dục của chúng tôi.
             </p>
-            <div className="cta-buttons">
-              <Link
+            <Box
+              className="cta-buttons"
+              sx={{
+                display: "flex",
+                gap: 2,
+                justifyContent: "center",
+                flexWrap: "wrap",
+              }}>
+              <Button
+                component={Link}
                 to="/education/surveys/assist"
-                className="btn btn-primary">
+                variant="contained"
+                size="medium"
+                startIcon={<AssessmentOutlined />}
+                sx={{
+                  background:
+                    "linear-gradient(45deg, #4caf50 30%, #66bb6a 90%)",
+                  color: "white",
+                  borderRadius: "25px",
+                  padding: "10px 28px",
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
+                  textTransform: "none",
+                  boxShadow: "0 4px 12px rgba(76, 175, 80, 0.3)",
+                  transition: "all 0.3s ease-in-out",
+                  "&:hover": {
+                    background:
+                      "linear-gradient(45deg, #388e3c 30%, #4caf50 90%)",
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 6px 16px rgba(76, 175, 80, 0.4)",
+                  },
+                }}>
                 Làm Bài Đánh Giá Rủi Ro
-              </Link>
-              <Link to="/education" className="btn">
+              </Button>
+              <Button
+                component={Link}
+                to="/education"
+                variant="outlined"
+                size="medium"
+                startIcon={<ExploreOutlined />}
+                sx={{
+                  color: "#3f51b5",
+                  borderColor: "#3f51b5",
+                  borderRadius: "25px",
+                  padding: "10px 28px",
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
+                  textTransform: "none",
+                  transition: "all 0.3s ease-in-out",
+                  "&:hover": {
+                    backgroundColor: "rgba(63, 81, 181, 0.08)",
+                    borderColor: "#303f9f",
+                    color: "#303f9f",
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 6px 16px rgba(63, 81, 181, 0.2)",
+                  },
+                }}>
                 Duyệt Khóa Học
-              </Link>
-            </div>
+              </Button>
+            </Box>
           </div>
         </div>
       </section>

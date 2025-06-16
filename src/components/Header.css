@@ -4,7 +4,7 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    padding: 1rem 0;
+    padding: 0.5rem 0;
 }
 
 .header-container {
@@ -71,7 +71,7 @@
 .nav-link {
     color: var(--primary);
     font-weight: bold;
-    font-size: 1.12rem;
+    font-size: 1.05rem;
     padding: 0.5rem;
     text-decoration: none;
     display: block;
