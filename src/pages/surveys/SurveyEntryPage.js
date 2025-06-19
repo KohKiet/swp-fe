@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import surveyService from '../../services/surveyService';
 import { Link } from 'react-router-dom';
+import './styles/survey.css';
 
 const SurveyEntryPage = () => {
   const [status, setStatus] = useState(null);
@@ -14,19 +15,37 @@ const SurveyEntryPage = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div>Đang tải...</div>;
-  if (error) return <div style={{color:'red'}}>{error}</div>;
+  if (loading) return (
+    <div className="survey-root">
+      <div className="survey-container">
+        <div className="survey-title" style={{justifyContent:'center'}}>
+          <span role="img" aria-label="survey">📝</span> Đang tải trạng thái khảo sát...
+        </div>
+      </div>
+    </div>
+  );
+  if (error) return <div className="survey-root"><div className="survey-container survey-alert">{error}</div></div>;
 
   return (
-    <div>
-      <h2>Khảo sát</h2>
-      <p>{status?.message}</p>
-      {status?.canTakeSurvey && (
-        <Link to="/surveys/take"><button>Bắt đầu khảo sát</button></Link>
-      )}
-      {status?.hasCompleted && (
-        <Link to="/surveys/history"><button>Xem lịch sử</button></Link>
-      )}
+    <div className="survey-root">
+      <div className="survey-container" style={{maxWidth:400}}>
+        <div className="survey-title">
+          <span role="img" aria-label="survey">📝</span> Khảo sát
+        </div>
+        <div className="survey-desc">{status?.message}</div>
+        <div style={{display:'flex',flexDirection:'column',gap:16,marginTop:24}}>
+          {status?.canTakeSurvey && (
+            <Link to="/surveys/take" style={{textDecoration:'none'}}>
+              <button className="survey-btn" style={{width:'100%'}}>Bắt đầu khảo sát</button>
+            </Link>
+          )}
+          {status?.hasCompleted && (
+            <Link to="/surveys/history" style={{textDecoration:'none'}}>
+              <button className="survey-btn" style={{width:'100%',background:'linear-gradient(90deg,#60a5fa 0%,#6366f1 100%)'}}>Xem lịch sử</button>
+            </Link>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

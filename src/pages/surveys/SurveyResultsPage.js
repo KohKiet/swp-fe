@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import './styles/survey.css';
 
 const SurveyResultsPage = () => {
   const { state } = useLocation();
@@ -12,19 +13,49 @@ const SurveyResultsPage = () => {
   }
 
   return (
-    <div>
-      <h2>Kết quả khảo sát</h2>
-      <div>Điểm số: {result.totalScore}</div>
-      <div>Mức độ rủi ro: {result.riskLevel}</div>
-      <div>Đề xuất: {result.suggestedAction}</div>
-      <div>Ngày nộp: {new Date(result.submittedAt).toLocaleString()}</div>
-      <h3>Chi tiết câu trả lời</h3>
-      <ul>
-        {result.answers.map((a, i) => (
-          <li key={i}><b>{a.question}</b>: {a.selectedAnswer}</li>
-        ))}
-      </ul>
-      <button onClick={() => navigate('/surveys')}>Quay lại khảo sát</button>
+    <div className="survey-root">
+      <div className="survey-container" style={{ maxWidth: 500 }}>
+        <div className="survey-title" style={{ justifyContent: 'center' }}>
+          <span role="img" aria-label="result">
+            🎉
+          </span>{' '}
+          Kết quả khảo sát
+        </div>
+        <div className="survey-desc" style={{ marginBottom: 18 }}>
+          <b>Điểm số:</b> {result.totalScore} <br />
+          <b>Mức độ rủi ro:</b>{' '}
+          <span style={{ color: '#6366f1', fontWeight: 700 }}>
+            {result.riskLevel}
+          </span>{' '}
+          <br />
+          <b>Đề xuất:</b>{' '}
+          <span style={{ color: '#16a34a' }}>
+            {result.suggestedAction}
+          </span>{' '}
+          <br />
+          <b>Ngày nộp:</b> {new Date(result.submittedAt).toLocaleString()}
+        </div>
+        <div className="survey-question" style={{ marginBottom: 10 }}>
+          Chi tiết câu trả lời
+        </div>
+        <ul style={{ paddingLeft: 18, marginBottom: 24 }}>
+          {result.answers.map((a, i) => (
+            <li key={i} style={{ marginBottom: 8 }}>
+              <b>{a.question}</b>:{' '}
+              <span style={{ color: '#6366f1' }}>
+                {a.selectedAnswer}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <button
+          className="survey-btn"
+          style={{ width: '100%' }}
+          onClick={() => navigate('/surveys')}
+        >
+          Quay lại khảo sát
+        </button>
+      </div>
     </div>
   );
 };

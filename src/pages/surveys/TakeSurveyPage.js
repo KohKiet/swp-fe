@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import surveyService from '../../services/surveyService';
 import { useNavigate } from 'react-router-dom';
+import './styles/survey.css';
 
 const TakeSurveyPage = () => {
   const [survey, setSurvey] = useState(null);
@@ -57,36 +58,74 @@ const TakeSurveyPage = () => {
     }
   };
 
-  if (loading) return <div>Đang tải câu hỏi...</div>;
-  if (error) return <div style={{color:'red'}}>{error}</div>;
+  if (loading) return (
+    <div className="survey-root">
+      <div className="survey-container">
+        <div className="survey-title" style={{justifyContent:'center'}}>
+          <span role="img" aria-label="survey">📝</span> Đang tải câu hỏi...
+        </div>
+        <div style={{marginTop: 24}}>
+          <div className="survey-progress">
+            <div className="survey-progress-bar" style={{width:'40%'}}></div>
+          </div>
+          <div className="survey-question" style={{opacity:0.5}}>
+            <div className="survey-answer" style={{width:'80%',margin:'8px auto',height:32,background:'#f3f4f6'}}></div>
+            <div className="survey-answer" style={{width:'60%',margin:'8px auto',height:32,background:'#f3f4f6'}}></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  if (error) return <div className="survey-root"><div className="survey-container survey-alert">{error}</div></div>;
   if (!survey) return null;
 
   const q = survey.questions[current];
+  const total = survey.questions.length;
+  const answered = answers.filter(a => a.selectedAnswerId).length;
+  const progress = Math.round((answered / total) * 100);
 
   return (
-    <div>
-      <h3>{survey.title}</h3>
-      <p>{survey.description}</p>
-      <div>
-        <h4>Câu {current + 1}: {q.content}</h4>
-        {q.answers.map(ans => (
-          <label key={ans.answerId}>
-            <input
-              type="radio"
-              checked={answers[current].selectedAnswerId === ans.answerId}
-              onChange={() => handleAnswer(ans.answerId)}
-              disabled={submitting}
-            />
-            {ans.answerText}
-          </label>
-        ))}
-      </div>
-      <div>
-        {current > 0 && <button onClick={() => setCurrent(c => c - 1)}>Trước</button>}
-        {current < survey.questions.length - 1
-          ? <button onClick={() => setCurrent(c => c + 1)} disabled={!answers[current].selectedAnswerId}>Tiếp</button>
-          : <button onClick={handleSubmit} disabled={submitting}>{submitting ? 'Đang gửi...' : 'Nộp bài'}</button>
-        }
+    <div className="survey-root">
+      <div className="survey-container">
+        <div className="survey-title">
+          <span role="img" aria-label="survey">📝</span> {survey.title}
+        </div>
+        <div className="survey-desc">{survey.description}</div>
+        <div className="survey-progress" aria-label="Tiến trình khảo sát">
+          <div className="survey-progress-bar" style={{width: progress + '%'}}></div>
+        </div>
+        <div className="survey-step">Câu {current + 1} / {total} &nbsp;|&nbsp; Đã trả lời: {answered}/{total}</div>
+        <div className="survey-question">{q.content}</div>
+        <div className="survey-answers">
+          {q.answers.map(ans => (
+            <label key={ans.answerId} className={
+              'survey-answer' + (answers[current].selectedAnswerId === ans.answerId ? ' selected' : '')
+            }>
+              <input
+                type="radio"
+                checked={answers[current].selectedAnswerId === ans.answerId}
+                onChange={() => handleAnswer(ans.answerId)}
+                disabled={submitting}
+                aria-label={ans.answerText}
+              />
+              {ans.answerText}
+            </label>
+          ))}
+        </div>
+        <div className="survey-nav">
+          {current > 0 && <button className="survey-btn" onClick={() => setCurrent(c => c - 1)}>Trước</button>}
+          {current < survey.questions.length - 1 ? (
+            <button className="survey-btn" onClick={() => setCurrent(c => c + 1)} disabled={!answers[current].selectedAnswerId}>Tiếp</button>
+          ) : (
+            <button
+              className="survey-btn"
+              onClick={handleSubmit}
+              disabled={submitting || !answers[current].selectedAnswerId}
+            >
+              {submitting ? 'Đang gửi...' : 'Nộp bài'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
