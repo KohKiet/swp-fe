@@ -48,10 +48,28 @@ export const AuthProvider = ({ children }) => {
       const result = await authService.register(userData);
 
       if (result.success) {
-        return {
-          success: true,
-          message: "Đăng ký thành công! Vui lòng đăng nhập.",
-        };
+        // Automatically log in the user after successful registration
+        const loginResult = await authService.login(
+          userData.email,
+          userData.password
+        );
+
+        if (loginResult.success) {
+          const user = authService.getCurrentUser();
+          setCurrentUser(user);
+          return {
+            success: true,
+            message: "Đăng ký và đăng nhập thành công!",
+            autoLoggedIn: true,
+          };
+        } else {
+          // Registration succeeded but auto-login failed
+          return {
+            success: true,
+            message: "Đăng ký thành công! Vui lòng đăng nhập.",
+            autoLoggedIn: false,
+          };
+        }
       } else {
         return { success: false, error: result.error };
       }
@@ -83,6 +101,11 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem("userAddress", updatedData[key]);
         } else if (key === "dateOfBirth") {
           localStorage.setItem("userDateOfBirth", updatedData[key]);
+        } else if (key === "profilePicture") {
+          localStorage.setItem(
+            "userProfilePicture",
+            updatedData[key]
+          );
         }
       });
 
@@ -143,6 +166,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     currentUser,
+    setCurrentUser,
     login,
     register,
     logout,

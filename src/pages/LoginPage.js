@@ -239,22 +239,31 @@ const LoginPage = () => {
             result.message ||
               "Đăng ký thành công! Vui lòng đăng nhập."
           );
-          // Reset form and switch to login
-          setFormData({
-            email: formData.email, // Keep email for convenience
-            password: "",
-            fullname: "",
-            phone: "",
-            gender: "",
-            dateOfBirth: "",
-            address: "",
-            confirmPassword: "",
-          });
-          // Auto switch to login form after successful registration
-          setTimeout(() => {
-            setIsLogin(true);
-            setSuccessMessage("");
-          }, 2000);
+
+          // Check if user was automatically logged in
+          if (result.autoLoggedIn) {
+            // User was automatically logged in, redirect to home
+            setTimeout(() => {
+              navigate("/");
+            }, 1500);
+          } else {
+            // Auto-login failed, reset form and switch to login
+            setFormData({
+              email: formData.email, // Keep email for convenience
+              password: "",
+              fullname: "",
+              phone: "",
+              gender: "",
+              dateOfBirth: "",
+              address: "",
+              confirmPassword: "",
+            });
+            // Auto switch to login form after successful registration
+            setTimeout(() => {
+              setIsLogin(true);
+              setSuccessMessage("");
+            }, 2000);
+          }
         } else {
           setLoginError(result.error || "Có lỗi xảy ra khi đăng ký");
         }
