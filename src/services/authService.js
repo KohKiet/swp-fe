@@ -25,26 +25,66 @@ class AuthService {
       const data = await response.json();
 
       if (!response.ok) {
+        console.log(
+          "AuthService - Login failed with status:",
+          response.status
+        );
+        console.log("AuthService - Error response data:", data);
+
         throw new Error(
           data.message || `HTTP error! status: ${response.status}`
         );
       }
 
+      // Handle nested response structure - API returns data wrapped in ApiResponseDto
+      const userData = data.data || data;
+
       // Store auth data in localStorage for persistence
-      if (data.AccessToken) {
-        localStorage.setItem("accessToken", data.AccessToken);
-        localStorage.setItem("refreshToken", data.RefreshToken);
-        localStorage.setItem("userEmail", data.Email);
-        localStorage.setItem("userFullname", data.Fullname);
-        localStorage.setItem("userRole", data.Role);
-        localStorage.setItem("userId", data.UserId || data.Id);
-        localStorage.setItem("userPhone", data.Phone || "");
-        localStorage.setItem("userGender", data.Gender || "");
-        localStorage.setItem(
-          "userDateOfBirth",
-          data.DateOfBirth || ""
+      if (userData.AccessToken || userData.accessToken) {
+        // Use backend's exact field names with fallback for debugging
+        const accessToken =
+          userData.AccessToken || userData.accessToken;
+        const refreshToken =
+          userData.RefreshToken || userData.refreshToken;
+        const email = userData.Email || userData.email;
+        const fullname = userData.Fullname || userData.fullname;
+        const role = userData.Role || userData.role;
+        const userId =
+          userData.UserId ||
+          userData.userId ||
+          `user_${email?.split("@")[0]}_${Date.now()}`;
+        const phone = userData.Phone || userData.phone || "";
+        const gender = userData.Gender || userData.gender || "";
+        const dateOfBirth =
+          userData.DateOfBirth || userData.dateOfBirth || "";
+        const address = userData.Address || userData.address || "";
+
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("userFullname", fullname);
+        localStorage.setItem("userRole", role);
+        localStorage.setItem("userId", userId);
+        localStorage.setItem("userPhone", phone);
+        localStorage.setItem("userGender", gender);
+        localStorage.setItem("userDateOfBirth", dateOfBirth);
+        localStorage.setItem("userAddress", address);
+
+        console.log(
+          "AuthService - User authenticated successfully:",
+          {
+            email: email,
+            fullname: fullname,
+            role: role,
+          }
         );
-        localStorage.setItem("userAddress", data.Address || "");
+      } else {
+        console.error(
+          "AuthService - No access token found in response"
+        );
+        throw new Error(
+          "Invalid login response - missing access token"
+        );
       }
 
       return {
@@ -93,11 +133,21 @@ class AuthService {
       const data = await response.json();
 
       if (!response.ok) {
+        console.log(
+          "AuthService - Register failed with status:",
+          response.status
+        );
+        console.log(
+          "AuthService - Register error response data:",
+          data
+        );
+
         throw new Error(
           data.message || `HTTP error! status: ${response.status}`
         );
       }
 
+      console.log("AuthService - Registration successful");
       return {
         success: true,
         data,
@@ -133,7 +183,7 @@ class AuthService {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
-          body: JSON.stringify(refreshToken),
+          body: JSON.stringify({ RefreshToken: refreshToken }),
         }
       );
 
@@ -145,10 +195,17 @@ class AuthService {
         );
       }
 
-      // Update tokens in localStorage
-      if (data.AccessToken) {
-        localStorage.setItem("accessToken", data.AccessToken);
-        localStorage.setItem("refreshToken", data.RefreshToken);
+      // Handle nested response structure - API returns data wrapped in ApiResponseDto
+      const tokenData = data.data || data;
+
+      // Update tokens in localStorage using backend's exact field names
+      if (tokenData.AccessToken) {
+        const newAccessToken = tokenData.AccessToken;
+        const newRefreshToken =
+          tokenData.RefreshToken || refreshToken;
+
+        localStorage.setItem("accessToken", newAccessToken);
+        localStorage.setItem("refreshToken", newRefreshToken);
       }
 
       return {
@@ -217,6 +274,274 @@ class AuthService {
   }
 
   /**
+   * Send password reset email
+   * @param {string} email - User email
+   * @returns {Promise} - API response
+   */
+  async forgotPassword(email) {
+    try {
+      const response = await fetch(
+        `${this.baseURL}${API_CONFIG.ENDPOINTS.FORGOT_PASSWORD}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return {
+        success: true,
+        data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      return {
+        success: false,
+        error: error.message,
+        status: error.status || 500,
+      };
+    }
+  }
+
+  /**
+   * Reset password with token
+   * @param {string} token - Reset token
+   * @param {string} newPassword - New password
+   * @param {string} confirmPassword - Confirm password
+   * @returns {Promise} - API response
+   */
+  async resetPassword(token, newPassword, confirmPassword) {
+    try {
+      const response = await fetch(
+        `${this.baseURL}${API_CONFIG.ENDPOINTS.RESET_PASSWORD}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            token,
+            newPassword,
+            confirmPassword,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return {
+        success: true,
+        data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error("Reset password error:", error);
+      return {
+        success: false,
+        error: error.message,
+        status: error.status || 500,
+      };
+    }
+  }
+
+  /**
+   * Change password when logged in
+   * @param {string} currentPassword - Current password
+   * @param {string} newPassword - New password
+   * @param {string} confirmPassword - Confirm new password
+   * @returns {Promise} - API response
+   */
+  async changePassword(
+    currentPassword,
+    newPassword,
+    confirmPassword
+  ) {
+    try {
+      const response = await this.authenticatedRequest(
+        `${this.baseURL}${API_CONFIG.ENDPOINTS.CHANGE_PASSWORD}`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            currentPassword,
+            newPassword,
+            confirmPassword,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return {
+        success: true,
+        data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error("Change password error:", error);
+      return {
+        success: false,
+        error: error.message,
+        status: error.status || 500,
+      };
+    }
+  }
+
+  /**
+   * Verify email address
+   * @param {string} token - Verification token
+   * @returns {Promise} - API response
+   */
+  async verifyEmail(token) {
+    try {
+      const response = await fetch(
+        `${this.baseURL}${API_CONFIG.ENDPOINTS.VERIFY_EMAIL}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ token }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return {
+        success: true,
+        data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error("Email verification error:", error);
+      return {
+        success: false,
+        error: error.message,
+        status: error.status || 500,
+      };
+    }
+  }
+
+  /**
+   * Resend verification email
+   * @param {string} email - User email
+   * @returns {Promise} - API response
+   */
+  async resendVerification(email) {
+    try {
+      const response = await fetch(
+        `${this.baseURL}${API_CONFIG.ENDPOINTS.RESEND_VERIFICATION}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return {
+        success: true,
+        data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error("Resend verification error:", error);
+      return {
+        success: false,
+        error: error.message,
+        status: error.status || 500,
+      };
+    }
+  }
+
+  /**
+   * Check email verification status
+   * @param {string} email - User email (optional, uses current user if authenticated)
+   * @returns {Promise} - API response
+   */
+  async getEmailVerificationStatus(email = null) {
+    try {
+      const endpoint = `${this.baseURL}${API_CONFIG.ENDPOINTS.EMAIL_VERIFICATION_STATUS}`;
+      const queryParams = email
+        ? `?email=${encodeURIComponent(email)}`
+        : "";
+
+      const response = await fetch(`${endpoint}${queryParams}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          ...(this.isAuthenticated() && {
+            Authorization: `Bearer ${this.getAccessToken()}`,
+          }),
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return {
+        success: true,
+        data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error("Email verification status error:", error);
+      return {
+        success: false,
+        error: error.message,
+        status: error.status || 500,
+      };
+    }
+  }
+
+  /**
    * Clear all authentication data from localStorage
    */
   clearAuthData() {
@@ -231,6 +556,7 @@ class AuthService {
       "userGender",
       "userDateOfBirth",
       "userAddress",
+      "userProfilePicture",
     ];
 
     authKeys.forEach((key) => {
@@ -265,6 +591,7 @@ class AuthService {
       gender: localStorage.getItem("userGender"),
       dateOfBirth: localStorage.getItem("userDateOfBirth"),
       address: localStorage.getItem("userAddress"),
+      profilePicture: localStorage.getItem("userProfilePicture"),
       accessToken: localStorage.getItem("accessToken"),
     };
   }
@@ -322,14 +649,6 @@ class AuthService {
       console.error("Authenticated request error:", error);
       throw error;
     }
-  }
-
-  /**
-   * Test login with example credentials
-   * @returns {Promise} - API response
-   */
-  async testLogin() {
-    return this.login("user@example.com", "string");
   }
 }
 
