@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
   faChevronDown,
   faSignOutAlt,
   faTachometerAlt,
   faUserCog,
-} from '@fortawesome/free-solid-svg-icons';
-import './Header.css';
-import { useAuth } from '../context/AuthContext';
+} from "@fortawesome/free-solid-svg-icons";
+import "./Header.css";
+import { useAuth } from "../context/AuthContext";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -23,16 +23,16 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/');
+      navigate("/");
     } catch (error) {
-      console.error('Logout error:', error);
-      navigate('/');
+      console.error("Logout error:", error);
+      navigate("/");
     }
   };
 
   // Function to get display name - prefer fullname, fallback to email
   const getDisplayName = () => {
-    if (!currentUser) return '';
+    if (!currentUser) return "";
     return currentUser.fullname || currentUser.email;
   };
 
@@ -55,25 +55,25 @@ const Header = () => {
             <ul className="nav-list">
               <li className="nav-item">
                 <Link to="/education" className="nav-link">
-                  Kh�a H?c
+                  Khóa Học
                 </Link>
               </li>
 
               <li className="nav-item">
                 <Link to="/counseling" className="nav-link">
-                  �?t L?ch Tu V?n
+                  Đặt Lịch Tư Vấn
                 </Link>
               </li>
 
               <li className="nav-item">
                 <Link to="/education/surveys" className="nav-link">
-                  Kh?o S�t
+                  Khảo Sát
                 </Link>
               </li>
 
               <li className="nav-item">
                 <Link to="/programs" className="nav-link">
-                  S? Ki?n
+                  Sự Kiện
                 </Link>
               </li>
 
@@ -92,7 +92,9 @@ const Header = () => {
             className="mobile-menu-button"
             onClick={toggleMobileMenu}>
             <div
-              className={hamburger }>
+              className={`hamburger ${
+                isMobileMenuOpen ? "active" : ""
+              }`}>
               <span></span>
               <span></span>
               <span></span>
@@ -122,8 +124,8 @@ const Header = () => {
                 <div className="dropdown-menu">
                   {!isAdmin() && (
                     <Link to="/profile" className="dropdown-item">
-                      <FontAwesomeIcon icon={faUserCog} /> H? So C�
-                      Nh�n
+                      <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá
+                      Nhân
                     </Link>
                   )}
                   {isAdmin() && (
@@ -135,13 +137,13 @@ const Header = () => {
                   <button
                     className="dropdown-item"
                     onClick={handleLogout}>
-                    <FontAwesomeIcon icon={faSignOutAlt} /> �ang Xu?t
+                    <FontAwesomeIcon icon={faSignOutAlt} /> Đăng Xuất
                   </button>
                 </div>
               </div>
             ) : (
               <Link to="/login" className="btn">
-                <FontAwesomeIcon icon={faUser} /> �ang Nh?p / �ang K�
+                <FontAwesomeIcon icon={faUser} /> Đăng Nhập / Đăng Ký
               </Link>
             )}
           </div>
@@ -149,23 +151,23 @@ const Header = () => {
       </div>
 
       <div
-        className={mobile-menu }>
+        className={`mobile-menu ${isMobileMenuOpen ? "active" : ""}`}>
         <div className="mobile-nav">
           <Link to="/education" className="mobile-nav-link">
-            Kh�a H?c
+            Khóa Học
           </Link>
           <Link to="/education/surveys" className="mobile-nav-link">
-            ��nh Gi�
+            Đánh Giá
           </Link>
           <Link to="/counseling" className="mobile-nav-link">
-            �?t L?ch Tu V?n
+            Đặt Lịch Tư Vấn
           </Link>
           <Link to="/programs" className="mobile-nav-link">
-            Chuong Tr�nh
+            Chương Trình
           </Link>
           {currentUser && !isAdmin() && (
             <Link to="/profile" className="mobile-nav-link">
-              <FontAwesomeIcon icon={faUserCog} /> H? So C� Nh�n
+              <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá Nhân
             </Link>
           )}
           {isAdmin() && (
@@ -177,11 +179,11 @@ const Header = () => {
             <button
               className="mobile-nav-link"
               onClick={handleLogout}>
-              <FontAwesomeIcon icon={faSignOutAlt} /> �ang Xu?t
+              <FontAwesomeIcon icon={faSignOutAlt} /> Đăng Xuất
             </button>
           ) : (
             <Link to="/login" className="mobile-nav-link login">
-              <FontAwesomeIcon icon={faUser} /> �ang Nh?p / �ang K�
+              <FontAwesomeIcon icon={faUser} /> Đăng Nhập / Đăng Ký
             </Link>
           )}
         </div>
