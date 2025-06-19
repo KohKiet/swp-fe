@@ -17,12 +17,18 @@ import EducationHub from "./pages/EducationHub";
 import Counseling from "./pages/Counseling";
 import Dashboard from "./pages/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
-import AssessmentPage from "./pages/AssessmentPage";  
+
 
 // Components
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ApiTest from "./components/ApiTest";
+
+// Survey Flow Pages
+import SurveyEntryPage from './pages/surveys/SurveyEntryPage';
+import TakeSurveyPage from './pages/surveys/TakeSurveyPage';
+import SurveyResultsPage from './pages/surveys/SurveyResultsPage';
+import SurveyHistoryPage from './pages/surveys/SurveyHistoryPage';
 
 // Protected route component
 const ProtectedRoute = ({ element }) => {
@@ -61,14 +67,15 @@ function AppContent() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/education" element={<EducationHub />} />
           <Route path="/counseling" element={<Counseling />} />
-          <Route path="/assessment" element={<AssessmentPage/>} />
-          <Route
-            path="/profile"
-            element={<UserProtectedRoute element={<ProfilePage />} />}
-          />
-          <Route
-            path="/dashboard"
-            element={<ProtectedRoute element={<Dashboard />} />}
+          {/* Survey Flow Routes */}
+          <Route path="/surveys" element={<UserProtectedRoute element={<SurveyEntryPage />} />} />
+          <Route path="/surveys/take" element={<UserProtectedRoute element={<TakeSurveyPage />} />} />
+          <Route path="/surveys/results" element={<UserProtectedRoute element={<SurveyResultsPage />} />} />
+          <Route path="/surveys/history" element={<UserProtectedRoute element={<SurveyHistoryPage />} />} />
+          {/* End Survey Flow */}
+          
+          <Route path="/profile" element={<UserProtectedRoute element={<ProfilePage />} />} />
+          <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />}
           />
         </Routes>
       </main>

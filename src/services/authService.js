@@ -652,4 +652,12 @@ class AuthService {
   }
 }
 
+/**
+ * Helper function to get access token (alias for getAccessToken)
+ * @returns {string|null}
+ */
+export function getAuthToken() {
+  return localStorage.getItem("accessToken");
+}
+
 export default new AuthService();

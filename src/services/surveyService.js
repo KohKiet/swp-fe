@@ -2,36 +2,37 @@ import axios from 'axios';
 import { API_CONFIG } from './apiConfig';
 import { getAuthToken } from './authService';
 
+const API_URL = `${API_CONFIG.BASE_URL}/api/Surveys`;
+
+const getAuthHeader = async () => {
+  const token = await getAuthToken();
+  return { headers: { Authorization: `Bearer ${token}` } };
+};
+
 const surveyService = {
-  async getAppropriateAssessment() {
-    const token = await getAuthToken();
-    return axios.get(`${API_CONFIG.BASE_URL}/api/Surveys/appropriate`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }).then(res => res.data);
+  async checkSurveyStatus() {
+    const config = await getAuthHeader();
+    const res = await axios.get(`${API_URL}/check-status`, config);
+    return res.data;
+  },
+  async getSuitableSurvey() {
+    const config = await getAuthHeader();
+    const res = await axios.get(`${API_URL}/get-suitable`, config);
+    return res.data;
   },
   async getSurveyById(surveyId) {
-    const token = await getAuthToken();
-    return axios.get(`${API_CONFIG.BASE_URL}/api/Surveys/${surveyId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }).then(res => res.data);
+    const res = await axios.get(`${API_URL}/${surveyId}`);
+    return res.data;
   },
-  async getSurveyQuestions(surveyId) {
-    const token = await getAuthToken();
-    return axios.get(`${API_CONFIG.BASE_URL}/api/Surveys/${surveyId}/questions`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }).then(res => res.data);
+  async submitSurvey(surveyId, answers) {
+    const config = await getAuthHeader();
+    const res = await axios.post(`${API_URL}/${surveyId}/submit`, { answers }, config);
+    return res.data;
   },
-  async submitSurveyAnswers(surveyId, answers) {
-    const token = await getAuthToken();
-    return axios.post(`${API_CONFIG.BASE_URL}/api/SurveyAnswer`, {
-      surveyId,
-      answers
-    }, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    }).then(res => res.data);
+  async getHistory() {
+    const config = await getAuthHeader();
+    const res = await axios.get(`${API_URL}/history`, config);
+    return res.data;
   }
 };
 
