@@ -92,6 +92,7 @@ button:hover,
 
 .secondary-bg {
     background-color: var(--secondary-bg);
+    padding: 0.8rem 0;
 }
 
 /* Grid & Flexbox Layouts */

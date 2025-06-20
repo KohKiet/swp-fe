@@ -4,7 +4,7 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    padding: 0.5rem 0;
+    padding: 0.3rem 0;
 }
 
 .header-container {
@@ -21,7 +21,7 @@
 }
 
 .logo-container {
-    padding: 0.5rem 1rem;
+    padding: 0.3rem 0.7rem;
     border-radius: 4px;
 }
 
@@ -32,14 +32,14 @@
 }
 
 .logo-image {
-    height: 40px;
+    height: 32px;
     width: auto;
-    margin-right: 10px;
+    margin-right: 8px;
     border-radius: 4px;
 }
 
 .logo-container h1 {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     margin: 0;
     color: var(--primary);
     text-shadow: 1px 1px 0px #e0e0e0,
@@ -64,15 +64,15 @@
 }
 
 .nav-item {
-    margin: 0 0.8rem;
+    margin: 0 0.6rem;
     position: relative;
 }
 
 .nav-link {
     color: var(--primary);
     font-weight: bold;
-    font-size: 1.05rem;
-    padding: 0.5rem;
+    font-size: 0.95rem;
+    padding: 0.4rem;
     text-decoration: none;
     display: block;
     transition: color 0.3s ease;
@@ -91,11 +91,11 @@
 .auth-buttons .btn {
     background-color: var(--accent);
     color: var(--text-primary);
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.8rem;
     border-radius: 4px;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 
 /* User dropdown styles */
@@ -106,20 +106,20 @@
 .dropdown-toggle {
     background: linear-gradient(135deg, #e8eaf6, #e3f2fd);
     color: #3f51b5;
-    padding: 0.7rem 1.2rem;
-    border-radius: 25px;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
     border: 1px solid rgba(63, 81, 181, 0.15);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.8rem;
+    gap: 0.6rem;
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 500;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 8px rgba(63, 81, 181, 0.08);
-    min-width: 140px;
+    min-width: 130px;
 }
 
 .dropdown-toggle:hover {
@@ -130,20 +130,20 @@
 }
 
 .user-avatar {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: linear-gradient(135deg, #c5cae9, #bbdefb);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #3f51b5;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     overflow: hidden;
     border: 2px solid rgba(255, 255, 255, 0.95);
     box-shadow: 0 2px 6px rgba(63, 81, 181, 0.15);
     flex-shrink: 0;
-    margin: 4px 0;
+    margin: 3px 0;
 }
 
 .user-profile-pic {
@@ -333,25 +333,25 @@
     }
 
     .header-content {
-        padding: 0.5rem 0;
+        padding: 0.3rem 0;
     }
 
     /* Mobile user dropdown adjustments */
     .dropdown-toggle {
-        padding: 0.6rem 1.2rem;
-        font-size: 0.9rem;
-        border-radius: 25px;
+        padding: 0.4rem 1rem;
+        font-size: 0.85rem;
+        border-radius: 20px;
         justify-content: center;
-        min-width: 140px;
-        gap: 0.8rem;
+        min-width: 130px;
+        gap: 0.6rem;
     }
 
     .user-avatar {
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
         border: 2px solid rgba(255, 255, 255, 0.95);
-        font-size: 1.2rem;
-        margin: 3px 0;
+        font-size: 1.1rem;
+        margin: 2px 0;
     }
 
     .user-name {

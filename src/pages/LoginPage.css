@@ -338,3 +338,29 @@
         min-width: auto;
     }
 }
+
+.mock-credentials-info {
+    background-color: #e8f4fd;
+    border: 1px solid #b8daff;
+    border-radius: 4px;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    font-size: 0.9rem;
+}
+
+.mock-credentials-info svg {
+    color: #0056b3;
+    margin-right: 10px;
+    font-size: 1.2rem;
+    margin-top: 3px;
+}
+
+.mock-credentials-info p {
+    margin: 3px 0;
+}
+
+.mock-credentials-info strong {
+    color: #0056b3;
+}

@@ -1,13 +1,32 @@
 // Services export file
 import { API_CONFIG as CONFIG } from "./apiConfig";
+import { USE_MOCK_SERVICES, USE_MOCK_ADMIN } from "./serviceConfig";
 
-export { default as authService } from "./authService";
+// Import real services
+import realAuthService from "./authService";
+import realAdminService from "./adminService";
+
+// Import mock services
+import mockAuthService from "./mockAuthService";
+import mockAdminService from "./mockAdminService";
+
+// Export services based on configuration
+export const authService = USE_MOCK_SERVICES
+  ? mockAuthService
+  : realAuthService;
+
+// Use mock admin service if either mock services are enabled or mock admin specifically is enabled
+export const adminService =
+  USE_MOCK_SERVICES || USE_MOCK_ADMIN
+    ? mockAdminService
+    : realAdminService;
+
 export { API_CONFIG } from "./apiConfig";
 
 // Named exports for convenience
 export const services = {
-  auth: () =>
-    import("./authService").then((module) => module.default),
+  auth: () => Promise.resolve(authService),
+  admin: () => Promise.resolve(adminService),
 };
 
 // API endpoint constants for easy access
@@ -23,4 +42,17 @@ export const AUTH_ENDPOINTS = {
   RESEND_VERIFICATION: CONFIG.ENDPOINTS.RESEND_VERIFICATION,
   EMAIL_VERIFICATION_STATUS:
     CONFIG.ENDPOINTS.EMAIL_VERIFICATION_STATUS,
+};
+
+// Admin endpoint constants
+export const ADMIN_ENDPOINTS = {
+  USERS: CONFIG.ENDPOINTS.ADMIN_USERS,
+  USER_BY_ID: CONFIG.ENDPOINTS.ADMIN_USER_BY_ID,
+  DASHBOARD: CONFIG.ENDPOINTS.ADMIN_DASHBOARD,
+  STATS: CONFIG.ENDPOINTS.ADMIN_STATS,
+  POSTS: CONFIG.ENDPOINTS.ADMIN_POSTS,
+  POSTS_PENDING: CONFIG.ENDPOINTS.ADMIN_POSTS_PENDING,
+  POST_BY_ID: CONFIG.ENDPOINTS.ADMIN_POST_BY_ID,
+  POST_APPROVE: CONFIG.ENDPOINTS.ADMIN_POST_APPROVE,
+  POST_REJECT: CONFIG.ENDPOINTS.ADMIN_POST_REJECT,
 };

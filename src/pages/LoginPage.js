@@ -12,13 +12,18 @@ import {
   faCalendar,
   faVenus,
   faMars,
+  faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import "./LoginPage.css";
 import { useAuth } from "../context/AuthContext";
+import {
+  USE_MOCK_SERVICES,
+  USE_MOCK_ADMIN,
+} from "../services/serviceConfig";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, register } = useAuth();
+  const { login, register, isAdmin } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: "",
@@ -99,7 +104,6 @@ const LoginPage = () => {
         cleanValue = "+84" + cleanValue.replace(/^\+?84?/, "");
       }
 
-      // Limit length to +84 + 9 digits = 12 characters total
       if (cleanValue.length > 12) {
         cleanValue = cleanValue.substring(0, 12);
       }
@@ -210,9 +214,15 @@ const LoginPage = () => {
 
         if (result.success) {
           setSuccessMessage("Đăng nhập thành công!");
-          // Navigate to home page after successful login
+
+          // Redirect based on user role
           setTimeout(() => {
-            navigate("/");
+            // Check if user is admin and redirect to dashboard
+            if (isAdmin()) {
+              navigate("/dashboard");
+            } else {
+              navigate("/");
+            }
           }, 1500);
         } else {
           setLoginError(
@@ -229,7 +239,7 @@ const LoginPage = () => {
           gender: formData.gender,
           dateOfBirth: formData.dateOfBirth,
           address: formData.address,
-          role: "User",
+          role: "Member",
         };
 
         const result = await register(registrationData);
@@ -244,6 +254,7 @@ const LoginPage = () => {
           if (result.autoLoggedIn) {
             // User was automatically logged in, redirect to home
             setTimeout(() => {
+              // Regular users always go to home page after registration
               navigate("/");
             }, 1500);
           } else {
@@ -291,6 +302,19 @@ const LoginPage = () => {
         </div>
 
         <div className="login-form-container">
+          {/* {(USE_MOCK_SERVICES || USE_MOCK_ADMIN) && (
+            <div className="mock-credentials-info">
+              <FontAwesomeIcon icon={faInfoCircle} />
+              <div>
+                <p>
+                  <strong>Mock Credentials for Admin Access:</strong>
+                </p>
+                <p>Admin: admin@example.com / admin123</p>
+                <p>Staff: staff@example.com / staff123</p>
+              </div>
+            </div>
+          )} */}
+
           <div className="form-switcher">
             <button
               className={`switcher-btn ${isLogin ? "active" : ""}`}
@@ -305,11 +329,7 @@ const LoginPage = () => {
           </div>
 
           <form className="login-form" onSubmit={handleSubmit}>
-            <h2>
-              {isLogin
-                ? "Đăng Nhập Vào Tài Khoản Của Bạn"
-                : "Tạo Tài Khoản Mới"}
-            </h2>
+            <h2>{isLogin ? "Đăng Nhập" : "Tạo Tài Khoản Mới"}</h2>
 
             {loginError && (
               <div className="error-alert">{loginError}</div>
