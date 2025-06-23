@@ -14,39 +14,84 @@ const SurveyHistoryPage = () => {
       .catch(() => setError('Không thể tải lịch sử khảo sát'))
       .finally(() => setLoading(false));
   }, []);
-
-  if (loading) return (
-    <div className="survey-root">
-      <div className="survey-container">
-        <div className="survey-title" style={{justifyContent:'center'}}>
-          <span role="img" aria-label="history">📜</span> Đang tải lịch sử...
+    if (loading) return (
+    <div>
+      <div className="survey-banner">
+        <div className="survey-banner-content">
+          <h1 className="survey-banner-title">Lịch Sử Khảo Sát</h1>
+          <p className="survey-banner-subtitle">Xem lại các khảo sát bạn đã hoàn thành</p>
+        </div>
+      </div>
+      <div className="survey-root">
+        <div className="survey-container">
+          <div className="survey-title survey-title-center">
+            <span role="img" aria-label="history">📜</span> Đang tải lịch sử...
+          </div>
         </div>
       </div>
     </div>
   );
-  if (error) return <div className="survey-root"><div className="survey-container survey-alert">{error}</div></div>;
-  if (!history.length) return <div className="survey-root"><div className="survey-container">Chưa có khảo sát nào.</div></div>;
-
-  return (
-    <div className="survey-root">
-      <div className="survey-container" style={{maxWidth:600}}>
-        <div className="survey-title" style={{justifyContent:'center'}}>
-          <span role="img" aria-label="history">📜</span> Lịch sử khảo sát
+  
+  if (error) return (
+    <div>
+      <div className="survey-banner">
+        <div className="survey-banner-content">
+          <h1 className="survey-banner-title">Lịch Sử Khảo Sát</h1>
+          <p className="survey-banner-subtitle">Xem lại các khảo sát bạn đã hoàn thành</p>
         </div>
-        <ul style={{paddingLeft:0,marginTop:24}}>
-          {history.map(h => (
-            <li key={h.id} style={{listStyle:'none',marginBottom:18,padding:0}}>
-              <div style={{background:'#f3f4f6',borderRadius:10,padding:'14px 18px',display:'flex',flexDirection:'column',gap:4}}>
-                <div style={{fontWeight:700,color:'#6366f1'}}>{h.surveyTitle}</div>
-                <div style={{fontSize:'0.98rem',color:'#6b7280'}}>Ngày nộp: {new Date(h.submittedAt).toLocaleString()}</div>
-                <div style={{fontSize:'0.98rem'}}>Điểm: <b>{h.totalScore}</b> &nbsp;|&nbsp; Rủi ro: <b style={{color:'#f59e42'}}>{h.riskLevel}</b></div>
-                <Link to={`/surveys/results/${h.id}`} style={{marginTop:6,textDecoration:'none'}}>
-                  <button className="survey-btn" style={{width:'100%',padding:'7px 0'}}>Xem chi tiết</button>
-                </Link>
-              </div>
-            </li>
-          ))}
-        </ul>
+      </div>
+      <div className="survey-root">
+        <div className="survey-container survey-alert">{error}</div>
+      </div>
+    </div>
+  );
+  
+  if (!history.length) return (
+    <div>
+      <div className="survey-banner">
+        <div className="survey-banner-content">
+          <h1 className="survey-banner-title">Lịch Sử Khảo Sát</h1>
+          <p className="survey-banner-subtitle">Xem lại các khảo sát bạn đã hoàn thành</p>
+        </div>
+      </div>
+      <div className="survey-root">
+        <div className="survey-container survey-title-center">Chưa có khảo sát nào.</div>
+      </div>
+    </div>
+  );
+    return (
+    <div>
+      <div className="survey-banner">
+        <div className="survey-banner-content">
+          <h1 className="survey-banner-title">Lịch Sử Khảo Sát</h1>
+          <p className="survey-banner-subtitle">Xem lại các khảo sát bạn đã hoàn thành</p>
+        </div>
+      </div>
+      
+      <div className="survey-root">
+        <div className="survey-container survey-history-container">
+          <div className="survey-title survey-title-center">
+            <span role="img" aria-label="history">📜</span> Lịch sử khảo sát
+          </div>
+          <ul className="survey-history-list">
+            {history.map(h => (
+              <li key={h.id} className="survey-history-item">
+                <div className="survey-history-card">
+                  <div className="survey-history-title">{h.surveyTitle}</div>
+                  <div className="survey-history-date">Ngày nộp: {new Date(h.submittedAt).toLocaleDateString('vi-VN')}</div>
+                  <div className="survey-history-risk">Rủi ro: <b className="survey-history-risk-level">{h.riskLevel}</b></div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="survey-back-button-container">
+            <Link to="/surveys" className="survey-back-link">
+              <button className="survey-btn">
+                <span className="survey-back-arrow">←</span> Quay lại trang khảo sát
+              </button>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

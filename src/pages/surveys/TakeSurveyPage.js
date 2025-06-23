@@ -57,44 +57,68 @@ const TakeSurveyPage = () => {
       setSubmitting(false);
     }
   };
-
   if (loading) return (
-    <div className="survey-root">
-      <div className="survey-container">
-        <div className="survey-title" style={{justifyContent:'center'}}>
-          <span role="img" aria-label="survey">📝</span> Đang tải câu hỏi...
+    <div>
+      <div className="survey-banner">
+        <div className="survey-banner-content">
+          <h1 className="survey-banner-title">Làm Bài Khảo Sát</h1>
+          <p className="survey-banner-subtitle">Hãy trả lời các câu hỏi dưới đây một cách chân thực nhất</p>
         </div>
-        <div style={{marginTop: 24}}>
-          <div className="survey-progress">
-            <div className="survey-progress-bar" style={{width:'40%'}}></div>
+      </div>
+      <div className="survey-root">
+        <div className="survey-container">
+          <div className="survey-title" style={{justifyContent:'center'}}>
+            <span role="img" aria-label="survey">📝</span> Đang tải câu hỏi...
           </div>
-          <div className="survey-question" style={{opacity:0.5}}>
-            <div className="survey-answer" style={{width:'80%',margin:'8px auto',height:32,background:'#f3f4f6'}}></div>
-            <div className="survey-answer" style={{width:'60%',margin:'8px auto',height:32,background:'#f3f4f6'}}></div>
+          <div style={{marginTop: 24}}>
+            <div className="survey-progress">
+              <div className="survey-progress-bar" style={{width:'40%'}}></div>
+            </div>
+            <div className="survey-question" style={{opacity:0.5}}>
+              <div className="survey-answer" style={{width:'80%',margin:'8px auto',height:32,background:'#f3f4f6'}}></div>
+              <div className="survey-answer" style={{width:'60%',margin:'8px auto',height:32,background:'#f3f4f6'}}></div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-  if (error) return <div className="survey-root"><div className="survey-container survey-alert">{error}</div></div>;
+  
+  if (error) return (
+    <div>
+      <div className="survey-banner">
+        <div className="survey-banner-content">
+          <h1 className="survey-banner-title">Làm Bài Khảo Sát</h1>
+          <p className="survey-banner-subtitle">Hãy trả lời các câu hỏi dưới đây một cách chân thực nhất</p>
+        </div>
+      </div>
+      <div className="survey-root">
+        <div className="survey-container survey-alert">{error}</div>
+      </div>
+    </div>
+  );
   if (!survey) return null;
 
   const q = survey.questions[current];
   const total = survey.questions.length;
   const answered = answers.filter(a => a.selectedAnswerId).length;
-  const progress = Math.round((answered / total) * 100);
-
-  return (
-    <div className="survey-root">
-      <div className="survey-container">
-        <div className="survey-title">
-          <span role="img" aria-label="survey">📝</span> {survey.title}
+  const progress = Math.round((answered / total) * 100);  return (
+    <div>
+      <div className="survey-banner">
+        <div className="survey-banner-content">
+          <h1 className="survey-banner-title">Làm Bài Khảo Sát</h1>
+          <p className="survey-banner-subtitle">Hãy trả lời các câu hỏi dưới đây một cách chân thực nhất</p>
         </div>
-        <div className="survey-desc">{survey.description}</div>
-        <div className="survey-progress" aria-label="Tiến trình khảo sát">
+      </div>
+      
+      <div className="survey-root">
+        <div className="survey-container">
+          <div className="survey-title">
+            <span role="img" aria-label="survey">📝</span> {survey.title}
+          </div>
+        <div className="survey-desc">{survey.description}</div>        <div className="survey-progress" aria-label="Tiến trình khảo sát">
           <div className="survey-progress-bar" style={{width: progress + '%'}}></div>
         </div>
-        <div className="survey-step">Câu {current + 1} / {total} &nbsp;|&nbsp; Đã trả lời: {answered}/{total}</div>
         <div className="survey-question">{q.content}</div>
         <div className="survey-answers">
           {q.answers.map(ans => (
@@ -124,9 +148,9 @@ const TakeSurveyPage = () => {
             >
               {submitting ? 'Đang gửi...' : 'Nộp bài'}
             </button>
-          )}
-        </div>
+          )}        </div>
       </div>
+    </div>
     </div>
   );
 };

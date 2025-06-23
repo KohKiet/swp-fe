@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import './styles/survey.css';
 
 const SurveyResultsPage = () => {
@@ -10,52 +10,53 @@ const SurveyResultsPage = () => {
   if (!result) {
     navigate('/surveys');
     return null;
-  }
-
-  return (
-    <div className="survey-root">
-      <div className="survey-container" style={{ maxWidth: 500 }}>
-        <div className="survey-title" style={{ justifyContent: 'center' }}>
-          <span role="img" aria-label="result">
-            🎉
-          </span>{' '}
-          Kết quả khảo sát
+  }  return (
+    <div>
+      <div className="survey-banner">
+        <div className="survey-banner-content">
+          <h1 className="survey-banner-title">Kết Quả Khảo Sát</h1>
+          <p className="survey-banner-subtitle">Phân tích và đánh giá từ bài khảo sát của bạn</p>
         </div>
-        <div className="survey-desc" style={{ marginBottom: 18 }}>
-          <b>Điểm số:</b> {result.totalScore} <br />
+      </div>
+      
+      <div className="survey-root">
+        <div className="survey-container survey-results-container">
+          <div className="survey-title survey-title-center">
+            <span role="img" aria-label="result">
+              🎉
+            </span>{' '}
+            Kết quả khảo sát
+          </div>        <div className="survey-results-summary">
           <b>Mức độ rủi ro:</b>{' '}
-          <span style={{ color: '#6366f1', fontWeight: 700 }}>
+          <span className="survey-results-risk">
             {result.riskLevel}
           </span>{' '}
           <br />
           <b>Đề xuất:</b>{' '}
-          <span style={{ color: '#16a34a' }}>
+          <span className="survey-results-suggestion">
             {result.suggestedAction}
           </span>{' '}
           <br />
-          <b>Ngày nộp:</b> {new Date(result.submittedAt).toLocaleString()}
+          <b>Ngày nộp:</b> {new Date(result.submittedAt).toLocaleDateString('vi-VN')}
         </div>
-        <div className="survey-question" style={{ marginBottom: 10 }}>
-          Chi tiết câu trả lời
-        </div>
-        <ul style={{ paddingLeft: 18, marginBottom: 24 }}>
-          {result.answers.map((a, i) => (
-            <li key={i} style={{ marginBottom: 8 }}>
-              <b>{a.question}</b>:{' '}
-              <span style={{ color: '#6366f1' }}>
-                {a.selectedAnswer}
-              </span>
-            </li>
-          ))}
-        </ul>
-        <button
-          className="survey-btn"
-          style={{ width: '100%' }}
-          onClick={() => navigate('/surveys')}
-        >
-          Quay lại khảo sát
-        </button>
+        
+        <div className="survey-action-buttons">
+          <Link to="/counseling" className="survey-action-btn survey-action-btn--primary">
+            <span role="img" aria-label="calendar">📅</span> Đặt lịch tư vấn ngay
+          </Link>
+          
+          <Link to="/education" className="survey-action-btn survey-action-btn--secondary">
+            <span role="img" aria-label="book">📚</span> Xem khóa học phù hợp
+          </Link>
+          
+          <button
+            className="survey-action-btn survey-action-btn--secondary"
+            onClick={() => navigate('/surveys')}
+          >
+            <span role="img" aria-label="back">↩️</span> Quay lại trang khảo sát
+          </button>        </div>
       </div>
+    </div>
     </div>
   );
 };
