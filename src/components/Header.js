@@ -7,13 +7,15 @@ import {
   faSignOutAlt,
   faTachometerAlt,
   faUserCog,
+  faClock,
+  faCalendarCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import "./Header.css";
 import { useAuth } from "../context/AuthContext";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { currentUser, logout, isAdmin } = useAuth();
+  const { currentUser, logout, isAdmin, isConsultant } = useAuth();
   const navigate = useNavigate();
 
   const toggleMobileMenu = () => {
@@ -28,6 +30,11 @@ const Header = () => {
       console.error("Logout error:", error);
       navigate("/");
     }
+  };
+
+  // Function to check if user is a regular member (not admin or consultant)
+  const isMember = () => {
+    return currentUser && !isAdmin() && !isConsultant();
   };
 
   // Function to get display name - prefer fullname, fallback to email
@@ -66,7 +73,7 @@ const Header = () => {
               </li>
 
               <li className="nav-item">
-                <Link to="/education/surveys" className="nav-link">
+                <Link to="/surveys" className="nav-link">
                   Khảo Sát
                 </Link>
               </li>
@@ -76,6 +83,22 @@ const Header = () => {
                   Sự Kiện
                 </Link>
               </li>
+
+              {isMember() && (
+                <li className="nav-item">
+                  <Link to="/my-appointments" className="nav-link">
+                    Lịch Hẹn
+                  </Link>
+                </li>
+              )}
+
+              {isConsultant() && (
+                <li className="nav-item">
+                  <Link to="/consult-time" className="nav-link">
+                    <FontAwesomeIcon icon={faClock} /> Quản Lý Lịch
+                  </Link>
+                </li>
+              )}
 
               {isAdmin() && (
                 <li className="nav-item">
@@ -122,11 +145,32 @@ const Header = () => {
                   <FontAwesomeIcon icon={faChevronDown} />
                 </button>
                 <div className="dropdown-menu">
-                  {!isAdmin() && (
-                    <Link to="/profile" className="dropdown-item">
-                      <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá
-                      Nhân
-                    </Link>
+                  {!isAdmin() && !isConsultant() && (
+                    <>
+                      <Link to="/profile" className="dropdown-item">
+                        <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá
+                        Nhân
+                      </Link>
+                      <Link
+                        to="/my-appointments"
+                        className="dropdown-item">
+                        Lịch Hẹn
+                      </Link>
+                    </>
+                  )}
+                  {isConsultant() && (
+                    <>
+                      <Link to="/profile" className="dropdown-item">
+                        <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá
+                        Nhân
+                      </Link>
+                      <Link
+                        to="/consult-time"
+                        className="dropdown-item">
+                        <FontAwesomeIcon icon={faClock} /> Quản Lý
+                        Lịch
+                      </Link>
+                    </>
                   )}
                   {isAdmin() && (
                     <Link to="/dashboard" className="dropdown-item">
@@ -166,8 +210,22 @@ const Header = () => {
             Chương Trình
           </Link>
           {currentUser && !isAdmin() && (
-            <Link to="/profile" className="mobile-nav-link">
-              <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá Nhân
+            <>
+              <Link to="/profile" className="mobile-nav-link">
+                <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá Nhân
+              </Link>
+              {!isConsultant() && (
+                <Link
+                  to="/my-appointments"
+                  className="mobile-nav-link">
+                  Lịch Hẹn
+                </Link>
+              )}
+            </>
+          )}
+          {isConsultant() && (
+            <Link to="/consult-time" className="mobile-nav-link">
+              <FontAwesomeIcon icon={faClock} /> Quản Lý Lịch
             </Link>
           )}
           {isAdmin() && (

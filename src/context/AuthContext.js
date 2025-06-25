@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      // First attempt with real auth service
+      // Only use real auth service
       const response = await authService.login(email, password);
 
       if (response.success) {
@@ -42,38 +42,6 @@ export const AuthProvider = ({ children }) => {
         setIsLoading(false);
         return { success: true, data: user };
       } else {
-        console.log(
-          "Regular login failed, checking if this is an admin account"
-        );
-
-        // Check if this is a potential admin account that should use mock auth
-        if (
-          email.includes("admin") ||
-          email.includes("staff") ||
-          email === "admin@example.com" ||
-          email === "staff@example.com"
-        ) {
-          console.log("Trying mock auth for admin account");
-
-          // Try with mock auth service for admin accounts
-          const mockAuthService = await import(
-            "../services/mockAuthService"
-          ).then((module) => module.default);
-          const mockResponse = await mockAuthService.login(
-            email,
-            password
-          );
-
-          if (mockResponse.success) {
-            console.log("Mock admin login successful");
-            setCurrentUser(mockResponse.data);
-            setIsAuthenticated(true);
-            setIsLoading(false);
-            return { success: true, data: mockResponse.data };
-          }
-        }
-
-        // If we get here, both real and mock auth failed
         setError(response.error || "Authentication failed");
         setIsLoading(false);
         return {
@@ -83,40 +51,6 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error("Login error:", err);
-
-      // If real auth throws an error, try mock auth for admin accounts
-      if (
-        email.includes("admin") ||
-        email.includes("staff") ||
-        email === "admin@example.com" ||
-        email === "staff@example.com"
-      ) {
-        try {
-          console.log(
-            "Real auth failed with error, trying mock auth for admin"
-          );
-          const mockAuthService = await import(
-            "../services/mockAuthService"
-          ).then((module) => module.default);
-          const mockResponse = await mockAuthService.login(
-            email,
-            password
-          );
-
-          if (mockResponse.success) {
-            console.log(
-              "Mock admin login successful after real auth error"
-            );
-            setCurrentUser(mockResponse.data);
-            setIsAuthenticated(true);
-            setIsLoading(false);
-            return { success: true, data: mockResponse.data };
-          }
-        } catch (mockErr) {
-          console.error("Mock auth also failed:", mockErr);
-        }
-      }
-
       setError(err.message || "An unexpected error occurred");
       setIsLoading(false);
       return {
@@ -207,6 +141,14 @@ export const AuthProvider = ({ children }) => {
     return currentUser && currentUser.role === "admin";
   };
 
+  const isConsultant = () => {
+    return (
+      currentUser &&
+      (currentUser.role === "consultant" ||
+        currentUser.role === "Consultant")
+    );
+  };
+
   const value = {
     currentUser,
     login,
@@ -217,6 +159,7 @@ export const AuthProvider = ({ children }) => {
     refreshToken,
     isAuthenticated,
     isAdmin,
+    isConsultant,
     getAccessToken: () => authService.getAccessToken(),
     error,
     isLoading,

@@ -5,6 +5,7 @@ import { USE_MOCK_SERVICES, USE_MOCK_ADMIN } from "./serviceConfig";
 // Import real services
 import realAuthService from "./authService";
 import realAdminService from "./adminService";
+import consultationService from "./consultationService";
 
 // Import mock services
 import mockAuthService from "./mockAuthService";
@@ -21,12 +22,16 @@ export const adminService =
     ? mockAdminService
     : realAdminService;
 
+// Export consultation service (always use real service)
+export { consultationService };
+
 export { API_CONFIG } from "./apiConfig";
 
 // Named exports for convenience
 export const services = {
   auth: () => Promise.resolve(authService),
   admin: () => Promise.resolve(adminService),
+  consultation: () => Promise.resolve(consultationService),
 };
 
 // API endpoint constants for easy access

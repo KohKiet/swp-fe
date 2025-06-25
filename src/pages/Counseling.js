@@ -12,135 +12,314 @@ import {
   faUser,
   faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
+import { useAuth } from "../context/AuthContext";
+import { consultationService } from "../services/consultationService";
 import "./Counseling.css";
 
-// Mock counselor data
-const counselorsData = [
-  {
-    id: 1,
-    name: "TS. Nguyễn Thị Hương",
-    title: "Nhà Tâm Lý Học Lâm Sàng",
-    specialties: [
-      "Tư Vấn Thanh Thiếu Niên",
-      "Lạm Dụng Chất Gây Nghiện",
-      "Trị Liệu Gia Đình",
-    ],
-    experience: "12 năm",
-    bio: "TS. Hương chuyên về làm việc với thanh thiếu niên và gia đình bị ảnh hưởng bởi lạm dụng chất gây nghiện. Phương pháp của cô kết hợp liệu pháp nhận thức-hành vi với công việc hệ thống gia đình.",
-    rating: 4.8,
-    reviews: 56,
-    image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=NH",
-    availableDays: ["Thứ Hai", "Thứ Ba", "Thứ Năm"],
-    availableTimeSlots: {
-      "Thứ Hai": ["9:00 - 10:30", "13:00 - 14:30", "15:00 - 16:30"],
-      "Thứ Ba": ["10:00 - 11:30", "14:00 - 15:30"],
-      "Thứ Năm": ["9:00 - 10:30", "11:00 - 12:30", "14:00 - 15:30"],
-    },
-  },
-  {
-    id: 2,
-    name: "Trần Văn Minh, LCSW",
-    title: "Nhân Viên Xã Hội Lâm Sàng",
-    specialties: [
-      "Trị Liệu Nhóm",
-      "Hỗ Trợ Phục Hồi",
-      "Can Thiệp Khủng Hoảng",
-    ],
-    experience: "8 năm",
-    bio: "Minh điều phối các nhóm hỗ trợ phục hồi và cung cấp tư vấn cá nhân với trọng tâm là xây dựng kỹ năng đối phó và ngăn ngừa tái phát.",
-    rating: 4.6,
-    reviews: 42,
-    image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=VM",
-    availableDays: ["Thứ Tư", "Thứ Sáu", "Thứ Bảy"],
-    availableTimeSlots: {
-      "Thứ Tư": ["8:30 - 10:00", "10:30 - 12:00", "15:00 - 16:30"],
-      "Thứ Sáu": ["9:00 - 10:30", "13:30 - 15:00"],
-      "Thứ Bảy": ["8:30 - 10:00", "10:30 - 12:00"],
-    },
-  },
-  {
-    id: 3,
-    name: "TS. Lê Thị Mai",
-    title: "Bác Sĩ Tâm Thần",
-    specialties: [
-      "Chẩn Đoán Kép",
-      "Quản Lý Thuốc",
-      "Sức Khỏe Tâm Thần",
-    ],
-    experience: "15 năm",
-    bio: "TS. Mai chuyên điều trị cho bệnh nhân có rối loạn đồng thời, cung cấp cả quản lý thuốc và hỗ trợ trị liệu.",
-    rating: 4.9,
-    reviews: 78,
-    image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=LM",
-    availableDays: ["Thứ Hai", "Thứ Tư", "Thứ Sáu"],
-    availableTimeSlots: {
-      "Thứ Hai": ["8:00 - 9:30", "10:00 - 11:30", "14:00 - 15:30"],
-      "Thứ Tư": ["9:00 - 10:30", "13:00 - 14:30"],
-      "Thứ Sáu": ["8:00 - 9:30", "10:00 - 11:30", "15:00 - 16:30"],
-    },
-  },
-  {
-    id: 4,
-    name: "Phạm Văn Hùng, LPC",
-    title: "Cố Vấn Chuyên Nghiệp",
-    specialties: [
-      "Tư Vấn Người Trưởng Thành Trẻ",
-      "Phục Hồi Sau Nghiện",
-      "Chấn Thương Tâm Lý",
-    ],
-    experience: "6 năm",
-    bio: "Hùng chủ yếu làm việc với người trưởng thành trẻ đang đối mặt với các vấn đề sử dụng chất gây nghiện, tập trung vào xây dựng khả năng phục hồi và cơ chế đối phó lành mạnh.",
-    rating: 4.7,
-    reviews: 35,
-    image: "https://placehold.co/300x300/e8f5e9/2D7DD2?text=PH",
-    availableDays: ["Thứ Ba", "Thứ Năm", "Thứ Bảy"],
-    availableTimeSlots: {
-      "Thứ Ba": ["9:00 - 10:30", "11:00 - 12:30", "15:00 - 16:30"],
-      "Thứ Năm": ["10:00 - 11:30", "13:30 - 15:00"],
-      "Thứ Bảy": ["9:00 - 10:30", "11:00 - 12:30"],
-    },
-  },
-];
-
 const Counseling = () => {
+  const { currentUser, isAuthenticated, isConsultant } = useAuth();
   const [activeTab, setActiveTab] = useState("booking");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
-  const [filteredCounselors, setFilteredCounselors] =
-    useState(counselorsData);
+
+  // Helper function to safely get lowercase status
+  const getStatusLower = (status) => {
+    if (!status) return "";
+
+    // Handle numeric status codes
+    if (typeof status === "number") {
+      switch (status) {
+        case 0:
+          return "available";
+        case 1:
+          return "booked";
+        case 2:
+          return "pending";
+        case 3:
+          return "confirmed";
+        case 4:
+          return "rejected";
+        case 5:
+          return "cancelled";
+        default:
+          return "unknown";
+      }
+    }
+
+    // Handle string status
+    if (typeof status === "string") {
+      return status.toLowerCase();
+    }
+
+    // Handle any other type by converting to string first
+    return String(status).toLowerCase();
+  };
+
+  // Real data from API
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [consultants, setConsultants] = useState([]);
+  const [myAppointments, setMyAppointments] = useState([]);
 
   // Booking state
-  const [selectedCounselor, setSelectedCounselor] = useState(null);
+  const [selectedConsultant, setSelectedConsultant] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [bookingForm, setBookingForm] = useState({
-    email: "",
-    phone: "",
-    reason: "",
+    note: "",
+    attachments: [],
   });
   const [formErrors, setFormErrors] = useState({});
-  const [bookingConfirmed, setBookingConfirmed] = useState(false);
-  const [availableDates, setAvailableDates] = useState([]);
-  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [currentWeek, setCurrentWeek] = useState([]);
   const [nextWeek, setNextWeek] = useState([]);
-  const [availableConsultants, setAvailableConsultants] = useState(
-    []
-  );
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Refs for scrolling
   const timeSelectRef = useRef(null);
   const consultantsRef = useRef(null);
   const bookingFormRef = useRef(null);
-  const confirmationRef = useRef(null);
 
-  // Get all unique specialties from counselors
-  const allSpecialties = [
-    ...new Set(counselorsData.flatMap((c) => c.specialties)),
-  ];
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadAvailableSlots();
+      // Only load appointments for regular users, not consultants
+      if (!isConsultant()) {
+        loadMyAppointments();
+      }
+    }
+    generateWeeks();
+
+    // Update current time every minute
+    const timeInterval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(timeInterval);
+  }, [isAuthenticated, isConsultant]);
+
+  const generateWeeks = () => {
+    const today = new Date();
+    const currentWeekDates = [];
+    const nextWeekDates = [];
+
+    // Generate current week (next 7 days starting from today)
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() + i);
+      currentWeekDates.push({
+        date: date,
+        formatted: formatDateShort(date),
+        isPast: isPastDate(date),
+        isToday: isToday(date),
+        dateString: date.toISOString().split("T")[0],
+      });
+    }
+
+    // Generate next week (days 7-14)
+    for (let i = 7; i < 14; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() + i);
+      nextWeekDates.push({
+        date: date,
+        formatted: formatDateShort(date),
+        isPast: false,
+        isToday: false,
+        dateString: date.toISOString().split("T")[0],
+      });
+    }
+
+    setCurrentWeek(currentWeekDates);
+    setNextWeek(nextWeekDates);
+  };
+
+  const loadAvailableSlots = async () => {
+    setIsLoading(true);
+    try {
+      const startDate = new Date().toISOString().split("T")[0];
+      const endDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+
+      let slotsData = [];
+
+      // Try 1: Get all available slots first (no query params)
+      try {
+        const response =
+          await consultationService.getAllAvailableSlots();
+        if (response.success && response.data) {
+          const allSlots = response.data.data || response.data || [];
+          // Filter by date range client-side
+          slotsData = allSlots.filter((slot) => {
+            const slotDate = slot.workDate || slot.date;
+            return slotDate >= startDate && slotDate <= endDate;
+          });
+        }
+      } catch (error) {
+        // Silently continue to next attempt
+      }
+
+      // Try 2: Search slots with date range
+      if (slotsData.length === 0) {
+        try {
+          const response = await consultationService.searchSlots({
+            startDate,
+            endDate,
+          });
+          if (response.success && response.data) {
+            slotsData = response.data.data || response.data || [];
+          }
+        } catch (error) {
+          // Silently continue to next attempt
+        }
+      }
+
+      // Try 3: Get available slots with query params
+      if (slotsData.length === 0) {
+        try {
+          const response =
+            await consultationService.getAvailableSlots({
+              startDate,
+              endDate,
+            });
+          if (response.success && response.data) {
+            slotsData = response.data.data || response.data || [];
+          }
+        } catch (error) {
+          // Silently continue to next attempt
+        }
+      }
+
+      // Try 4: Public available slots (for users)
+      if (slotsData.length === 0) {
+        try {
+          const response =
+            await consultationService.getPublicAvailableSlots({
+              startDate,
+              endDate,
+            });
+          if (response.success && response.data) {
+            slotsData = response.data.data || response.data || [];
+          }
+        } catch (error) {
+          // Silently continue to next attempt
+        }
+      }
+
+      // Try 5: Try getMySlots if user is a consultant (for testing)
+      if (slotsData.length === 0 && isConsultant()) {
+        try {
+          const response = await consultationService.getMySlots();
+          if (response.success && response.data) {
+            const allSlots =
+              response.data.data || response.data || [];
+            slotsData = allSlots.filter((slot) => {
+              const slotDate = slot.workDate || slot.date;
+              return slotDate >= startDate && slotDate <= endDate;
+            });
+          }
+        } catch (error) {
+          // Silently continue to next attempt
+        }
+      }
+
+      // Try 6: Debug - get ALL slots regardless of status/filters
+      if (slotsData.length === 0) {
+        try {
+          const response =
+            await consultationService.getAllSlotsDebug();
+          if (response.success && response.data) {
+            const allSlots =
+              response.data.data || response.data || [];
+            // Filter by date range and show what we have
+            slotsData = allSlots.filter((slot) => {
+              const slotDate = slot.workDate || slot.date;
+              return slotDate >= startDate && slotDate <= endDate;
+            });
+          }
+        } catch (error) {
+          // All attempts failed, will show no slots message
+        }
+      }
+
+      // Ensure slotsData is always an array
+      const finalSlotsData = Array.isArray(slotsData)
+        ? slotsData
+        : [];
+      setAvailableSlots(finalSlotsData);
+
+      if (finalSlotsData.length === 0) {
+        setErrorMessage(
+          "No available slots found. Consultants may not have created any slots yet."
+        );
+      } else {
+        setErrorMessage(""); // Clear any previous error messages
+      }
+    } catch (err) {
+      console.error("Error loading available slots:", err);
+      setErrorMessage(
+        "Error loading available slots: " + err.message
+      );
+      // Always set an empty array on error
+      setAvailableSlots([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadMyAppointments = async () => {
+    // Don't load appointments for consultants - they should use the ConsultTime page
+    if (isConsultant()) {
+      return;
+    }
+
+    // Only try to load appointments if user is properly authenticated
+    if (!isAuthenticated || !currentUser) {
+      setMyAppointments([]);
+      return;
+    }
+
+    // Check if we have a valid token
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setMyAppointments([]);
+      setErrorMessage("Please log in to view your appointments.");
+      return;
+    }
+
+    try {
+      const response = await consultationService.getMyAppointments();
+      if (response.success) {
+        setMyAppointments(response.data.data || []);
+      } else {
+        // Handle API errors gracefully
+        if (response.error && response.error.includes("401")) {
+          setErrorMessage(
+            "Your session has expired. Please log in again."
+          );
+        } else {
+          setMyAppointments([]);
+        }
+      }
+    } catch (err) {
+      // Handle authentication errors without showing error messages
+      if (
+        err.message.includes("401") ||
+        err.message.includes("403") ||
+        err.message.includes("Unauthorized")
+      ) {
+        setMyAppointments([]);
+        setErrorMessage("Please log in to view your appointments.");
+      } else {
+        setMyAppointments([]);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to load appointments:", err);
+        }
+      }
+    }
+  };
 
   // Helper function to format date as "Day Date" (e.g. "Mon 3")
   const formatDateShort = (date) => {
@@ -148,8 +327,7 @@ const Counseling = () => {
       weekday: "short",
     });
     const dayNum = date.getDate();
-    const formatted = `${day} ${dayNum}`;
-    return formatted;
+    return `${day} ${dayNum}`;
   };
 
   // Helper function to check if a date is today
@@ -169,437 +347,436 @@ const Counseling = () => {
     return date < today;
   };
 
-  // Memoize the generateTimeSlots function
-  const memoizedGenerateTimeSlots = React.useCallback(() => {
-    const slots = [];
-    const now = new Date();
-
-    // For today, implement strict time slot filtering
-    if (selectedDate && isToday(new Date(selectedDate))) {
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-
-      // Calculate the next possible time slot (current hour + 2 at minimum)
-      // If we're at 8:00, the earliest slot should be 10:00
-      let minimumHour = currentHour + 2;
-
-      console.log(
-        `Current time: ${currentHour}:${currentMinute}, minimum bookable hour: ${minimumHour}:00`
-      );
-
-      for (let hour = 8; hour < 20; hour++) {
-        // Check if this time slot is at least 2 hours in the future
-        const isPast = hour < minimumHour;
-
-        // Only include future time slots if we want to completely hide past slots
-        // This option keeps past slots but marks them as disabled
-        // if (!isPast) {
-        const formattedStartTime = new Date().setHours(hour, 0, 0, 0);
-        const startTimeStr = new Date(
-          formattedStartTime
-        ).toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        });
-
-        const formattedEndTime = new Date().setHours(
-          hour + 1,
-          0,
-          0,
-          0
-        );
-        const endTimeStr = new Date(
-          formattedEndTime
-        ).toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        });
-
-        const timeSlot = {
-          id: hour - 8,
-          display: `${startTimeStr} - ${endTimeStr}`,
-          start: hour,
-          end: hour + 1,
-          isPast: isPast,
-        };
-
-        slots.push(timeSlot);
-        // }
-      }
-    } else {
-      // For future dates, show all time slots
-      for (let hour = 8; hour < 20; hour++) {
-        const formattedStartTime = new Date().setHours(hour, 0, 0, 0);
-        const startTimeStr = new Date(
-          formattedStartTime
-        ).toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        });
-
-        const formattedEndTime = new Date().setHours(
-          hour + 1,
-          0,
-          0,
-          0
-        );
-        const endTimeStr = new Date(
-          formattedEndTime
-        ).toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        });
-
-        const timeSlot = {
-          id: hour - 8,
-          display: `${startTimeStr} - ${endTimeStr}`,
-          start: hour,
-          end: hour + 1,
-          isPast: false,
-        };
-
-        slots.push(timeSlot);
-      }
-    }
-
-    return slots;
-  }, [selectedDate]);
-
-  // Replace the original generateTimeSlots function
-  const generateTimeSlots = memoizedGenerateTimeSlots;
-
-  // Generate current week and next week dates
-  useEffect(() => {
-    const today = new Date();
-    console.log("Today's date:", today.toDateString());
-    const currentWeekDates = [];
-    const nextWeekDates = [];
-
-    // Start with today
-    const startDate = new Date(today);
-
-    // Generate current week (from today to end of week)
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + i);
-
-      // Stop when we reach next week
-      if (date.getDay() === 0 && i > 0) break;
-
-      const isCurrentDay = isToday(date);
-      if (isCurrentDay) {
-        console.log("Marking as today:", date.toDateString());
-      }
-
-      currentWeekDates.push({
-        date: date,
-        formatted: formatDateShort(date),
-        isToday: isCurrentDay,
-        isPast: isPastDate(date),
-        dayName: date.toLocaleDateString("en-US", {
-          weekday: "long",
-        }),
-      });
-    }
-
-    // Generate next week (from next Sunday to next Saturday)
-    const nextSunday = new Date(startDate);
-    while (nextSunday.getDay() !== 0) {
-      nextSunday.setDate(nextSunday.getDate() + 1);
-    }
-
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(nextSunday);
-      date.setDate(nextSunday.getDate() + i);
-
-      nextWeekDates.push({
-        date: date,
-        formatted: formatDateShort(date),
-        isToday: false,
-        isPast: false,
-        dayName: date.toLocaleDateString("en-US", {
-          weekday: "long",
-        }),
-      });
-    }
-
-    setCurrentWeek(currentWeekDates);
-    setNextWeek(nextWeekDates);
-  }, []);
-
-  // Update current time every second for the clock display
-  useEffect(() => {
-    const clockTimer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000); // Update every second for smooth clock display
-
-    return () => clearInterval(clockTimer);
-  }, []);
-
-  // Handle time slot updates separately at a longer interval
-  useEffect(() => {
-    // Initial update of time slots
-    if (selectedDate && isToday(new Date(selectedDate))) {
-      setAvailableTimeSlots(memoizedGenerateTimeSlots());
-    }
-
-    // Update time slots every 30 seconds
-    const timeSlotTimer = setInterval(() => {
-      // Always refresh time slots for today to ensure past slots disappear
-      if (selectedDate && isToday(new Date(selectedDate))) {
-        const updatedSlots = memoizedGenerateTimeSlots();
-        console.log(
-          "Updating time slots:",
-          updatedSlots.length,
-          "slots available"
-        );
-        setAvailableTimeSlots(updatedSlots);
-
-        // If the currently selected time is no longer available, clear it
-        if (selectedTime) {
-          const isTimeStillAvailable = updatedSlots.some(
-            (slot) => slot.display === selectedTime
-          );
-
-          if (!isTimeStillAvailable) {
-            console.log(
-              "Selected time is no longer available:",
-              selectedTime
-            );
-            setSelectedTime("");
-            setSelectedCounselor(null);
-          }
-        }
-      }
-    }, 30000); // Check every 30 seconds
-
-    return () => clearInterval(timeSlotTimer);
-  }, [selectedDate, memoizedGenerateTimeSlots, selectedTime]);
-
-  // Format current time as HH:MM:SS
   const formatCurrentTime = () => {
-    return currentTime.toLocaleTimeString("en-US", {
+    return currentTime.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
     });
   };
 
-  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setBookingForm({
-      ...bookingForm,
+    setBookingForm((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
 
-    // Clear error when user starts typing
+    // Clear specific error when user starts typing
     if (formErrors[name]) {
-      setFormErrors({
-        ...formErrors,
+      setFormErrors((prev) => ({
+        ...prev,
         [name]: "",
-      });
+      }));
     }
   };
 
-  // Validate booking form
   const validateForm = () => {
     const errors = {};
 
-    if (!bookingForm.email.trim()) {
-      errors.email = "Email là bắt buộc";
-    } else if (!/\S+@\S+\.\S+/.test(bookingForm.email)) {
-      errors.email = "Email không hợp lệ";
+    if (!selectedSlot) {
+      errors.slot = "Please select a time slot";
     }
 
-    if (!bookingForm.phone.trim()) {
-      errors.phone = "Số điện thoại là bắt buộc";
-    }
-
-    if (!bookingForm.reason.trim()) {
-      errors.reason = "Lý do thăm khám là bắt buộc";
-    }
-
-    if (!selectedDate) {
-      errors.date = "Vui lòng chọn ngày";
-    }
-
-    if (!selectedTime) {
-      errors.time = "Vui lòng chọn giờ";
-    }
-
-    if (!selectedCounselor) {
-      errors.counselor = "Vui lòng chọn tư vấn viên";
+    if (bookingForm.note && bookingForm.note.length > 1000) {
+      errors.note = "Note cannot exceed 1000 characters";
     }
 
     return errors;
   };
 
-  // Handle booking submission
-  const handleBookingSubmit = (e) => {
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
 
     const errors = validateForm();
-    if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
       return;
     }
 
-    // Check if user has reached maximum bookings (1 per week)
-    // In a real app, this would be checked against the database
-    const hasReachedMaxBookings = false; // Simulate this check
+    // Check authentication before proceeding
+    if (!isAuthenticated || !currentUser) {
+      setErrorMessage("Please log in to book appointments.");
+      return;
+    }
 
-    if (hasReachedMaxBookings) {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
       setErrorMessage(
-        "Bạn đã đạt đến số lượng đặt lịch tối đa trong tuần này (1 lịch hẹn)"
+        "Your session has expired. Please log in again."
       );
       return;
     }
 
     setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      // Here you would typically send this to your backend
-      console.log("Booking submitted:", {
-        counselor: selectedCounselor.name,
-        date: selectedDate,
-        time: selectedTime,
-        ...bookingForm,
-      });
-
-      setIsLoading(false);
-      // Show confirmation
-      setBookingConfirmed(true);
-    }, 1000);
-  };
-
-  // Handle date selection
-  const handleDateSelection = (dateObj) => {
-    // Format the date consistently
-    const formattedDate = dateObj.formatted;
-    console.log("Selected date:", formattedDate);
-
-    setSelectedDate(formattedDate);
-    setSelectedTime("");
     setErrorMessage("");
-    setSelectedCounselor(null);
 
-    // Force regeneration of time slots with a slight delay to ensure state update
-    setTimeout(() => {
-      const slots = memoizedGenerateTimeSlots();
-      console.log(
-        `Generated ${slots.length} time slots for ${formattedDate}`
+    try {
+      const appointmentData = {
+        slotId: selectedSlot.id,
+        note: bookingForm.note,
+        attachments: bookingForm.attachments,
+      };
+
+      const response = await consultationService.createAppointment(
+        appointmentData
       );
 
-      // Filter out past slots for today to ensure they don't appear at all
-      if (dateObj.isToday) {
-        const now = new Date();
-        const currentHour = now.getHours();
-        const minimumHour = currentHour + 2;
-        const filteredSlots = slots.filter(
-          (slot) => slot.start >= minimumHour
-        );
-        console.log(
-          `Filtered to ${filteredSlots.length} available slots after removing past times`
-        );
-        setAvailableTimeSlots(filteredSlots);
+      if (response.success) {
+        setSuccessMessage("Appointment booked successfully!");
+
+        // Reset the booking form and selection
+        resetBooking();
+
+        // Refresh available slots and appointments
+        await Promise.all([
+          loadAvailableSlots(),
+          loadMyAppointments(),
+        ]);
       } else {
-        setAvailableTimeSlots(slots);
-      }
-    }, 10);
+        // Handle different types of errors
+        let errorMsg = response.error || "Failed to book appointment";
+        let shouldRefreshSlots = false;
 
-    // Filter available consultants for this date
-    filterAvailableConsultants(dateObj);
+        if (
+          errorMsg.includes("401") ||
+          errorMsg.includes("Unauthorized")
+        ) {
+          errorMsg = "Your session has expired. Please log in again.";
+        } else if (
+          errorMsg.includes("409") ||
+          errorMsg.includes("Conflict") ||
+          errorMsg.includes("conflict")
+        ) {
+          shouldRefreshSlots = true; // Refresh slots after conflict
+          // More specific conflict messages
+          if (errorMsg.toLowerCase().includes("already booked")) {
+            errorMsg =
+              "This time slot has already been booked by another user. Please select a different time.";
+          } else if (errorMsg.toLowerCase().includes("duplicate")) {
+            errorMsg =
+              "You have already booked an appointment for this time slot.";
+          } else if (
+            errorMsg.toLowerCase().includes("advance") ||
+            errorMsg.toLowerCase().includes("hours")
+          ) {
+            errorMsg =
+              "This appointment is too close to the current time. Please book at least 3 hours in advance.";
+          } else if (errorMsg.toLowerCase().includes("unavailable")) {
+            errorMsg =
+              "This time slot is no longer available. Please refresh and select another time.";
+          } else {
+            errorMsg =
+              "This time slot is no longer available. Please select another time.";
+          }
+        } else if (errorMsg.includes("400")) {
+          errorMsg =
+            "Invalid booking request. Please check your selection and try again.";
+        } else if (
+          errorMsg.includes("403") ||
+          errorMsg.includes("Forbidden")
+        ) {
+          errorMsg =
+            "You don't have permission to book this appointment.";
+        }
 
-    // Scroll to time selector after a short delay
-    setTimeout(() => {
-      if (timeSelectRef.current) {
-        timeSelectRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }
-    }, 300);
-  };
+        setErrorMessage(errorMsg);
 
-  // Filter consultants available on selected date and time
-  const filterAvailableConsultants = (dateObj) => {
-    setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      // In a real implementation, you would fetch this from an API
-      // For now, we'll just filter the mock data
-      const dayName = dateObj.dayName;
-      const availableConsultants = counselorsData.filter(
-        (counselor) => counselor.availableDays.includes(dayName)
-      );
-
-      setAvailableConsultants(availableConsultants);
+        // Refresh available slots if there was a conflict
+        if (shouldRefreshSlots) {
+          // Clear current selection since it's no longer valid
+          setSelectedSlot(null);
+          setSelectedTime("");
+          // Show loading state while refreshing
+          setIsLoading(true);
+          // Refresh slots to show current availability
+          await loadAvailableSlots();
       setIsLoading(false);
-    }, 500);
+        }
+      }
+    } catch (err) {
+      let errorMsg = "Failed to book appointment: " + err.message;
+      let shouldRefreshSlots = false;
+
+      if (
+        err.message.includes("401") ||
+        err.message.includes("Unauthorized")
+      ) {
+        errorMsg = "Your session has expired. Please log in again.";
+      } else if (
+        err.message.includes("409") ||
+        err.message.includes("Conflict") ||
+        err.message.includes("conflict")
+      ) {
+        shouldRefreshSlots = true; // Refresh slots after conflict
+        // More specific conflict messages
+        if (err.message.toLowerCase().includes("already booked")) {
+          errorMsg =
+            "This time slot has already been booked by another user. Please select a different time.";
+        } else if (err.message.toLowerCase().includes("duplicate")) {
+          errorMsg =
+            "You have already booked an appointment for this time slot.";
+        } else if (
+          err.message.toLowerCase().includes("advance") ||
+          err.message.toLowerCase().includes("hours")
+        ) {
+          errorMsg =
+            "This appointment is too close to the current time. Please book at least 3 hours in advance.";
+        } else if (
+          err.message.toLowerCase().includes("unavailable")
+        ) {
+          errorMsg =
+            "This time slot is no longer available. Please refresh and select another time.";
+        } else {
+          errorMsg =
+            "This time slot is no longer available. Please select another time.";
+        }
+      } else if (err.message.includes("400")) {
+        errorMsg =
+          "Invalid booking request. Please check your selection and try again.";
+      } else if (
+        err.message.includes("403") ||
+        err.message.includes("Forbidden")
+      ) {
+        errorMsg =
+          "You don't have permission to book this appointment.";
+      }
+
+      setErrorMessage(errorMsg);
+
+      // Refresh available slots if there was a conflict
+      if (shouldRefreshSlots) {
+        // Clear current selection since it's no longer valid
+        setSelectedSlot(null);
+        setSelectedTime("");
+        // Show loading state while refreshing
+        setIsLoading(true);
+        // Refresh slots to show current availability
+        await loadAvailableSlots();
+        setIsLoading(false);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Handle time slot selection
-  const handleTimeSelection = (timeSlot) => {
-    setSelectedTime(timeSlot.display);
+  const handleDateSelection = (dateObj) => {
+    setSelectedDate(dateObj.dateString);
+    setSelectedTime("");
+    setSelectedSlot(null);
     setErrorMessage("");
 
-    // Scroll to consultants section after a short delay
+    // Ensure availableSlots is an array
+    const slotsArray = Array.isArray(availableSlots)
+      ? availableSlots
+      : [];
+
+    // Filter slots for selected date - check both date and workDate fields
+    const slotsForDate = slotsArray.filter((slot) => {
+      const slotDate = slot.workDate || slot.date;
+
+      // Extract date part from datetime format (2025-06-25T00:00:00 -> 2025-06-25)
+      const normalizedSlotDate = slotDate
+        ? slotDate.split("T")[0]
+        : null;
+
+      // Handle different status formats - numeric 0 probably means "available"
+      const isAvailable =
+        slot.status === 0 ||
+        slot.status === "available" ||
+        getStatusLower(slot.status) === "available";
+
+      // Check if slot date matches selected date
+      const dateMatches = normalizedSlotDate === dateObj.dateString;
+
+      // Check if slot can be booked (must be at least 3 hours from now)
+      let canBook = true;
+      if (slot.startTime) {
+        const now = new Date();
+        const slotStartTime = new Date(slot.startTime);
+        const threeHoursFromNow = new Date(
+          now.getTime() + 3 * 60 * 60 * 1000
+        ); // Add 3 hours
+        canBook = slotStartTime >= threeHoursFromNow;
+      }
+
+      return dateMatches && isAvailable && canBook;
+    });
+
+    if (slotsForDate.length === 0) {
+      setErrorMessage("No available slots for the selected date");
+    }
+
+    // Scroll to time selection
     setTimeout(() => {
-      if (consultantsRef.current) {
-        consultantsRef.current.scrollIntoView({
+      timeSelectRef.current?.scrollIntoView({
           behavior: "smooth",
           block: "nearest",
+        });
+    }, 100);
+  };
+
+  const handleTimeSelection = (slot) => {
+    setSelectedSlot(slot);
+    setSelectedTime(
+      `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`
+    );
+
+    // Find consultant info (we might need to enhance the API to include consultant details)
+    setSelectedConsultant({
+      id: slot.consultantId,
+      name: slot.consultantName || "Consultant",
+    });
+
+    setErrorMessage("");
+  };
+
+  const formatTime = (timeString) => {
+    if (!timeString) return "Unknown time";
+
+    try {
+      // Handle different time formats
+
+      // Format 1: Full datetime format like "2025-06-25T19:00:00" or "2025-06-25T19:00:00.000Z"
+      if (timeString.includes("T")) {
+        const date = new Date(timeString);
+        if (date instanceof Date && !isNaN(date)) {
+          return date.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+      }
+
+      // Format 2: Time only like "19:00:00" or "19:00"
+      if (timeString.includes(":")) {
+        const timeParts = timeString.split(":");
+        if (timeParts.length >= 2) {
+          const hours = parseInt(timeParts[0]);
+          const minutes = parseInt(timeParts[1]);
+          if (!isNaN(hours) && !isNaN(minutes)) {
+            const date = new Date();
+            date.setHours(hours, minutes, 0, 0);
+            return date.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          }
+        }
+      }
+
+      // Format 3: Try to parse as a regular date string
+      const date = new Date(timeString);
+      if (date instanceof Date && !isNaN(date)) {
+        return date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
         });
       }
-    }, 300);
+
+      // If all parsing fails, return the original string
+      return timeString;
+    } catch (error) {
+      console.warn("Error formatting time:", timeString, error);
+      return timeString || "Unknown time";
+    }
   };
 
-  // Scroll to booking form when consultant is selected
-  useEffect(() => {
-    if (selectedCounselor && bookingFormRef.current) {
-      setTimeout(() => {
-        bookingFormRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }, 300);
-    }
-  }, [selectedCounselor]);
-
-  // Scroll to confirmation when booking is confirmed
-  useEffect(() => {
-    if (bookingConfirmed && confirmationRef.current) {
-      setTimeout(() => {
-        confirmationRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 300);
-    }
-  }, [bookingConfirmed]);
-
-  // Function to check if we can proceed to booking
   const canProceedToBooking = () => {
-    return selectedDate && selectedTime && selectedCounselor;
+    return selectedSlot && isAuthenticated && !isConsultant();
   };
 
-  // Function to handle proceed to booking
   const handleProceedToBooking = () => {
-    // Scroll to the booking form
-    if (bookingFormRef.current) {
-      bookingFormRef.current.scrollIntoView({
+    if (!isAuthenticated) {
+      setErrorMessage("Please log in to book an appointment");
+      return;
+    }
+
+    if (isConsultant()) {
+      setErrorMessage(
+        "Consultants cannot book appointments. This page is for viewing available slots only."
+      );
+      return;
+    }
+
+    // Scroll to booking form
+    setTimeout(() => {
+      bookingFormRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "nearest",
       });
-    }
+    }, 100);
+  };
+
+  const getAvailableTimeSlotsForDate = (dateString) => {
+    // Ensure availableSlots is an array
+    const slotsArray = Array.isArray(availableSlots)
+      ? availableSlots
+      : [];
+
+    const filteredSlots = slotsArray
+      .filter((slot) => {
+        // Check both date and workDate fields since consultant creates with workDate
+        const slotDate = slot.workDate || slot.date;
+
+        // Extract date part from datetime format (2025-06-25T00:00:00 -> 2025-06-25)
+        const normalizedSlotDate = slotDate
+          ? slotDate.split("T")[0]
+          : null;
+
+        // Handle different status formats - numeric 0 probably means "available"
+        const isAvailable =
+          slot.status === 0 ||
+          slot.status === "available" ||
+          getStatusLower(slot.status) === "available";
+
+        // Check if slot date matches selected date
+        const dateMatches = normalizedSlotDate === dateString;
+
+        // Check if slot can be booked (must be at least 3 hours from now)
+        let canBook = true;
+        if (slot.startTime) {
+          const now = new Date();
+          const slotStartTime = new Date(slot.startTime);
+          const threeHoursFromNow = new Date(
+            now.getTime() + 3 * 60 * 60 * 1000
+          ); // Add 3 hours
+          canBook = slotStartTime >= threeHoursFromNow;
+        }
+
+        return dateMatches && isAvailable && canBook;
+      })
+      .map((slot) => ({
+        ...slot,
+        display: `${formatTime(slot.startTime)} - ${formatTime(
+          slot.endTime
+        )}`,
+        sortTime: slot.startTime, // Add sort key
+      }))
+      .sort((a, b) => {
+        // Sort by start time chronologically
+        return (
+          new Date(a.startTime).getTime() -
+          new Date(b.startTime).getTime()
+        );
+      });
+
+    return filteredSlots;
+  };
+
+  const clearMessages = () => {
+    setErrorMessage("");
+    setSuccessMessage("");
+  };
+
+  const resetBooking = () => {
+    setSelectedSlot(null);
+    setSelectedDate("");
+    setSelectedTime("");
+    setSelectedConsultant(null);
+    setBookingForm({ note: "", attachments: [] });
+    setFormErrors({});
+    clearMessages();
   };
 
   return (
@@ -608,19 +785,72 @@ const Counseling = () => {
         <div className="container">
           <h1>Dịch Vụ Tư Vấn</h1>
           <p>
-            Đặt lịch hẹn tư vấn trực tuyến với các tư vấn viên chuyên
-            nghiệp
+            {isConsultant()
+              ? "Xem các khung giờ tư vấn có sẵn (Chế độ xem dành cho tư vấn viên)"
+              : "Đặt lịch hẹn tư vấn trực tuyến với các tư vấn viên chuyên nghiệp"}
           </p>
         </div>
       </div>
 
       <div className="container">
         <div className="tab-navigation fade-in delay-100">
-          <button className="tab-btn active">Đặt Lịch Hẹn</button>
+          <button
+            className={`tab-btn ${
+              activeTab === "booking" ? "active" : ""
+            }`}
+            onClick={() => setActiveTab("booking")}>
+            {isConsultant() ? "Xem Khung Giờ" : "Đặt Lịch Hẹn"}
+          </button>
+          {isAuthenticated && (
+            <button
+              className={`tab-btn ${
+                activeTab === "appointments" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("appointments")}>
+              {isConsultant()
+                ? "Lịch Hẹn Đã Đặt"
+                : "Lịch Hẹn Của Tôi"}
+            </button>
+          )}
         </div>
 
+        {/* Error and Success Messages */}
+        {errorMessage && (
+          <div className="alert alert-error">
+            <FontAwesomeIcon icon={faTimesCircle} />
+            {errorMessage}
+            <button onClick={clearMessages} className="close-btn">
+              ×
+            </button>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="alert alert-success">
+            <FontAwesomeIcon icon={faCheck} />
+            {successMessage}
+            <button onClick={clearMessages} className="close-btn">
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Authentication Notice */}
+        {!isAuthenticated && (
+          <div className="alert alert-info">
+            <FontAwesomeIcon icon={faInfoCircle} />
+            Please log in to book appointments or view your booking
+            history.
+            <button
+              onClick={() => (window.location.href = "/login")}
+              className="btn-link">
+              Go to Login
+            </button>
+          </div>
+        )}
+
+        {activeTab === "booking" && (
         <div className="booking-section">
-          {!bookingConfirmed ? (
             <>
               <div className="booking-layout fade-in delay-200">
                 {/* Left side - Time selection */}
@@ -633,13 +863,6 @@ const Counseling = () => {
                       Ngày
                     </h4>
 
-                    {errorMessage && (
-                      <div className="error-message">
-                        <FontAwesomeIcon icon={faTimesCircle} />{" "}
-                        {errorMessage}
-                      </div>
-                    )}
-
                     <div className="calendar-wrapper fade-in delay-300">
                       <div className="week-header">Tuần Này</div>
                       <div className="dates-grid">
@@ -650,7 +873,7 @@ const Counseling = () => {
                               ${dateObj.isPast ? "past" : ""} 
                               ${dateObj.isToday ? "today" : ""}
                               ${
-                                selectedDate === dateObj.formatted
+                                selectedDate === dateObj.dateString
                                   ? "selected"
                                   : ""
                               }
@@ -676,10 +899,8 @@ const Counseling = () => {
                           <button
                             key={index}
                             className={`date-btn 
-                              ${dateObj.isPast ? "past" : ""} 
-                              ${dateObj.isToday ? "today" : ""}
                               ${
-                                selectedDate === dateObj.formatted
+                                selectedDate === dateObj.dateString
                                   ? "selected"
                                   : ""
                               }
@@ -713,26 +934,38 @@ const Counseling = () => {
                         <FontAwesomeIcon icon={faClock} /> Chọn Giờ
                       </h4>
                       <div className="times-grid">
-                        {availableTimeSlots.map((timeSlot, index) => (
+                        {getAvailableTimeSlotsForDate(
+                          selectedDate
+                        ).map((slot, index) => (
                           <button
                             key={index}
                             className={`time-btn ${
-                              selectedTime === timeSlot.display
+                              selectedSlot?.id === slot.id
                                 ? "selected"
                                 : ""
-                            } ${timeSlot.isPast ? "past" : ""}`}
+                            } ${slot.isPast ? "past" : ""} ${
+                              isConsultant() ? "consultant-view" : ""
+                            }`}
                             onClick={() =>
-                              !timeSlot.isPast &&
-                              handleTimeSelection(timeSlot)
+                              !slot.isPast &&
+                              !isConsultant() &&
+                              handleTimeSelection(slot)
                             }
-                            disabled={timeSlot.isPast}>
-                            {timeSlot.display}
+                            disabled={slot.isPast || isConsultant()}>
+                            {slot.display}
+                            <small>{slot.consultantName}</small>
                           </button>
                         ))}
                       </div>
-                      {formErrors.time && (
+                      {getAvailableTimeSlotsForDate(selectedDate)
+                        .length === 0 && (
+                        <div className="no-slots">
+                          Không có khung giờ nào khả dụng cho ngày này
+                        </div>
+                      )}
+                      {formErrors.slot && (
                         <div className="error-text">
-                          {formErrors.time}
+                          {formErrors.slot}
                         </div>
                       )}
                     </div>
@@ -774,11 +1007,11 @@ const Counseling = () => {
                       </div>
                     )}
 
-                    {selectedCounselor ? (
+                    {selectedConsultant ? (
                       <div className="selection-item">
                         <FontAwesomeIcon icon={faUser} />
                         <span>Tư vấn viên:</span>{" "}
-                        {selectedCounselor.name}
+                        {selectedConsultant.name}
                       </div>
                     ) : (
                       <div className="selection-item">
@@ -789,10 +1022,17 @@ const Counseling = () => {
                   </div>
 
                   <button
-                    className="confirmation-btn"
+                    className={`confirmation-btn ${
+                      isConsultant() ? "consultant-view" : ""
+                    }`}
                     disabled={!canProceedToBooking()}
                     onClick={handleProceedToBooking}>
-                    {selectedCounselor ? (
+                    {isConsultant() ? (
+                      <>
+                        <FontAwesomeIcon icon={faInfoCircle} />
+                        View Only (Consultants cannot book)
+                      </>
+                    ) : selectedSlot ? (
                       <>
                         <FontAwesomeIcon icon={faCheck} />
                         Đặt Lịch Hẹn
@@ -800,239 +1040,235 @@ const Counseling = () => {
                     ) : (
                       <>
                         <FontAwesomeIcon icon={faInfoCircle} />
-                        Vui lòng chọn đầy đủ thông tin
+                        Chọn thời gian để tiếp tục
                       </>
                     )}
                   </button>
+
+                  {!isAuthenticated && (
+                    <div className="auth-notice">
+                      <FontAwesomeIcon icon={faInfoCircle} />
+                      Vui lòng đăng nhập để đặt lịch hẹn
+                    </div>
+                  )}
+
+                  {isConsultant() && (
+                    <div className="consultant-notice">
+                      <FontAwesomeIcon icon={faInfoCircle} />
+                      Bạn đang xem với tư cách tư vấn viên. Không thể
+                      đặt lịch hẹn.
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Consultants selection */}
-              {selectedDate && selectedTime && (
+              {/* Booking Form */}
+              {selectedSlot && isAuthenticated && !isConsultant() && (
                 <div
-                  className="available-consultants card fade-in"
-                  ref={consultantsRef}>
-                  <h3>Tư Vấn Viên Khả Dụng</h3>
-
-                  {isLoading ? (
-                    <div className="loading-spinner">
-                      <FontAwesomeIcon icon={faSpinner} spin />
-                      <span>Đang tải danh sách tư vấn viên...</span>
-                    </div>
-                  ) : availableConsultants.length > 0 ? (
-                    <div className="consultants-grid">
-                      {availableConsultants.map((consultant) => (
-                        <div
-                          key={consultant.id}
-                          className={`consultant-card ${
-                            selectedCounselor?.id === consultant.id
-                              ? "selected"
-                              : ""
-                          }`}
-                          onClick={() =>
-                            setSelectedCounselor(consultant)
-                          }>
-                          <div className="consultant-image">
-                            <img
-                              src={consultant.image}
-                              alt={consultant.name}
-                            />
-                          </div>
-                          <div className="consultant-details">
-                            <h4>{consultant.name}</h4>
-                            <p>{consultant.title}</p>
-                            <div className="consultant-rating">
-                              <FontAwesomeIcon
-                                icon={faStar}
-                                className="star-icon"
-                              />
-                              <span>{consultant.rating}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="no-consultants">
-                      <FontAwesomeIcon icon={faTimesCircle} />
-                      <p>
-                        Không có tư vấn viên khả dụng vào thời gian
-                        này
-                      </p>
-                    </div>
-                  )}
-
-                  {formErrors.counselor && (
-                    <div className="error-text">
-                      {formErrors.counselor}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Booking form */}
-              {selectedCounselor && (
-                <form
-                  className="booking-form card fade-in"
-                  onSubmit={handleBookingSubmit}
+                  className="booking-form-section fade-in"
                   ref={bookingFormRef}>
-                  <h3>Thông Tin Liên Hệ</h3>
-
+                  <div className="card">
+                    <h3>Thông Tin Đặt Lịch</h3>
+                <form
+                  onSubmit={handleBookingSubmit}
+                      className="booking-form">
                   <div className="form-group">
-                    <label htmlFor="email">Địa Chỉ Email</label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={bookingForm.email}
+                        <label htmlFor="note">
+                          Ghi chú (tùy chọn)
+                        </label>
+                        <textarea
+                          id="note"
+                          name="note"
+                          value={bookingForm.note}
                       onChange={handleInputChange}
-                      className={formErrors.email ? "error" : ""}
+                          placeholder="Mô tả vấn đề bạn muốn tư vấn..."
+                          rows="4"
+                          maxLength="1000"
+                          className={formErrors.note ? "error" : ""}
                     />
-                    {formErrors.email && (
+                        <small>
+                          {bookingForm.note.length}/1000 ký tự
+                        </small>
+                        {formErrors.note && (
                       <div className="error-text">
-                        {formErrors.email}
+                            {formErrors.note}
                       </div>
                     )}
                   </div>
 
-                  <div className="form-group">
-                    <label htmlFor="phone">Số Điện Thoại</label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={bookingForm.phone}
-                      onChange={handleInputChange}
-                      className={formErrors.phone ? "error" : ""}
-                    />
-                    {formErrors.phone && (
-                      <div className="error-text">
-                        {formErrors.phone}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="reason">Lý Do Thăm Khám</label>
-                    <textarea
-                      id="reason"
-                      name="reason"
-                      rows="3"
-                      value={bookingForm.reason}
-                      onChange={handleInputChange}
-                      className={
-                        formErrors.reason ? "error" : ""
-                      }></textarea>
-                    {formErrors.reason && (
-                      <div className="error-text">
-                        {formErrors.reason}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="booking-summary">
-                    <h4>Tóm Tắt Lịch Hẹn</h4>
-                    <div className="summary-details">
-                      <div className="summary-item">
-                        <strong>Tư vấn viên:</strong>{" "}
-                        {selectedCounselor.name}
-                      </div>
-                      <div className="summary-item">
-                        <strong>Ngày:</strong> {selectedDate}
-                      </div>
-                      <div className="summary-item">
-                        <strong>Giờ:</strong> {selectedTime}
-                      </div>
-                    </div>
-                  </div>
-
+                      <div className="form-actions">
+                        <button
+                          type="button"
+                          onClick={resetBooking}
+                          className="btn-secondary">
+                          Hủy
+                        </button>
                   <button
                     type="submit"
-                    className="btn btn-primary submit-btn">
+                          disabled={isLoading}
+                          className="btn-primary">
                     {isLoading ? (
                       <>
-                        <FontAwesomeIcon icon={faSpinner} spin /> Đang
-                        xử lý...
+                              <FontAwesomeIcon
+                                icon={faSpinner}
+                                spin
+                              />
+                              Đang đặt lịch...
                       </>
                     ) : (
-                      "Đặt Lịch Hẹn"
+                            <>
+                              <FontAwesomeIcon icon={faCheck} />
+                              Xác nhận đặt lịch
+                            </>
                     )}
                   </button>
+                      </div>
                 </form>
+                  </div>
+                </div>
               )}
             </>
-          ) : (
-            <div
-              className="booking-confirmation card fade-in"
-              ref={confirmationRef}>
-              <div className="confirmation-icon">
-                <FontAwesomeIcon icon={faCheck} />
               </div>
-              <h2>Đã Đặt Lịch Thành Công!</h2>
-              <p>
-                Bạn đã đặt lịch thành công với{" "}
-                {selectedCounselor.name} vào:
-              </p>
-              <div className="confirmation-details">
-                <p className="detail-item">
-                  <strong>Ngày:</strong> {selectedDate}
-                </p>
-                <p className="detail-item">
-                  <strong>Giờ:</strong> {selectedTime}
-                </p>
-              </div>
-              <p className="confirmation-message">
-                Bạn đã đặt lịch hẹn thành công với{" "}
-                {selectedCounselor.name} vào {selectedDate} lúc{" "}
-                {selectedTime}. Đang chờ xác nhận từ tư vấn viên.
-              </p>
-              <div className="appointment-status">
-                <span className="status-badge pending">
-                  Đang chờ xác nhận
-                </span>
-              </div>
-              <div className="contact-info">
+        )}
+
+        {/* My Appointments Tab */}
+        {activeTab === "appointments" && isAuthenticated && (
+          <div className="appointments-section fade-in">
+            <h3>
+              {isConsultant()
+                ? "Lịch Hẹn Đã Đặt"
+                : "Lịch Hẹn Của Tôi"}
+            </h3>
+
+            {isConsultant() ? (
+              <div className="empty-appointments">
+                <FontAwesomeIcon icon={faCalendarDay} />
+                <h4>Quản lý lịch hẹn từ trang tư vấn</h4>
                 <p>
-                  Nếu bạn cần đổi lịch hoặc hủy, vui lòng liên hệ với
-                  chúng tôi:
+                  Để xem và quản lý các lịch hẹn của bạn, vui lòng
+                  truy cập trang Quản lý thời gian tư vấn.
                 </p>
-                <div className="contact-methods">
-                  <a
-                    href="tel:+1234567890"
-                    className="contact-method">
-                    <FontAwesomeIcon icon={faPhone} /> (123) 456-7890
-                  </a>
-                  <a
-                    href="mailto:contact@brightchoice.org"
-                    className="contact-method">
-                    <FontAwesomeIcon icon={faEnvelope} />{" "}
-                    contact@brightchoice.org
+                <button
+                  onClick={() =>
+                    (window.location.href = "/consult-time")
+                  }
+                  className="btn-primary">
+                  Đến trang quản lý
+                </button>
+              </div>
+            ) : isLoading ? (
+              <div className="loading">
+                <FontAwesomeIcon icon={faSpinner} spin />
+                Đang tải...
+              </div>
+            ) : myAppointments.length === 0 ? (
+              <div className="empty-appointments">
+                <FontAwesomeIcon icon={faCalendarDay} />
+                <h4>Chưa có lịch hẹn nào</h4>
+                <p>Đặt lịch hẹn đầu tiên của bạn ngay hôm nay!</p>
+                <button
+                  onClick={() => setActiveTab("booking")}
+                  className="btn-primary">
+                  Đặt lịch hẹn
+                </button>
+              </div>
+            ) : (
+              <div className="appointments-list">
+                {myAppointments.map((appointment) => {
+                  return (
+                    <div
+                      key={appointment.id}
+                      className={`appointment-card ${getStatusLower(
+                        appointment.status
+                      )}`}>
+                      <div className="appointment-header">
+                        <div className="appointment-info">
+                          <h4>
+                            {appointment.consultantName ||
+                              "Tư vấn viên"}
+                          </h4>
+                          <div className="appointment-datetime">
+                            <FontAwesomeIcon icon={faCalendarDay} />
+                            {appointment.availableSlot?.workDate?.split(
+                              "T"
+                            )[0] || appointment.date}{" "}
+                            -{" "}
+                            {formatTime(
+                              appointment.availableSlot?.startTime
+                            )}{" "}
+                            to{" "}
+                            {formatTime(
+                              appointment.availableSlot?.endTime
+                            )}
+                          </div>
+                        </div>
+                        <div
+                          className={`status-badge ${getStatusLower(
+                            appointment.status
+                          )}`}>
+                          {appointment.status}
+                        </div>
+                      </div>
+
+                      {appointment.note && (
+                        <div className="appointment-note">
+                          <strong>Ghi chú:</strong> {appointment.note}
+                        </div>
+                      )}
+
+                      {appointment.meetingLink &&
+                        getStatusLower(appointment.status) ===
+                          "confirmed" && (
+                          <div className="meeting-link">
+                            <FontAwesomeIcon icon={faUser} />
+                            <a
+                              href={appointment.meetingLink}
+                              target="_blank"
+                              rel="noopener noreferrer">
+                              Tham gia cuộc họp
                   </a>
                 </div>
-              </div>
-              <div className="action-buttons">
+                        )}
+
+                      {getStatusLower(appointment.status) ===
+                        "pending" && (
+                        <div className="appointment-actions">
                 <button
-                  className="btn btn-primary"
-                  onClick={() => {
-                    setBookingConfirmed(false);
-                    setSelectedDate("");
-                    setSelectedTime("");
-                    setSelectedCounselor(null);
-                    setBookingForm({
-                      email: "",
-                      phone: "",
-                      reason: "",
-                    });
-                  }}>
-                  Đặt Lịch Hẹn Mới
-                </button>
-                <button className="btn btn-outline cancel-btn">
-                  Hủy Lịch Hẹn
+                            onClick={async () => {
+                              const reason = prompt(
+                                "Lý do hủy lịch hẹn:"
+                              );
+                              if (reason) {
+                                const response =
+                                  await consultationService.cancelAppointmentByMember(
+                                    appointment.id,
+                                    reason
+                                  );
+                                if (response.success) {
+                                  setSuccessMessage(
+                                    "Đã hủy lịch hẹn thành công"
+                                  );
+                                  loadMyAppointments();
+                                } else {
+                                  setErrorMessage(
+                                    "Không thể hủy lịch hẹn: " +
+                                      response.error
+                                  );
+                                }
+                              }
+                            }}
+                            className="btn-danger">
+                            Hủy lịch hẹn
                 </button>
               </div>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );
