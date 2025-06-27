@@ -74,8 +74,8 @@ const SurveyHistoryPage = () => {
             <span role="img" aria-label="history">📜</span> Lịch sử khảo sát
           </div>
           <ul className="survey-history-list">
-            {history.map(h => (
-              <li key={h.id} className="survey-history-item">
+            {history.map((h, idx) => (
+              <li key={h.id || idx} className="survey-history-item">
                 <div className="survey-history-card">
                   <div className="survey-history-title">{h.surveyTitle}</div>
                   <div className="survey-history-date">Ngày nộp: {new Date(h.submittedAt).toLocaleDateString('vi-VN')}</div>
