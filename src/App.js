@@ -18,6 +18,8 @@ import Counseling from "./pages/Counseling";
 import Dashboard from "./pages/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
 
+// Event Pages
+import EventListPage from "./pages/events/EventListPage";
 
 // Components
 import Header from "./components/Header";
@@ -60,13 +62,13 @@ function AppContent() {
   return (
     <div className="App">
       <Header />
-      <main>
-        <Routes>
+      <main>        <Routes>
           <Route path="/Apitest" element={<ApiTest />} />
           <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/education" element={<EducationHub />} />
-          <Route path="/counseling" element={<Counseling />} />
+          <Route path="/login" element={<LoginPage />} />          <Route path="/education" element={<EducationHub />} />
+          <Route path="/counseling" element={<Counseling />} />            {/* Event Routes */}
+          <Route path="/events" element={<EventListPage />} />
+          
           {/* Survey Flow Routes */}
           <Route path="/surveys" element={<UserProtectedRoute element={<SurveyEntryPage />} />} />
           <Route path="/surveys/take" element={<UserProtectedRoute element={<TakeSurveyPage />} />} />
