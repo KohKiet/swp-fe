@@ -207,7 +207,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
     setCurrentUserId(userId);
     
     // Nếu có userId và event ID, thử load từ cache ngay lập tức
-    if (userId && event?.id && isAuthenticated()) {
+    if (userId && event?.id && isAuthenticated) {
       const cacheKey = `event_registration_${event.id}_${userId}`;
       const cachedStatus = localStorage.getItem(cacheKey);
       
@@ -235,7 +235,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
     }
     
     // Nếu không có cache hoặc không authenticated, vẫn set initial state
-    if (!isAuthenticated()) {
+    if (!isAuthenticated) {
       setCheckingStatus(false);
       setHasCheckedRegistration(true);
     }
@@ -270,7 +270,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
       const token = localStorage.getItem('accessToken');
       
       // CHỈ clear cache khi user thực sự đăng xuất (không có token)
-      if (!token || !isAuthenticated()) {
+      if (!token || !isAuthenticated) {
         console.log('User logged out completely, clearing all registration cache');
         Object.keys(localStorage).forEach(key => {
           if (key.startsWith('event_registration_')) {
@@ -297,7 +297,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
       isRegistered,
       hasCheckedRegistration,
       checkingStatus,
-      isAuthenticated: isAuthenticated(),
+      isAuthenticated: isAuthenticated,
       userId: localStorage.getItem('userId'),
       timestamp: new Date().toISOString()
     });
@@ -305,7 +305,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
 
     // Function để force reload registration status
   const forceReloadRegistrationStatus = async () => {
-    if (!isAuthenticated() || !event?.id) {
+    if (!isAuthenticated || !event?.id) {
       return;
     }
 
@@ -364,7 +364,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
     }
   };  // Sử dụng useCallback để tránh re-create function mỗi lần render
   const checkRegistrationStatusCallback = useCallback(async () => {
-    if (!isAuthenticated() || !event?.id) {
+    if (!isAuthenticated || !event?.id) {
       setCheckingStatus(false);
       setHasCheckedRegistration(true);
       return;
@@ -581,7 +581,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
     };
 
     // Chỉ chạy khi cần thiết
-    if (event?.id && isAuthenticated()) {
+    if (event?.id && isAuthenticated) {
       checkRegistrationStatus();
     }
     
@@ -613,12 +613,12 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
 
     console.log('🚀 Starting registration process:', {
       eventId: event.id,
-      isAuthenticated: isAuthenticated(),
+      isAuthenticated: isAuthenticated,
       isRegistered: isRegistered,
       loading: loading
     });
 
-    if (!isAuthenticated()) {
+    if (!isAuthenticated) {
       setShowLoginModal(true);
       return;
     }
@@ -773,7 +773,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
     const isEventPast = effectiveEndTime < now;
 
   // Show login prompt for unauthenticated users
-  if (!isAuthenticated()) {
+  if (!isAuthenticated) {
     return (
       <>
         <button
@@ -1298,7 +1298,7 @@ const EventListPage = () => {
                       </button>
 
                       {/* Hiển thị nút đánh giá cho sự kiện đã kết thúc và user đã tham gia */}
-                      {isAuthenticated() && isEventPast(event) && (
+                      {isAuthenticated && isEventPast(event) && (
                         <button 
                           className="btn-feedback"
                           onClick={() => handleFeedbackClick(event)}

@@ -42,36 +42,38 @@
 /* Navigation Tabs */
 .events-nav {
     display: flex;
-    justify-content: center;
-    gap: 1rem;
+    justify-content: flex-start;
+    gap: 8px;
     margin-bottom: 2rem;
-    padding: 0.5rem;
-    background-color: var(--white);
-    border-radius: 8px;
-    box-shadow: var(--shadow);
+    padding: 0 0 16px 0;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 .nav-tab {
-    padding: 0.75rem 1.5rem;
+    padding: 8px 18px;
     border: none;
-    background-color: transparent;
+    background-color: #fff;
     color: var(--text-secondary);
-    border-radius: 6px;
-    font-weight: 500;
+    border-radius: 8px;
+    font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: background 0.2s, color 0.2s;
+    min-width: 110px;
+    box-shadow: none;
 }
 
 .nav-tab.active {
-    background-color: var(--primary);
-    color: white;
-    box-shadow: 0 4px 12px rgba(94, 182, 233, 0.3);
+    background: #5eb6e9;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(94, 182, 233, 0.12);
 }
 
 .nav-tab:hover:not(.active) {
-    background-color: var(--bg);
-    color: var(--primary);
+    background: #f2f8fc;
+    color: #5eb6e9;
 }
 
 /* Events Grid */
