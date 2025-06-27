@@ -63,14 +63,16 @@ const Header = () => {
                 <Link to="/counseling" className="nav-link">
                   Đặt Lịch Tư Vấn
                 </Link>
-              </li>              <li className="nav-item">
+              </li>
+
+              <li className="nav-item">
                 <Link to="/surveys" className="nav-link">
                   Khảo Sát
                 </Link>
               </li>
 
               <li className="nav-item">
-                <Link to="/events" className="nav-link">
+                <Link to="/programs" className="nav-link">
                   Sự Kiện
                 </Link>
               </li>

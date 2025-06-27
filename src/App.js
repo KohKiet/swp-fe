@@ -66,8 +66,8 @@ function AppContent() {
           <Route path="/Apitest" element={<ApiTest />} />
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />          <Route path="/education" element={<EducationHub />} />
-          <Route path="/counseling" element={<Counseling />} />            {/* Event Routes */}
-          <Route path="/events" element={<EventListPage />} />
+          <Route path="/counseling" element={<Counseling />} />            
+          <Route path="/programs" element={<EventListPage />} />
           
           {/* Survey Flow Routes */}
           <Route path="/surveys" element={<UserProtectedRoute element={<SurveyEntryPage />} />} />
