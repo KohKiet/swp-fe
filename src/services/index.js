@@ -1,4 +1,6 @@
 // Services export file
+
+// Import configuration
 import { API_CONFIG as CONFIG } from "./apiConfig";
 import { USE_MOCK_SERVICES, USE_MOCK_ADMIN } from "./serviceConfig";
 

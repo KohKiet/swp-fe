@@ -273,6 +273,261 @@ class AdminService {
     );
   }
 
+  // ==================== CHAPTER MANAGEMENT ====================
+
+  // Get all chapters
+  async getChapters() {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.CHAPTER_ALL
+    );
+  }
+
+  // Get specific chapter
+  async getChapterById(chapterId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.CHAPTER_BY_ID.replace(
+        "{chapterId}",
+        chapterId
+      )
+    );
+  }
+
+  // Create chapter
+  async createChapter(chapterData) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.CHAPTER_ALL,
+      {
+        method: "POST",
+        body: JSON.stringify(chapterData),
+      }
+    );
+  }
+
+  // Update chapter
+  async updateChapter(chapterId, chapterData) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.CHAPTER_BY_ID.replace(
+        "{chapterId}",
+        chapterId
+      ),
+      {
+        method: "PUT",
+        body: JSON.stringify(chapterData),
+      }
+    );
+  }
+
+  // Delete chapter
+  async deleteChapter(chapterId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.CHAPTER_BY_ID.replace(
+        "{chapterId}",
+        chapterId
+      ),
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  // ==================== LESSON MANAGEMENT ====================
+
+  // Get all lessons
+  async getLessons() {
+    return this.authenticatedRequest(API_CONFIG.ENDPOINTS.LESSON_ALL);
+  }
+
+  // Get specific lesson
+  async getLessonById(lessonId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.LESSON_BY_ID.replace(
+        "{lessonId}",
+        lessonId
+      )
+    );
+  }
+
+  // Create lesson
+  async createLesson(lessonData) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.LESSON_ALL,
+      {
+        method: "POST",
+        body: JSON.stringify(lessonData),
+      }
+    );
+  }
+
+  // Update lesson
+  async updateLesson(lessonId, lessonData) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.LESSON_BY_ID.replace(
+        "{lessonId}",
+        lessonId
+      ),
+      {
+        method: "PUT",
+        body: JSON.stringify(lessonData),
+      }
+    );
+  }
+
+  // Delete lesson
+  async deleteLesson(lessonId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.LESSON_BY_ID.replace(
+        "{lessonId}",
+        lessonId
+      ),
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  // ==================== ENROLLMENT MANAGEMENT ====================
+
+  // Get all enrollments (Admin only)
+  async getAllEnrollments() {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.ENROLLMENT_ALL
+    );
+  }
+
+  // Get course enrollments
+  async getCourseEnrollments(courseId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.ENROLLMENT_BY_COURSE.replace(
+        "{courseId}",
+        courseId
+      )
+    );
+  }
+
+  // Get enrollment count
+  async getEnrollmentCount(courseId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.ENROLLMENT_COUNT.replace(
+        "{courseId}",
+        courseId
+      )
+    );
+  }
+
+  // Update enrollment status
+  async updateEnrollmentStatus(enrollmentId, status) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.ENROLLMENT_UPDATE_STATUS.replace(
+        "{enrollmentId}",
+        enrollmentId
+      ),
+      {
+        method: "PUT",
+        body: JSON.stringify({ Status: status }),
+      }
+    );
+  }
+
+  // Delete enrollment
+  async deleteEnrollment(enrollmentId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.ENROLLMENT_DELETE.replace(
+        "{enrollmentId}",
+        enrollmentId
+      ),
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  // ==================== PROGRESS MANAGEMENT ====================
+
+  // Get all progress (Admin)
+  async getAllProgress() {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.PROGRESS_ALL
+    );
+  }
+
+  // Get specific progress
+  async getProgressById(progressId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.PROGRESS_BY_ID.replace(
+        "{progressId}",
+        progressId
+      )
+    );
+  }
+
+  // Create progress entry
+  async createProgress(progressData) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.PROGRESS_ALL,
+      {
+        method: "POST",
+        body: JSON.stringify(progressData),
+      }
+    );
+  }
+
+  // Update progress
+  async updateProgress(progressId, progressData) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.PROGRESS_BY_ID.replace(
+        "{progressId}",
+        progressId
+      ),
+      {
+        method: "PUT",
+        body: JSON.stringify(progressData),
+      }
+    );
+  }
+
+  // ==================== QUIZ MANAGEMENT ====================
+
+  // Get all quizzes
+  async getQuizzes() {
+    return this.authenticatedRequest(API_CONFIG.ENDPOINTS.QUIZ_ALL);
+  }
+
+  // Get specific quiz
+  async getQuizById(quizId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.QUIZ_BY_ID.replace("{quizId}", quizId)
+    );
+  }
+
+  // Create quiz
+  async createQuiz(quizData) {
+    return this.authenticatedRequest(API_CONFIG.ENDPOINTS.QUIZ_ALL, {
+      method: "POST",
+      body: JSON.stringify(quizData),
+    });
+  }
+
+  // Update quiz
+  async updateQuiz(quizId, quizData) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.QUIZ_BY_ID.replace("{quizId}", quizId),
+      {
+        method: "PUT",
+        body: JSON.stringify(quizData),
+      }
+    );
+  }
+
+  // Delete quiz
+  async deleteQuiz(quizId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.QUIZ_BY_ID.replace("{quizId}", quizId),
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
   // Category Management
   async getCategories() {
     return this.authenticatedRequest(

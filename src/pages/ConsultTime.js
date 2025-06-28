@@ -147,7 +147,6 @@ const ConsultTime = () => {
       const response = await consultationService.getMySlots();
       if (response.success) {
         const slotsData = response.data.data || [];
-        console.log("Loaded slots:", slotsData.length, "slots");
 
         // Clean and normalize the slots data
         const normalizedSlots = slotsData.map((slot) => ({
@@ -162,21 +161,6 @@ const ConsultTime = () => {
           status: slot.status || "available",
         }));
 
-        // Debug: Log status values and types
-        console.log("Status debugging:");
-        normalizedSlots.forEach((slot, index) => {
-          console.log(
-            `Slot ${index}: status = ${
-              slot.status
-            }, type = ${typeof slot.status}`
-          );
-        });
-
-        console.log(
-          "Normalized",
-          normalizedSlots.length,
-          "slots successfully"
-        );
         setSlots(normalizedSlots);
       } else {
         setError("Failed to load slots: " + response.error);

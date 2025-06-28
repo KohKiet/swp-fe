@@ -178,6 +178,24 @@ const LoginPage = () => {
 
       if (!formData.dateOfBirth) {
         newErrors.dateOfBirth = "Ngày sinh là bắt buộc";
+      } else {
+        // Age validation - check if user is at least 15 years old
+        const birthDate = new Date(formData.dateOfBirth);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        // Adjust age if birthday hasn't occurred this year
+        const actualAge =
+          monthDiff < 0 ||
+          (monthDiff === 0 && today.getDate() < birthDate.getDate())
+            ? age - 1
+            : age;
+
+        if (actualAge < 15) {
+          newErrors.dateOfBirth =
+            "Bạn phải từ 15 tuổi trở lên để đăng ký";
+        }
       }
 
       if (!formData.address) {
@@ -482,6 +500,7 @@ const LoginPage = () => {
                 <div className="form-group">
                   <label htmlFor="dateOfBirth">
                     <FontAwesomeIcon icon={faCalendar} /> Ngày Sinh
+                    (phải từ 15 tuổi trở lên)
                   </label>
                   <input
                     type="date"
@@ -490,6 +509,15 @@ const LoginPage = () => {
                     value={formData.dateOfBirth}
                     onChange={handleChange}
                     className={errors.dateOfBirth ? "error" : ""}
+                    max={(() => {
+                      const today = new Date();
+                      const maxDate = new Date(
+                        today.getFullYear() - 15,
+                        today.getMonth(),
+                        today.getDate()
+                      );
+                      return maxDate.toISOString().split("T")[0];
+                    })()}
                   />
                   {errors.dateOfBirth && (
                     <div className="error-text">

@@ -146,17 +146,10 @@ const Header = () => {
                 </button>
                 <div className="dropdown-menu">
                   {!isAdmin() && !isConsultant() && (
-                    <>
-                      <Link to="/profile" className="dropdown-item">
-                        <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá
-                        Nhân
-                      </Link>
-                      <Link
-                        to="/my-appointments"
-                        className="dropdown-item">
-                        Lịch Hẹn
-                      </Link>
-                    </>
+                    <Link to="/profile" className="dropdown-item">
+                      <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá
+                      Nhân
+                    </Link>
                   )}
                   {isConsultant() && (
                     <>
