@@ -40,9 +40,67 @@ export const API_CONFIG = {
     ROLE_USER: "/api/role/user/{userId}",
     ROLE_ASSIGN: "/api/role/assign",
 
-    // Course endpoints
+    // Public Course endpoints
+    PUBLIC_COURSES_ALL: "/api/public/courses",
+    PUBLIC_COURSE_BY_ID: "/api/public/courses/{courseId}",
+    PUBLIC_COURSES_BY_AGE: "/api/public/courses/by-age/{ageGroup}",
+    PUBLIC_COURSES_BY_TYPE:
+      "/api/public/courses/by-type/{courseType}",
+    PUBLIC_COURSES_SEARCH: "/api/public/courses/search",
+
+    // Protected Course endpoints
     COURSE_ALL: "/api/course",
     COURSE_BY_ID: "/api/course/{id}",
+
+    // Chapter endpoints
+    CHAPTER_ALL: "/api/chapter",
+    CHAPTER_BY_ID: "/api/chapter/{chapterId}",
+
+    // Lesson endpoints
+    LESSON_ALL: "/api/lesson",
+    LESSON_BY_ID: "/api/lesson/{lessonId}",
+
+    // Media endpoints
+    MEDIA_YOUTUBE_ADD:
+      "/api/SimplifiedMedia/lesson/{lessonId}/youtube",
+    MEDIA_UPLOAD_VIDEO: "/api/lessons/{lessonId}/Media/upload/video",
+    MEDIA_UPLOAD_AUDIO: "/api/lessons/{lessonId}/Media/upload/audio",
+    MEDIA_UPLOAD_DOCUMENT:
+      "/api/lessons/{lessonId}/Media/upload/document",
+    MEDIA_LESSON_FILES: "/api/FileAttachment/lesson/{lessonId}",
+
+    // Course Enrollment endpoints
+    ENROLLMENT_ENROLL: "/api/CourseEnrollment/enroll/{courseId}",
+    ENROLLMENT_DROP: "/api/CourseEnrollment/drop/{courseId}",
+    ENROLLMENT_MY_ENROLLMENTS: "/api/CourseEnrollment/my-enrollments",
+    ENROLLMENT_STATUS: "/api/CourseEnrollment/status/{courseId}",
+    ENROLLMENT_IS_ENROLLED:
+      "/api/CourseEnrollment/is-enrolled/{courseId}",
+    ENROLLMENT_COMPLETE: "/api/CourseEnrollment/complete/{courseId}",
+
+    // Admin Enrollment endpoints
+    ENROLLMENT_ALL: "/api/CourseEnrollment/all",
+    ENROLLMENT_BY_COURSE: "/api/CourseEnrollment/course/{courseId}",
+    ENROLLMENT_COUNT: "/api/CourseEnrollment/course/{courseId}/count",
+    ENROLLMENT_UPDATE_STATUS:
+      "/api/CourseEnrollment/{enrollmentId}/status",
+    ENROLLMENT_DELETE: "/api/CourseEnrollment/{enrollmentId}",
+
+    // Progress endpoints
+    PROGRESS_ALL: "/api/Progress",
+    PROGRESS_BY_ID: "/api/Progress/{progressId}",
+
+    // Quiz endpoints
+    QUIZ_ALL: "/api/Quiz",
+    QUIZ_BY_ID: "/api/Quiz/{quizId}",
+
+    // Comment endpoints
+    COMMENT_BY_COURSE: "/api/Comment/course/{courseId}",
+    COMMENT_BY_LESSON: "/api/Comment/lesson/{lessonId}",
+    COMMENT_BY_CHAPTER: "/api/Comment/chapter/{chapterId}",
+
+    // Review endpoints
+    REVIEW_BY_COURSE: "/api/Review/course/{courseId}",
 
     // Category endpoints
     CATEGORY_ALL: "/api/category",

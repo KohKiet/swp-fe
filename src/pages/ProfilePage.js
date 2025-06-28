@@ -365,7 +365,7 @@ const ProfilePage = () => {
           } else {
             // If API call fails, don't show error message on profile tab, just log it
             console.warn(
-              "Profile API call failed, using cached user data:",
+              "API FAILLL:",
               result.error
             );
           }

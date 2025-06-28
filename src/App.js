@@ -5,7 +5,12 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { ThemeProvider } from "@mui/material/styles";
+import { CssBaseline } from "@mui/material";
 import "./App.css";
+
+// Custom Material-UI Theme
+import muiTheme from "./theme/muiTheme";
 
 // Auth Context
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -24,6 +29,7 @@ import MyAppointments from "./pages/MyAppointments";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ApiTest from "./components/ApiTest";
+import CourseDetail from "./components/CourseDetail";
 
 // Survey Flow Pages
 import SurveyEntryPage from "./pages/surveys/SurveyEntryPage";
@@ -80,6 +86,10 @@ function AppContent() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/education" element={<EducationHub />} />
+          <Route
+            path="/education/courses/:courseId"
+            element={<CourseDetail />}
+          />
           <Route path="/counseling" element={<Counseling />} />
           <Route
             path="/consult-time"
@@ -138,9 +148,12 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
+      <ThemeProvider theme={muiTheme}>
+        <CssBaseline />
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ThemeProvider>
     </Router>
   );
 }
