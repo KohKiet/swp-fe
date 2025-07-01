@@ -138,6 +138,22 @@ export const API_CONFIG = {
     HEALTH_DATABASE: "/api/healthchecks/database",
     HEALTH_FIREBASE: "/api/healthchecks/firebase",
     HEALTH_CLOUDINARY: "/api/healthchecks/cloudinary",
+    
+    COMMUNITY_EVENTS: "/api/community-events",
+    COMMUNITY_EVENTS_UPCOMING: "/api/community-events/upcoming",
+    COMMUNITY_EVENTS_PAST: "/api/community-events/past",
+    COMMUNITY_EVENTS_MY_EVENTS: "/api/community-events/my-events",
+    COMMUNITY_EVENTS_BY_ID: "/api/community-events/{id}",    // Event Participants endpoints (for registration)
+    EVENT_PARTICIPANTS_REGISTER: "/api/event-participants/register",
+    EVENT_PARTICIPANTS_UNREGISTER: "/api/event-participants/unregister/{eventId}",
+    EVENT_PARTICIPANTS_CHECK_REGISTRATION: "/api/event-participants/check-registration/{eventId}",
+    EVENT_PARTICIPANTS_BY_EVENT: "/api/event-participants/event/{eventId}",    // Event Feedback endpoints
+    EVENT_FEEDBACK: "/api/event-feedback",
+    EVENT_FEEDBACK_BY_ID: "/api/event-feedback/{id}",
+    EVENT_FEEDBACK_BY_EVENT: "/api/event-feedback/event/{eventId}",
+    EVENT_FEEDBACK_BY_USER: "/api/event-feedback/user",
+    EVENT_FEEDBACK_SUBMIT: "/api/event-feedback/submit",
+    EVENT_FEEDBACK_CHECK_USER: "/api/event-feedback/check-user-feedback/{eventId}",
   },
 };
 
