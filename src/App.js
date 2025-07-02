@@ -36,6 +36,8 @@ import SurveyEntryPage from "./pages/surveys/SurveyEntryPage";
 import TakeSurveyPage from "./pages/surveys/TakeSurveyPage";
 import SurveyResultsPage from "./pages/surveys/SurveyResultsPage";
 import SurveyHistoryPage from "./pages/surveys/SurveyHistoryPage";
+//Events
+import EventListPage from "./pages/events/EventListPage";
 
 // Protected route component
 const ProtectedRoute = ({ element }) => {
@@ -97,6 +99,11 @@ function AppContent() {
               <ConsultantProtectedRoute element={<ConsultTime />} />
             }
           />
+
+          <Route
+            path="/programs" element={<EventListPage />}
+          />
+          
           {/* Survey Flow Routes */}
           <Route
             path="/surveys"
