@@ -15,8 +15,7 @@ const EventManagementModal = ({
     endTime: '',
     location: '',
     maxParticipants: '',
-    onlineLink: '',
-    imageUrl: ''
+    onlineLink: ''
   });
   
   const [loading, setLoading] = useState(false);
@@ -27,13 +26,31 @@ const EventManagementModal = ({
     if (mode === 'edit' && eventToEdit) {
       const formatDateTimeLocal = (dateString) => {
         if (!dateString) return '';
-        const date = new Date(dateString);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
+        try {
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) {
+            console.error('Invalid date for formatting:', dateString);
+            return '';
+          }
+          
+          // Lấy thời gian địa phương (không chuyển đổi múi giờ)
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          
+          console.log('Formatting datetime:', {
+            original: dateString,
+            parsed: date.toISOString(),
+            formatted: `${year}-${month}-${day}T${hours}:${minutes}`
+          });
+          
+          return `${year}-${month}-${day}T${hours}:${minutes}`;
+        } catch (e) {
+          console.error('Error formatting datetime:', dateString, e);
+          return '';
+        }
       };
 
       setFormData({
@@ -43,8 +60,7 @@ const EventManagementModal = ({
         endTime: formatDateTimeLocal(eventToEdit.endTime || eventToEdit.endDate),
         location: eventToEdit.location || '',
         maxParticipants: eventToEdit.maxParticipants || '',
-        onlineLink: eventToEdit.onlineLink || '',
-        imageUrl: eventToEdit.imageUrl || ''
+        onlineLink: eventToEdit.onlineLink || ''
       });
     } else {
       // Reset form for create mode
@@ -55,8 +71,7 @@ const EventManagementModal = ({
         endTime: '',
         location: '',
         maxParticipants: '',
-        onlineLink: '',
-        imageUrl: ''
+        onlineLink: ''
       });
     }
     setError(null);
@@ -105,13 +120,30 @@ const EventManagementModal = ({
     setError(null);
 
     try {
-      // Format datetime cho backend (ISO 8601)
+      // Format datetime cho backend (giữ múi giờ địa phương)
       const formatDateTime = (dateTimeString) => {
         if (!dateTimeString) return null;
         try {
-          return new Date(dateTimeString).toISOString();
+          const date = new Date(dateTimeString);
+          // Kiểm tra xem date có hợp lệ không
+          if (isNaN(date.getTime())) {
+            console.error('Invalid date:', dateTimeString);
+            return null;
+          }
+          
+          // Chuyển đổi sang ISO string nhưng điều chỉnh múi giờ
+          // Để tránh lệch múi giờ, ta sẽ tạo ISO string từ các thành phần địa phương
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const seconds = String(date.getSeconds()).padStart(2, '0');
+          
+          // Trả về format ISO nhưng với thời gian địa phương + múi giờ Việt Nam
+          return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+07:00`;
         } catch (e) {
-          console.error('Invalid datetime format:', dateTimeString);
+          console.error('Invalid datetime format:', dateTimeString, e);
           return null;
         }
       };
@@ -128,11 +160,6 @@ const EventManagementModal = ({
       // Chỉ thêm maxParticipants nếu có giá trị
       if (formData.maxParticipants && parseInt(formData.maxParticipants) > 0) {
         eventData.maxParticipants = parseInt(formData.maxParticipants);
-      }
-
-      // Chỉ thêm imageUrl nếu có giá trị
-      if (formData.imageUrl && formData.imageUrl.trim()) {
-        eventData.imageUrl = formData.imageUrl.trim();
       }
 
       // Validate required fields
@@ -168,8 +195,7 @@ const EventManagementModal = ({
           endTime: '',
           location: '',
           maxParticipants: '',
-          onlineLink: '',
-          imageUrl: ''
+          onlineLink: ''
         });
       } else {
         setError(response?.message || `Lỗi khi ${mode === 'edit' ? 'cập nhật' : 'tạo'} sự kiện`);
@@ -216,14 +242,28 @@ const EventManagementModal = ({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="event-management-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="event-management-modal" onClick={(e) => e.stopPropagation()} style={{
+        maxHeight: '90vh',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
         <div className="modal-header">
           <h2>{mode === 'edit' ? 'Chỉnh sửa sự kiện' : 'Tạo sự kiện mới'}</h2>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
         
-        <div className="modal-body">
-          <form onSubmit={handleSubmit} className="event-form">
+        <form onSubmit={handleSubmit} className="event-form" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          overflow: 'hidden'
+        }}>
+          <div className="modal-body" style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '20px',
+            maxHeight: 'calc(90vh - 120px)' // Trừ đi chiều cao header và footer
+          }}>
             {error && (
               <div className="error-message mb-4">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,39 +362,26 @@ const EventManagementModal = ({
                 />
               </div>
             </div>
+          </div>
 
-            <div className="form-group">
-              <label htmlFor="imageUrl">URL hình ảnh</label>
-              <input
-                type="url"
-                id="imageUrl"
-                name="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleInputChange}
-                placeholder="https://..."
-              />
-            </div>
-          </form>
-        </div>
-
-        <div className="modal-footer">
-          <button 
-            type="button" 
-            className="btn-secondary" 
-            onClick={onClose}
-            disabled={loading}
-          >
-            Hủy
-          </button>
-          <button 
-            type="submit" 
-            className="btn-primary" 
-            onClick={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? 'Đang xử lý...' : (mode === 'edit' ? 'Cập nhật' : 'Tạo sự kiện')}
-          </button>
-        </div>
+          <div className="modal-footer">
+            <button 
+              type="button" 
+              className="btn-secondary" 
+              onClick={onClose}
+              disabled={loading}
+            >
+              Hủy
+            </button>
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              disabled={loading}
+            >
+              {loading ? 'Đang xử lý...' : (mode === 'edit' ? 'Hoàn tất chỉnh sửa' : 'Tạo sự kiện')}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
