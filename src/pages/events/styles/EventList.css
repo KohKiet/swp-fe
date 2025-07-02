@@ -312,6 +312,27 @@
     margin-top: 1px;
 }
 
+/* Success notification (for future use) */
+.success-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: #065f46;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background-color: #d1fae5;
+    border-radius: 6px;
+    border: 1px solid #a7f3d0;
+    border-left: 3px solid #10b981;
+}
+
+.success-message svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: #10b981;
+}
+
 /* Loading State */
 .events-loading {
     display: flex;
@@ -484,14 +505,99 @@
 /* Event Actions */
 .event-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.75rem;
-    align-items: center;
+    align-items: flex-start;
     margin-top: 1rem;
 }
 
 .event-actions .btn-outline {
     flex: 1;
     min-width: 120px;
+}
+
+/* Staff action buttons - luôn xuống hàng mới */
+.event-actions .btn-outline.staff-edit-btn,
+.event-actions .btn-outline.staff-delete-btn {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* Staff action buttons styling */
+.event-actions .btn-outline.staff-edit-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border: none;
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+}
+
+.event-actions .btn-outline.staff-edit-btn:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.event-actions .btn-outline.staff-delete-btn {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border: none;
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+}
+
+.event-actions .btn-outline.staff-delete-btn:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Staff actions wrapper - đảm bảo các nút staff nằm trên hàng riêng */
+.staff-actions-wrapper {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+    margin-top: 0.75rem;
+}
+
+.staff-actions-wrapper .btn-outline {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* Responsive layout for event actions */
+@media (max-width: 768px) {
+    .event-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .event-actions .btn-outline,
+    .event-actions .btn-feedback {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Staff actions wrapper trên mobile */
+    .staff-actions-wrapper {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .staff-actions-wrapper .btn-outline {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .event-actions {
+        gap: 0.5rem;
+    }
+    
+    .event-actions .btn-outline {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.75rem;
+    }
 }
 
 /* Feedback Button */
@@ -844,4 +950,484 @@
 
 .font-medium {
     font-weight: 500;
+}
+
+/* Staff Management Controls */
+.staff-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+}
+
+.staff-controls h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.staff-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.btn-create-event {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-create-event:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-create-event svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Event Card Staff Actions */
+.event-card-staff-actions {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+    z-index: 3;
+}
+
+.btn-staff-action {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.btn-edit-event {
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+}
+
+.btn-edit-event:hover {
+    background: rgba(59, 130, 246, 1);
+    transform: scale(1.1);
+}
+
+.btn-delete-event {
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+}
+
+.btn-delete-event:hover {
+    background: rgba(239, 68, 68, 1);
+    transform: scale(1.1);
+}
+
+.btn-staff-action svg {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+/* Event Management Modal */
+.event-management-modal {
+    background: white;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+}
+
+.event-management-modal .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+.event-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background: white;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(94, 182, 233, 0.1);
+}
+
+.form-group input[type="datetime-local"] {
+    font-family: inherit;
+}
+
+.form-group input:invalid {
+    border-color: #dc2626;
+}
+
+.form-group input:valid {
+    border-color: #10b981;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .staff-controls {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .staff-actions {
+        justify-content: center;
+    }
+    
+    .event-management-modal {
+        width: 95%;
+        margin: 1rem;
+    }
+}
+
+/* Delete Confirmation Modal */
+.delete-confirmation-modal {
+    background: white;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.delete-confirmation-content {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.delete-confirmation-content .warning-icon {
+    width: 3rem;
+    height: 3rem;
+    color: #f59e0b;
+    margin: 0 auto 1rem;
+}
+
+.delete-confirmation-content h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.delete-confirmation-content p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.delete-confirmation-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.btn-confirm-delete {
+    padding: 0.5rem 1.5rem;
+    background-color: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-confirm-delete:hover {
+    background-color: #b91c1c;
+}
+
+.btn-confirm-delete:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Staff Badge */
+.staff-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.staff-badge svg {
+    width: 0.75rem;
+    height: 0.75rem;
+}
+
+/* Enhanced Event Card for Staff View */
+.event-card.staff-view {
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.event-card.staff-view:hover {
+    border-color: var(--primary);
+    box-shadow: 0 8px 25px rgba(94, 182, 233, 0.15);
+}
+
+/* Event Statistics for Staff */
+.event-stats {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.stat-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+/* Quick Edit Inline Form */
+.quick-edit-form {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.quick-edit-form .form-group {
+    margin-bottom: 0.75rem;
+}
+
+.quick-edit-form .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.quick-edit-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.btn-save-quick {
+    padding: 0.375rem 1rem;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-save-quick:hover {
+    background-color: #4a9fd9;
+}
+
+.btn-cancel-quick {
+    padding: 0.375rem 1rem;
+    background-color: #6b7280;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-cancel-quick:hover {
+    background-color: #4b5563;
+}
+
+/* Cancel registration button */
+.btn-cancel {
+    background-color: #f59e0b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+    background-color: #d97706;
+    transform: translateY(-1px);
+}
+
+.btn-cancel:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Modal improvements */
+.modal-overlay {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+/* Error message improvements */
+.error-message {
+    border-left: 3px solid #dc2626;
+}
+
+/* Loading overlay for forms */
+.form-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: inherit;
+}
+
+/* Staff view enhancements */
+.staff-view .event-image {
+    position: relative;
+    overflow: visible;
+}
+
+/* Tooltip styles for staff actions */
+[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Better focus states */
+.btn-staff-action:focus,
+.btn-create-event:focus,
+.btn-primary:focus,
+.btn-secondary:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+    .staff-controls,
+    .staff-actions,
+    .event-card-staff-actions,
+    .modal-overlay {
+        display: none !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .event-card {
+        border: 2px solid #000;
+    }
+    
+    .btn-staff-action {
+        border: 1px solid currentColor;
+    }
 }

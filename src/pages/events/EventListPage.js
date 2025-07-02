@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import eventService from '../../services/eventService';
 import { useAuth } from '../../context/AuthContext';
-// import EventFeedbackModal from '../../components/events/EventFeedbackModal';
-// import EventsBanner from '../../components/events/EventsBanner';
+import EventManagementModal from './EventManagementModal';
+import DeleteConfirmationModal from './DeleteConfirmationModal';
 import './styles/EventList.css';
 
 // Banner component dùng riêng cho trang sự kiện (code chung trong file)
@@ -961,92 +961,154 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
 };
 
 const EventListPage = () => {
-  const { isAuthenticated, currentUser } = useAuth();
+  const { isAuthenticated, currentUser, isStaff } = useAuth();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
-  const [error, setError] = useState(null);  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [error, setError] = useState(null);  
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedEventForFeedback, setSelectedEventForFeedback] = useState(null);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
-  useEffect(() => {
-    const fetchEvents = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        let response;
-        // Lấy tất cả events từ backend và filter ở frontend
-        response = await eventService.getAllEvents();
+  
+  // Staff management states
+  const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
+  const [eventToEdit, setEventToEdit] = useState(null);
+  const [managementMode, setManagementMode] = useState('create');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);  const fetchEvents = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      let response;
+      // Lấy tất cả events từ backend và filter ở frontend
+      response = await eventService.getAllEvents();
 
-        if (response && response.success) {
-          let allEvents = response.data || [];
-          
-          // Filter events dựa vào activeTab
-          const now = new Date();
-          let filteredEvents = allEvents;
-            switch (activeTab) {
-            case 'upcoming':
-              filteredEvents = allEvents.filter(event => {
-                const endTime = new Date(event.endTime || event.endDate || event.startTime || event.startDate);
-                // Nếu không có endTime, thêm 2 giờ vào startTime
-                if (!event.endTime && !event.endDate) {
-                  endTime.setTime(endTime.getTime() + 2 * 60 * 60 * 1000);
-                }
-                return endTime >= now; // Chưa kết thúc
-              })
-              // Sắp xếp theo ngày bắt đầu gần nhất
-              .sort((a, b) => {
-                const aStart = new Date(a.startTime || a.startDate);
-                const bStart = new Date(b.startTime || b.startDate);
-                return aStart - bStart;
-              });
-              break;
-            case 'past':
-              filteredEvents = allEvents.filter(event => {
-                const endTime = new Date(event.endTime || event.endDate || event.startTime || event.startDate);
-                if (!event.endTime && !event.endDate) {
-                  endTime.setTime(endTime.getTime() + 2 * 60 * 60 * 1000);
-                }
-                return endTime < now; // Đã kết thúc
-              });
-              break;
-            default:
-              filteredEvents = allEvents;
-          }
-          
-          setEvents(filteredEvents);
-        } else {
-          setError(response?.message || 'Không thể tải danh sách sự kiện');
+      if (response && response.success) {
+        let allEvents = response.data || [];
+        
+        // Filter events dựa vào activeTab
+        const now = new Date();
+        let filteredEvents = allEvents;
+          switch (activeTab) {
+          case 'upcoming':
+            filteredEvents = allEvents.filter(event => {
+              const endTime = new Date(event.endTime || event.endDate || event.startTime || event.startDate);
+              // Nếu không có endTime, thêm 2 giờ vào startTime
+              if (!event.endTime && !event.endDate) {
+                endTime.setTime(endTime.getTime() + 2 * 60 * 60 * 1000);
+              }
+              return endTime >= now; // Chưa kết thúc
+            })
+            // Sắp xếp theo ngày bắt đầu gần nhất
+            .sort((a, b) => {
+              const aStart = new Date(a.startTime || a.startDate);
+              const bStart = new Date(b.startTime || b.startDate);
+              return aStart - bStart;
+            });
+            break;
+          case 'past':
+            filteredEvents = allEvents.filter(event => {
+              const endTime = new Date(event.endTime || event.endDate || event.startTime || event.startDate);
+              if (!event.endTime && !event.endDate) {
+                endTime.setTime(endTime.getTime() + 2 * 60 * 60 * 1000);
+              }
+              return endTime < now; // Đã kết thúc
+            });
+            break;
+          default:
+            filteredEvents = allEvents;
         }
-      } catch (err) {
-        console.error('Error loading events:', err);
-        if (err.response?.data?.message) {
-          setError(err.response.data.message);
-        } else {
-          setError('Đã xảy ra lỗi khi tải danh sách sự kiện');
-        }
-      } finally {
-        setLoading(false);
+        
+        setEvents(filteredEvents);
+      } else {
+        setError(response?.message || 'Không thể tải danh sách sự kiện');
       }
-    };
+    } catch (err) {
+      console.error('Error loading events:', err);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Đã xảy ra lỗi khi tải danh sách sự kiện');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchEvents();
   }, [activeTab]);
   const handleRetry = () => {
     setError(null);
     setLoading(true);
-    // Trigger useEffect by updating activeTab
-    setActiveTab(prev => prev);
+    fetchEvents();
   };
 
   const handleFeedbackClick = (event) => {
     setSelectedEventForFeedback(event);
     setIsFeedbackModalOpen(true);
   };
+  
   const handleFeedbackSubmitted = () => {
     // Có thể refresh data hoặc show notification
     console.log('Feedback submitted successfully');
+  };
+
+  // Staff management functions
+  const handleCreateEvent = () => {
+    setEventToEdit(null);
+    setManagementMode('create');
+    setIsManagementModalOpen(true);
+  };
+
+  const handleEditEvent = (event) => {
+    setEventToEdit(event);
+    setManagementMode('edit');
+    setIsManagementModalOpen(true);
+  };
+
+  const handleDeleteEvent = (event) => {
+    setEventToDelete(event);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteEvent = async () => {
+    if (!eventToDelete) return;
+    
+    setDeleteLoading(true);
+    try {
+      const response = await eventService.deleteEvent(eventToDelete.id);
+      if (response && response.success) {
+        // Remove event from list
+        setEvents(prev => prev.filter(event => event.id !== eventToDelete.id));
+        setIsDeleteModalOpen(false);
+        setEventToDelete(null);
+      } else {
+        setError(response?.message || 'Không thể xóa sự kiện');
+      }
+    } catch (err) {
+      console.error('Error deleting event:', err);
+      setError(err.response?.data?.message || 'Đã xảy ra lỗi khi xóa sự kiện');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleEventSaved = (savedEvent) => {
+    if (managementMode === 'create') {
+      // Add new event to list
+      setEvents(prev => [savedEvent, ...prev]);
+    } else {
+      // Update existing event in list
+      setEvents(prev => prev.map(event => 
+        event.id === savedEvent.id ? savedEvent : event
+      ));
+    }
+    // Refresh the events list to get updated data
+    fetchEvents();
   };
 
   const isEventPast = (event) => {
@@ -1111,7 +1173,33 @@ const EventListPage = () => {
           <p>
             Tham gia các hoạt động cộng đồng để xây dựng một xã hội không ma túy
           </p>
-        </div>{/* Navigation Tabs */}
+        </div>
+
+        {/* Staff Controls */}
+        {isStaff() && (
+          <div className="staff-controls">
+            <div>
+              <h3>Quản lý sự kiện</h3>
+              <div className="staff-badge">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Staff
+              </div>
+            </div>
+            <div className="staff-actions">
+              <button 
+                className="btn-create-event"
+                onClick={handleCreateEvent}
+              >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Tạo sự kiện mới
+              </button>
+            </div>
+          </div>
+        )}{/* Navigation Tabs */}
         <div className="events-nav">
           {[
             { key: 'all', label: 'Tất cả' },
@@ -1145,9 +1233,10 @@ const EventListPage = () => {
         {events.length > 0 ? (
           <div className="events-grid">
             {events.map((event) => (
-              <div key={event.id} className="event-card">
+              <div key={event.id} className={`event-card ${isStaff() ? 'staff-view' : ''}`}>
                 {/* Event Image */}
                 <div className="event-image">
+                  {/* Staff Actions */}
                   {event.imageUrl ? (
                     <img
                       src={event.imageUrl}
@@ -1286,6 +1375,49 @@ const EventListPage = () => {
                           ></div>
                         </div>
                       </div>
+                    )}
+
+                    {/* Staff Event Statistics */}
+                    {isStaff() && (
+                      <div className="event-stats">
+                        <div className="stat-item">
+                          <div className="stat-number">{event.participantCount || 0}</div>
+                          <div className="stat-label">Người tham gia</div>
+                        </div>
+                        {event.maxParticipants && (
+                          <div className="stat-item">
+                            <div className="stat-number">
+                              {Math.round(((event.participantCount || 0) / event.maxParticipants) * 100)}%
+                            </div>
+                            <div className="stat-label">Tỷ lệ lấp đầy</div>
+                          </div>
+                        )}
+                        <div className="stat-item">
+                          <div className="stat-number">
+                            {(() => {
+                              const now = new Date();
+                              const startTime = new Date(event.startTime || event.startDate);
+                              const endTime = new Date(event.endTime || event.endDate || event.startTime || event.startDate);
+                              
+                              let effectiveEndTime = endTime;
+                              if (!event.endTime && !event.endDate) {
+                                effectiveEndTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
+                              }
+                              
+                              if (effectiveEndTime < now) {
+                                return 'Đã kết thúc';
+                              } else if (startTime <= now && now <= effectiveEndTime) {
+                                return 'Đang diễn ra';
+                              } else {
+                                const diffTime = Math.abs(startTime - now);
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                return `${diffDays} ngày`;
+                              }
+                            })()}
+                          </div>
+                          <div className="stat-label">Trạng thái</div>
+                        </div>
+                      </div>
                     )}                      <div className="event-actions">
                       <button 
                         className="btn-outline"
@@ -1308,7 +1440,9 @@ const EventListPage = () => {
                           </svg>
                           Đánh giá
                         </button>
-                      )}<EventRegistrationButton 
+                      )}
+
+                      <EventRegistrationButton 
                         key={`${event.id}-${currentUser?.userId || 'anonymous'}`}
                         event={event} 
                         onRegistrationChange={(eventId, isRegistered) => {
@@ -1328,6 +1462,37 @@ const EventListPage = () => {
                           }
                         }}
                       />
+
+                      {/* Staff Actions - chỉ hiện với role staff và đặt dưới nút đăng ký */}
+                      {isStaff() && (
+                        <div className="staff-actions-wrapper">
+                          <button 
+                            className="btn-outline staff-edit-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditEvent(event);
+                            }}
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Chỉnh sửa
+                          </button>
+                          
+                          <button 
+                            className="btn-outline staff-delete-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteEvent(event);
+                            }}
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Xóa
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1350,6 +1515,27 @@ const EventListPage = () => {
         isOpen={isDetailModalOpen} 
         onClose={() => setIsDetailModalOpen(false)} 
       />
+
+      {/* Staff Management Modals */}
+      {isStaff() && (
+        <>
+          <EventManagementModal
+            isOpen={isManagementModalOpen}
+            onClose={() => setIsManagementModalOpen(false)}
+            eventToEdit={eventToEdit}
+            mode={managementMode}
+            onEventSaved={handleEventSaved}
+          />
+          
+          <DeleteConfirmationModal
+            isOpen={isDeleteModalOpen}
+            onClose={() => setIsDeleteModalOpen(false)}
+            onConfirm={confirmDeleteEvent}
+            eventTitle={eventToDelete?.title}
+            loading={deleteLoading}
+          />
+        </>
+      )}
 
       {/* Event Feedback Modal */}
       {/*

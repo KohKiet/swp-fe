@@ -149,6 +149,14 @@ export const AuthProvider = ({ children }) => {
     );
   };
 
+  const isStaff = () => {
+    return (
+      currentUser &&
+      (currentUser.role === "staff" ||
+        currentUser.role === "Staff")
+    );
+  };
+
   const value = {
     currentUser,
     login,
@@ -160,6 +168,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     isAdmin,
     isConsultant,
+    isStaff,
     getAccessToken: () => authService.getAccessToken(),
     error,
     isLoading,
