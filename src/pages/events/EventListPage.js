@@ -11,7 +11,7 @@ const EventsBanner = () => (
   <div style={{
     width: '100vw',
     minHeight: 260,
-    background: `url('/images/banner-events.jpg'), linear-gradient(120deg, #5eb6e9 0%, #a7e9af 100%)`,
+    background: `url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?ixlib=rb-4.0.3&auto=format&fit=crop&w=1632&q=80'), linear-gradient(120deg, #5eb6e9 0%, #a7e9af 100%)`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     position: 'relative',
@@ -24,7 +24,7 @@ const EventsBanner = () => (
     <div style={{
       width: '100vw',
       minHeight: 260,
-      background: 'rgba(0,0,0,0.35)',
+      background: 'rgba(0,0,0,0.45)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -37,13 +37,13 @@ const EventsBanner = () => (
         fontSize: '2.8rem',
         fontWeight: 800,
         marginBottom: '0.5rem',
-        textShadow: '0 2px 8px rgba(0,0,0,0.18)'
+        textShadow: '0 2px 8px rgba(0,0,0,0.3)'
       }}>Sự kiện cộng đồng</h1>
       <p style={{
         color: '#e0f7fa',
         fontSize: '1.25rem',
         fontWeight: 400,
-        textShadow: '0 1px 4px rgba(0,0,0,0.12)'
+        textShadow: '0 1px 4px rgba(0,0,0,0.2)'
       }}>Khám phá, đăng ký và tham gia các sự kiện ý nghĩa dành cho bạn!</p>
     </div>
   </div>
@@ -54,12 +54,22 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
   const [eventDetails, setEventDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     if (isOpen && event?.id) {
+      setIsClosing(false);
       fetchEventDetails();
     }
   }, [isOpen, event?.id]);
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+      setIsClosing(false);
+    }, 300); // Match animation duration
+  };
 
   const fetchEventDetails = async () => {
     setLoading(true);
@@ -94,8 +104,8 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return React.createElement('div', {
-    className: 'modal-overlay',
-    onClick: onClose
+    className: `modal-overlay ${isClosing ? 'closing' : ''}`,
+    onClick: handleClose
   }, 
     React.createElement('div', {
       className: 'modal-content event-detail-modal',
@@ -105,7 +115,7 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
         React.createElement('h2', { key: 'title' }, event?.title || 'Chi tiết sự kiện'),
         React.createElement('button', {
           className: 'modal-close',
-          onClick: onClose,
+          onClick: handleClose,
           key: 'close'
         }, '×')
       ]),
@@ -183,7 +193,7 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
         React.createElement('div', { className: 'modal-footer', key: 'footer' }, [
         React.createElement('button', {
           className: 'btn-secondary',
-          onClick: onClose,
+          onClick: handleClose,
           key: 'close-btn'
         }, 'Đóng')
       ])
@@ -777,6 +787,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
     return (
       <>
         <button
+          type="button"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -797,6 +808,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
               <div className="modal-header">
                 <h3>Yêu cầu đăng nhập</h3>
                 <button 
+                  type="button"
                   className="modal-close"
                   onClick={() => setShowLoginModal(false)}
                 >
@@ -808,6 +820,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
               </div>
               <div className="modal-footer">
                 <button 
+                  type="button"
                   className="btn-secondary"
                   onClick={() => setShowLoginModal(false)}
                 >
@@ -852,6 +865,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
     return (
       <div className="flex flex-col gap-2">
         <button
+          type="button"
           className="registration-btn btn-registered"
           disabled
         >
@@ -861,6 +875,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
           Đã đăng ký
         </button>
         <button
+          type="button"
           className="registration-btn btn-cancel"
           onClick={async (e) => {
             e.preventDefault();
@@ -889,6 +904,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
         </button>
         {/* Nút đánh giá luôn hiển thị, nhưng disabled và có thông báo nếu sự kiện chưa kết thúc */}
         <button
+          type="button"
           className="registration-btn btn-feedback"
           onClick={() => {
             if (isEventPast) {
@@ -930,6 +946,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
   return (
     <div className="flex flex-col">
       <button
+        type="button"
         onClick={handleRegister}
         disabled={loading}
         className={`registration-btn btn-register ${loading ? 'btn-loading' : ''}`}
@@ -1189,6 +1206,7 @@ const EventListPage = () => {
             </div>
             <div className="staff-actions">
               <button 
+                type="button"
                 className="btn-create-event"
                 onClick={handleCreateEvent}
               >
@@ -1199,7 +1217,7 @@ const EventListPage = () => {
               </button>
             </div>
           </div>
-        )}{/* Navigation Tabs */}
+        )}        {/* Navigation Tabs */}
         <div className="events-nav">
           {[
             { key: 'all', label: 'Tất cả' },
@@ -1208,8 +1226,13 @@ const EventListPage = () => {
           ].map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveTab(tab.key);
+              }}
               className={`nav-tab ${activeTab === tab.key ? 'active' : ''}`}
+              disabled={loading}
             >
               {tab.label}
             </button>
@@ -1222,7 +1245,7 @@ const EventListPage = () => {
             </svg>
             <div>
               <p>{error}</p>
-              <button onClick={handleRetry} className="text-sm underline mt-1">
+              <button type="button" onClick={handleRetry} className="text-sm underline mt-1">
                 Thử lại
               </button>
             </div>
@@ -1418,22 +1441,34 @@ const EventListPage = () => {
                           <div className="stat-label">Trạng thái</div>
                         </div>
                       </div>
-                    )}                      <div className="event-actions">
+                    )}                    <div className="event-actions">
                       <button 
+                        type="button"
                         className="btn-outline"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           setSelectedEvent(event);
                           setIsDetailModalOpen(true);
                         }}
                       >
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
                         Xem chi tiết
                       </button>
 
                       {/* Hiển thị nút đánh giá cho sự kiện đã kết thúc và user đã tham gia */}
                       {isAuthenticated && isEventPast(event) && (
                         <button 
+                          type="button"
                           className="btn-feedback"
-                          onClick={() => handleFeedbackClick(event)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleFeedbackClick(event);
+                          }}
                         >
                           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -1467,8 +1502,10 @@ const EventListPage = () => {
                       {isStaff() && (
                         <div className="staff-actions-wrapper">
                           <button 
+                            type="button"
                             className="btn-outline staff-edit-btn"
                             onClick={(e) => {
+                              e.preventDefault();
                               e.stopPropagation();
                               handleEditEvent(event);
                             }}
@@ -1480,8 +1517,10 @@ const EventListPage = () => {
                           </button>
                           
                           <button 
+                            type="button"
                             className="btn-outline staff-delete-btn"
                             onClick={(e) => {
+                              e.preventDefault();
                               e.stopPropagation();
                               handleDeleteEvent(event);
                             }}
