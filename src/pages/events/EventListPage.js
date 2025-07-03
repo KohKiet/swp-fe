@@ -161,7 +161,7 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
             React.createElement('div', { className: 'info-section', key: 'time' }, [
               React.createElement('h3', { key: 'time-title' }, '📅 Thời gian'),
               React.createElement('p', { key: 'start' }, `Bắt đầu: ${formatDate(eventDetails.startTime || eventDetails.startDate)}`),
-              eventDetails.endTime && React.createElement('p', { key: 'end' }, `Kết thúc: ${formatDate(eventDetails.endTime)}`)
+              eventDetails.endTime && React.createElement('p', { key: 'end' }, `Dự kiến kết thúc: ${formatDate(eventDetails.endTime)}`)
             ]),
             
             eventDetails.location && React.createElement('div', { className: 'info-section', key: 'location' }, [

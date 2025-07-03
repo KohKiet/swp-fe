@@ -1,5 +1,26 @@
 /* Survey (Assessment) Page Modern CSS - Inspired by Google Forms, Typeform, SurveyMonkey */
 
+/* Import font và áp dụng cho trang khảo sát */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap');
+
+/* Apply font to survey page only */
+.survey-banner,
+.survey-banner *,
+.survey-root,
+.survey-root *,
+.survey-container,
+.survey-container *,
+.survey-entry-page,
+.survey-entry-page *,
+.take-survey-page,
+.take-survey-page *,
+.survey-results-page,
+.survey-results-page *,
+.survey-history-page,
+.survey-history-page * {
+  font-family: 'Roboto', 'Segoe UI', sans-serif !important;
+}
+
 /* Banner for Survey Pages */
 .survey-banner {
   position: relative;
