@@ -20,7 +20,9 @@ const EventsBanner = () => (
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: '2rem',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
+    boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+    overflow: 'hidden',
+    animation: 'slowZoom 30s infinite alternate ease-in-out'
   }}>
     <div style={{
       width: '100vw',
@@ -38,13 +40,16 @@ const EventsBanner = () => (
         fontSize: '2.8rem',
         fontWeight: 800,
         marginBottom: '0.5rem',
-        textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+        textShadow: '0 2px 8px rgba(0,0,0,0.3)',
+        animation: 'fadeInUp 0.8s ease-out',
+        letterSpacing: '-0.5px'
       }}>Sự kiện cộng đồng</h1>
       <p style={{
         color: '#e0f7fa',
         fontSize: '1.25rem',
         fontWeight: 400,
-        textShadow: '0 1px 4px rgba(0,0,0,0.2)'
+        textShadow: '0 1px 4px rgba(0,0,0,0.2)',
+        animation: 'fadeInUp 1s ease-out'
       }}>Khám phá, đăng ký và tham gia các sự kiện ý nghĩa dành cho bạn!</p>
     </div>
   </div>
@@ -982,7 +987,7 @@ const EventListPage = () => {
   const { isAuthenticated, currentUser, isStaff } = useAuth();
   const [allEvents, setAllEvents] = useState([]); // Lưu tất cả events
   const [events, setEvents] = useState([]); // Events đã filter theo tab
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Bỏ loading ban đầu
   const [activeTab, setActiveTab] = useState('all');
   const [error, setError] = useState(null);  
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -1037,7 +1042,7 @@ const EventListPage = () => {
   }, []);
 
   const fetchEvents = async () => {
-    setLoading(true);
+    // Không set loading = true nữa để không hiển thị loading spinner
     setError(null);
     
     try {
@@ -1062,9 +1067,8 @@ const EventListPage = () => {
       } else {
         setError('Đã xảy ra lỗi khi tải danh sách sự kiện');
       }
-    } finally {
-      setLoading(false);
     }
+    // Bỏ finally block vì không cần setLoading(false) nữa
   };
 
   // Chỉ gọi API một lần khi component mount
@@ -1081,8 +1085,7 @@ const EventListPage = () => {
   }, [activeTab, allEvents, filterEventsByTab]);
   const handleRetry = () => {
     setError(null);
-    setLoading(true);
-    fetchEvents();
+    fetchEvents(); // Bỏ setLoading(true)
   };
 
   const handleFeedbackClick = (event) => {
@@ -1184,28 +1187,9 @@ const EventListPage = () => {
       ? description.substring(0, maxLength) + '...' 
       : description;
   };
-  if (loading) {    return (
-      <div className="events-page">
-        <div className="events-container">
-          <div className="events-loading">
-            <div className="loading-card">
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: '40px',
-                fontSize: '16px',
-                color: '#666'
-              }}>
-                Đang tải...
-              </div>
-              <p className="mt-4">Đang tải danh sách sự kiện...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }  return (
+  
+  // Bỏ phần loading screen, chuyển thẳng tới render trang
+  return (
     <div className="events-page">
       <EventsBanner />
       <div className="events-container">
