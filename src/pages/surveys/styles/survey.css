@@ -76,10 +76,10 @@
 }
 
 .survey-banner-subtitle {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   font-weight: 400;
   opacity: 0.9;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   animation: fadeInUp 1s ease-out;
 }
@@ -120,7 +120,7 @@
   background: #fff;
   border-radius: 24px;
   box-shadow: 0 8px 32px rgba(60,72,100,0.12), 0 1.5px 6px rgba(60,72,100,0.08);
-  max-width: 520px;
+  max-width: 850px;
   width: 100%;
   padding: 40px 28px 32px 28px;
   position: relative;
@@ -303,7 +303,7 @@
 }
 
 .survey-history-container {
-  max-width: 600px;
+  max-width: 800px;
 }
 
 .survey-title-center {
@@ -320,7 +320,7 @@
 
 /* Results page specific styles */
 .survey-results-container {
-  max-width: 500px;
+  max-width: 800px;
 }
 
 .survey-results-summary {

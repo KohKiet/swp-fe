@@ -51,7 +51,7 @@ const SurveyEntryPage = () => {
       <div className="survey-banner">
         <div className="survey-banner-content">
           <h1 className="survey-banner-title">Khảo Sát</h1>
-          <p className="survey-banner-subtitle">Đánh giá tâm lý của bạn qua bài khảo sát</p>
+          <p className="survey-banner-subtitle">Đánh giá mức độ sử dụng chất gây nghiện của bạn qua bài khảo sát</p>
         </div>
       </div>
       
