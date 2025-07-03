@@ -151,9 +151,10 @@ export const API_CONFIG = {
     EVENT_FEEDBACK: "/api/event-feedback",
     EVENT_FEEDBACK_BY_ID: "/api/event-feedback/{id}",
     EVENT_FEEDBACK_BY_EVENT: "/api/event-feedback/event/{eventId}",
-    EVENT_FEEDBACK_BY_USER: "/api/event-feedback/user",
-    EVENT_FEEDBACK_SUBMIT: "/api/event-feedback/submit",
-    EVENT_FEEDBACK_CHECK_USER: "/api/event-feedback/check-user-feedback/{eventId}",
+    EVENT_FEEDBACK_BY_USER: "/api/event-feedback/my-feedback",
+    EVENT_FEEDBACK_CHECK_USER: "/api/event-feedback/check-feedback/{eventId}",
+    EVENT_FEEDBACK_AVERAGE_RATING: "/api/event-feedback/average-rating/{eventId}",
+    EVENT_FEEDBACK_COUNT: "/api/event-feedback/count/{eventId}",
   },
 };
 

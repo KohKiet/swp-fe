@@ -279,6 +279,16 @@ const eventService = {  // Lấy tất cả sự kiện
       return response;
     } catch (error) {
       console.error(`Error checking feedback status for event ${eventId}:`, error);
+      
+      // Nếu endpoint không tồn tại, return default response
+      if (error.response?.status === 404 || error.response?.status === 405) {
+        console.log('Feedback check endpoint not available, assuming no existing feedback');
+        return {
+          success: true,
+          data: null // No existing feedback
+        };
+      }
+      
       throw error;
     }
   },
@@ -286,10 +296,29 @@ const eventService = {  // Lấy tất cả sự kiện
   // Gửi feedback cho event
   submitFeedback: async (feedbackData) => {
     try {
-      const response = await apiCall('POST', API_CONFIG.ENDPOINTS.EVENT_FEEDBACK_SUBMIT, feedbackData);
+      // Debug: Log the exact request details
+      console.log('🔍 Submitting feedback with details:', {
+        eventId: feedbackData?.eventId,
+        rating: feedbackData?.rating,
+        comment: feedbackData?.comment?.substring(0, 50) + '...',
+        endpoint: API_CONFIG.ENDPOINTS.EVENT_FEEDBACK,
+        fullUrl: `${API_URL}${API_CONFIG.ENDPOINTS.EVENT_FEEDBACK}`,
+        payload: feedbackData
+      });
+      
+      // Sử dụng endpoint chính từ Swagger: POST /api/event-feedback
+      const response = await apiCall('POST', API_CONFIG.ENDPOINTS.EVENT_FEEDBACK, feedbackData);
+      console.log('✅ Feedback submitted successfully:', response);
       return response;
+      
     } catch (error) {
-      console.error('Error submitting feedback:', error);
+      console.error('❌ Error submitting feedback:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+        payload: feedbackData
+      });
       throw error;
     }
   },
@@ -302,6 +331,86 @@ const eventService = {  // Lấy tất cả sự kiện
       return response;
     } catch (error) {
       console.error(`Error updating feedback ${id}:`, error);
+      
+      // Nếu endpoint update không có, thử tạo mới
+      if (error.response?.status === 404 || error.response?.status === 405) {
+        console.log('Update endpoint not available, trying to submit as new feedback');
+        return await eventService.submitFeedback(feedbackData);
+      }
+      
+      throw error;
+    }
+  },
+
+  // ========== STAFF FEEDBACK MANAGEMENT FUNCTIONS ==========
+
+  // Lấy tất cả feedback (cho Staff/Admin)
+  getAllFeedback: async () => {
+    try {
+      const response = await apiCall('GET', API_CONFIG.ENDPOINTS.EVENT_FEEDBACK);
+      return response;
+    } catch (error) {
+      console.error('Error fetching all feedback:', error);
+      throw error;
+    }
+  },
+
+  // Lấy feedback theo ID (cho Staff/Admin)
+  getFeedbackById: async (feedbackId) => {
+    try {
+      const endpoint = API_CONFIG.ENDPOINTS.EVENT_FEEDBACK_BY_ID.replace('{id}', feedbackId);
+      const response = await apiCall('GET', endpoint);
+      return response;
+    } catch (error) {
+      console.error(`Error fetching feedback ${feedbackId}:`, error);
+      throw error;
+    }
+  },
+
+  // Xóa feedback (cho Staff/Admin)
+  deleteFeedback: async (feedbackId) => {
+    try {
+      const endpoint = API_CONFIG.ENDPOINTS.EVENT_FEEDBACK_BY_ID.replace('{id}', feedbackId);
+      const response = await apiCall('DELETE', endpoint);
+      return response;
+    } catch (error) {
+      console.error(`Error deleting feedback ${feedbackId}:`, error);
+      throw error;
+    }
+  },
+
+  // Lấy thống kê đánh giá trung bình cho event
+  getEventAverageRating: async (eventId) => {
+    try {
+      const endpoint = API_CONFIG.ENDPOINTS.EVENT_FEEDBACK_AVERAGE_RATING.replace('{eventId}', eventId);
+      const response = await apiCall('GET', endpoint);
+      return response;
+    } catch (error) {
+      console.error(`Error fetching average rating for event ${eventId}:`, error);
+      throw error;
+    }
+  },
+
+  // Lấy số lượng đánh giá cho event
+  getEventFeedbackCount: async (eventId) => {
+    try {
+      const endpoint = API_CONFIG.ENDPOINTS.EVENT_FEEDBACK_COUNT.replace('{eventId}', eventId);
+      const response = await apiCall('GET', endpoint);
+      return response;
+    } catch (error) {
+      console.error(`Error fetching feedback count for event ${eventId}:`, error);
+      throw error;
+    }
+  },
+
+  // Lấy danh sách người tham gia event (cho Staff/Admin)
+  getEventParticipants: async (eventId) => {
+    try {
+      const endpoint = API_CONFIG.ENDPOINTS.EVENT_PARTICIPANTS_BY_EVENT.replace('{eventId}', eventId);
+      const response = await apiCall('GET', endpoint);
+      return response;
+    } catch (error) {
+      console.error(`Error fetching participants for event ${eventId}:`, error);
       throw error;
     }
   }

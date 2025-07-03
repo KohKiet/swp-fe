@@ -4,6 +4,7 @@ import eventService from '../../services/eventService';
 import { useAuth } from '../../context/AuthContext';
 import EventManagementModal from './EventManagementModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
+import EventFeedbackModal from './EventFeedbackModal';
 import './styles/EventList.css';
 
 // Banner component dùng riêng cho trang sự kiện (code chung trong file)
@@ -202,7 +203,7 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
 };
 
 // Simple registration button component
-const EventRegistrationButton = ({ event, onRegistrationChange }) => {
+const EventRegistrationButton = ({ event, onRegistrationChange, onFeedbackClick }) => {
   const { isAuthenticated, currentUser } = useAuth();
   const [isRegistered, setIsRegistered] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -908,8 +909,8 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
           className="registration-btn btn-feedback"
           onClick={() => {
             if (isEventPast) {
-              if (typeof window.handleFeedbackClick === 'function') {
-                window.handleFeedbackClick(event);
+              if (onFeedbackClick) {
+                onFeedbackClick(event);
               }
             } else {
               window.alert('Bạn chỉ có thể đánh giá sau khi sự kiện kết thúc.');
@@ -979,7 +980,8 @@ const EventRegistrationButton = ({ event, onRegistrationChange }) => {
 
 const EventListPage = () => {
   const { isAuthenticated, currentUser, isStaff } = useAuth();
-  const [events, setEvents] = useState([]);
+  const [allEvents, setAllEvents] = useState([]); // Lưu tất cả events
+  const [events, setEvents] = useState([]); // Events đã filter theo tab
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
   const [error, setError] = useState(null);  
@@ -994,51 +996,61 @@ const EventListPage = () => {
   const [managementMode, setManagementMode] = useState('create');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);  const fetchEvents = async () => {
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Function để filter events theo tab (không cần gọi API)
+  const filterEventsByTab = useCallback((eventsToFilter, tab) => {
+    const now = new Date();
+    let filteredEvents = eventsToFilter;
+    
+    switch (tab) {
+      case 'upcoming':
+        filteredEvents = eventsToFilter.filter(event => {
+          const endTime = new Date(event.endTime || event.endDate || event.startTime || event.startDate);
+          // Nếu không có endTime, thêm 2 giờ vào startTime
+          if (!event.endTime && !event.endDate) {
+            endTime.setTime(endTime.getTime() + 2 * 60 * 60 * 1000);
+          }
+          return endTime >= now; // Chưa kết thúc
+        })
+        // Sắp xếp theo ngày bắt đầu gần nhất
+        .sort((a, b) => {
+          const aStart = new Date(a.startTime || a.startDate);
+          const bStart = new Date(b.startTime || b.startDate);
+          return aStart - bStart;
+        });
+        break;
+      case 'past':
+        filteredEvents = eventsToFilter.filter(event => {
+          const endTime = new Date(event.endTime || event.endDate || event.startTime || event.startDate);
+          if (!event.endTime && !event.endDate) {
+            endTime.setTime(endTime.getTime() + 2 * 60 * 60 * 1000);
+          }
+          return endTime < now; // Đã kết thúc
+        });
+        break;
+      default:
+        filteredEvents = eventsToFilter;
+    }
+    
+    return filteredEvents;
+  }, []);
+
+  const fetchEvents = async () => {
     setLoading(true);
     setError(null);
     
     try {
       let response;
-      // Lấy tất cả events từ backend và filter ở frontend
+      // Lấy tất cả events từ backend
       response = await eventService.getAllEvents();
 
       if (response && response.success) {
-        let allEvents = response.data || [];
+        const eventsData = response.data || [];
+        setAllEvents(eventsData); // Lưu tất cả events
         
-        // Filter events dựa vào activeTab
-        const now = new Date();
-        let filteredEvents = allEvents;
-          switch (activeTab) {
-          case 'upcoming':
-            filteredEvents = allEvents.filter(event => {
-              const endTime = new Date(event.endTime || event.endDate || event.startTime || event.startDate);
-              // Nếu không có endTime, thêm 2 giờ vào startTime
-              if (!event.endTime && !event.endDate) {
-                endTime.setTime(endTime.getTime() + 2 * 60 * 60 * 1000);
-              }
-              return endTime >= now; // Chưa kết thúc
-            })
-            // Sắp xếp theo ngày bắt đầu gần nhất
-            .sort((a, b) => {
-              const aStart = new Date(a.startTime || a.startDate);
-              const bStart = new Date(b.startTime || b.startDate);
-              return aStart - bStart;
-            });
-            break;
-          case 'past':
-            filteredEvents = allEvents.filter(event => {
-              const endTime = new Date(event.endTime || event.endDate || event.startTime || event.startDate);
-              if (!event.endTime && !event.endDate) {
-                endTime.setTime(endTime.getTime() + 2 * 60 * 60 * 1000);
-              }
-              return endTime < now; // Đã kết thúc
-            });
-            break;
-          default:
-            filteredEvents = allEvents;
-        }
-        
+        // Filter theo tab hiện tại
+        const filteredEvents = filterEventsByTab(eventsData, activeTab);
         setEvents(filteredEvents);
       } else {
         setError(response?.message || 'Không thể tải danh sách sự kiện');
@@ -1055,9 +1067,18 @@ const EventListPage = () => {
     }
   };
 
+  // Chỉ gọi API một lần khi component mount
   useEffect(() => {
     fetchEvents();
-  }, [activeTab]);
+  }, []);
+
+  // Filter events khi activeTab thay đổi (không gọi lại API)
+  useEffect(() => {
+    if (allEvents.length > 0) {
+      const filteredEvents = filterEventsByTab(allEvents, activeTab);
+      setEvents(filteredEvents);
+    }
+  }, [activeTab, allEvents, filterEventsByTab]);
   const handleRetry = () => {
     setError(null);
     setLoading(true);
@@ -1099,7 +1120,8 @@ const EventListPage = () => {
     try {
       const response = await eventService.deleteEvent(eventToDelete.id);
       if (response && response.success) {
-        // Remove event from list
+        // Remove event from both allEvents and events
+        setAllEvents(prev => prev.filter(event => event.id !== eventToDelete.id));
         setEvents(prev => prev.filter(event => event.id !== eventToDelete.id));
         setIsDeleteModalOpen(false);
         setEventToDelete(null);
@@ -1116,16 +1138,22 @@ const EventListPage = () => {
 
   const handleEventSaved = (savedEvent) => {
     if (managementMode === 'create') {
-      // Add new event to list
-      setEvents(prev => [savedEvent, ...prev]);
+      // Add new event to allEvents
+      const newAllEvents = [savedEvent, ...allEvents];
+      setAllEvents(newAllEvents);
+      // Filter và update events theo tab hiện tại
+      const filteredEvents = filterEventsByTab(newAllEvents, activeTab);
+      setEvents(filteredEvents);
     } else {
-      // Update existing event in list
-      setEvents(prev => prev.map(event => 
+      // Update existing event in allEvents
+      const updatedAllEvents = allEvents.map(event => 
         event.id === savedEvent.id ? savedEvent : event
-      ));
+      );
+      setAllEvents(updatedAllEvents);
+      // Filter và update events theo tab hiện tại
+      const filteredEvents = filterEventsByTab(updatedAllEvents, activeTab);
+      setEvents(filteredEvents);
     }
-    // Refresh the events list to get updated data
-    fetchEvents();
   };
 
   const isEventPast = (event) => {
@@ -1232,7 +1260,6 @@ const EventListPage = () => {
                 setActiveTab(tab.key);
               }}
               className={`nav-tab ${activeTab === tab.key ? 'active' : ''}`}
-              disabled={loading}
             >
               {tab.label}
             </button>
@@ -1459,24 +1486,6 @@ const EventListPage = () => {
                         Xem chi tiết
                       </button>
 
-                      {/* Hiển thị nút đánh giá cho sự kiện đã kết thúc và user đã tham gia */}
-                      {isAuthenticated && isEventPast(event) && (
-                        <button 
-                          type="button"
-                          className="btn-feedback"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleFeedbackClick(event);
-                          }}
-                        >
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                          </svg>
-                          Đánh giá
-                        </button>
-                      )}
-
                       <EventRegistrationButton 
                         key={`${event.id}-${currentUser?.userId || 'anonymous'}`}
                         event={event} 
@@ -1496,6 +1505,7 @@ const EventListPage = () => {
                             ));
                           }
                         }}
+                        onFeedbackClick={handleFeedbackClick}
                       />
 
                       {/* Staff Actions - chỉ hiện với role staff và đặt dưới nút đăng ký */}
@@ -1577,14 +1587,12 @@ const EventListPage = () => {
       )}
 
       {/* Event Feedback Modal */}
-      {/*
       <EventFeedbackModal 
         event={selectedEventForFeedback} 
         isOpen={isFeedbackModalOpen} 
         onClose={() => setIsFeedbackModalOpen(false)}
         onFeedbackSubmitted={handleFeedbackSubmitted}
       />
-      */}
     </div>
   );
 };
