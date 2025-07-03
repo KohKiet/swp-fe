@@ -157,9 +157,6 @@ const SurveyEntryPage = () => {
               <div style={{marginBottom: '8px'}}>
                 ✓ <strong>Bảo mật tuyệt đối:</strong> Thông tin cá nhân được mã hóa an toàn
               </div>
-              <div style={{marginBottom: '8px'}}>
-                ✓ <strong>Không chia sẻ:</strong> Kết quả chỉ bạn và chuyên gia tư vấn xem được
-              </div>
               <div>
                 ✓ <strong>Tuân thủ quy định:</strong> Đáp ứng tiêu chuẩn bảo vệ dữ liệu cá nhân
               </div>
