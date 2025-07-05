@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import EventManagementModal from './EventManagementModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import EventFeedbackModal from './EventFeedbackModal';
+import EventFeedbackListPage from './EventFeedbackListPage';
 import './styles/EventList.css';
 
 // Banner component dùng riêng cho trang sự kiện (code chung trong file)
@@ -1002,6 +1003,7 @@ const EventListPage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showFeedbackList, setShowFeedbackList] = useState(false);
 
   // Function để filter events theo tab (không cần gọi API)
   const filterEventsByTab = useCallback((eventsToFilter, tab) => {
@@ -1192,7 +1194,26 @@ const EventListPage = () => {
   return (
     <div className="events-page">
       <EventsBanner />
-      <div className="events-container">
+      
+      {/* Hiển thị Event Feedback List nếu được kích hoạt */}
+      {showFeedbackList ? (
+        <div className="container">
+          <div className="feedback-navigation">
+            <button 
+              type="button"
+              className="btn-back-to-events"
+              onClick={() => setShowFeedbackList(false)}
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Quay lại danh sách sự kiện
+            </button>
+          </div>
+          <EventFeedbackListPage />
+        </div>
+      ) : (
+        <div className="events-container">
         {/* Events Banner Component */}
         {/* <EventsBanner /> */}
 
@@ -1226,6 +1247,16 @@ const EventListPage = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
                 Tạo sự kiện mới
+              </button>
+              <button 
+                type="button"
+                className="btn-view-feedback"
+                onClick={() => setShowFeedbackList(true)}
+              >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Xem tất cả đánh giá
               </button>
             </div>
           </div>
@@ -1542,7 +1573,10 @@ const EventListPage = () => {
             </p>
           </div>
         )}
-      </div>      {/* Event Detail Modal */}
+        </div>
+      )}
+
+      {/* Event Detail Modal */}
       <EventDetailModal 
         event={selectedEvent} 
         isOpen={isDetailModalOpen} 
