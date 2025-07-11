@@ -14,12 +14,13 @@ const EventManagementModal = ({
     startTime: '',
     endTime: '',
     location: '',
-    maxParticipants: '',
-    onlineLink: ''
+    onlineLink: '',
+    imageUrl: ''
   });
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   // Initialize form data when editing
   useEffect(() => {
@@ -59,9 +60,16 @@ const EventManagementModal = ({
         startTime: formatDateTimeLocal(eventToEdit.startTime || eventToEdit.startDate),
         endTime: formatDateTimeLocal(eventToEdit.endTime || eventToEdit.endDate),
         location: eventToEdit.location || '',
-        maxParticipants: eventToEdit.maxParticipants || '',
-        onlineLink: eventToEdit.onlineLink || ''
+        onlineLink: eventToEdit.onlineLink || '',
+        imageUrl: eventToEdit.imageUrl || ''
       });
+      
+      // Set image preview if editing and there's an existing image
+      if (eventToEdit.imageUrl) {
+        setImagePreview(eventToEdit.imageUrl);
+      } else {
+        setImagePreview(null);
+      }
     } else {
       // Reset form for create mode
       setFormData({
@@ -70,12 +78,19 @@ const EventManagementModal = ({
         startTime: '',
         endTime: '',
         location: '',
-        maxParticipants: '',
-        onlineLink: ''
+        onlineLink: '',
+        imageUrl: ''
       });
+      setImagePreview(null);
     }
     setError(null);
   }, [mode, eventToEdit, isOpen]);
+
+  // Remove selected image
+  const removeImage = () => {
+    setImagePreview(null);
+    setFormData(prev => ({ ...prev, imageUrl: '' }));
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -102,10 +117,6 @@ const EventManagementModal = ({
       setError('Thời gian kết thúc phải sau thời gian bắt đầu');
       return false;
     }
-    if (formData.maxParticipants && (isNaN(formData.maxParticipants) || parseInt(formData.maxParticipants) <= 0)) {
-      setError('Số lượng tham gia tối đa phải là số dương');
-      return false;
-    }
     return true;
   };
 
@@ -120,6 +131,10 @@ const EventManagementModal = ({
     setError(null);
 
     try {
+      let imageUrl = formData.imageUrl || '';
+      
+      // Sử dụng URL ảnh từ input
+      
       // Format datetime cho backend (giữ múi giờ địa phương)
       const formatDateTime = (dateTimeString) => {
         if (!dateTimeString) return null;
@@ -154,13 +169,9 @@ const EventManagementModal = ({
         startTime: formatDateTime(formData.startTime),
         endTime: formData.endTime ? formatDateTime(formData.endTime) : null,
         location: formData.location.trim() || null,
-        onlineLink: formData.onlineLink.trim() || null
+        onlineLink: formData.onlineLink.trim() || null,
+        imageUrl: imageUrl || null
       };
-
-      // Chỉ thêm maxParticipants nếu có giá trị
-      if (formData.maxParticipants && parseInt(formData.maxParticipants) > 0) {
-        eventData.maxParticipants = parseInt(formData.maxParticipants);
-      }
 
       // Validate required fields
       if (!eventData.startTime) {
@@ -194,9 +205,10 @@ const EventManagementModal = ({
           startTime: '',
           endTime: '',
           location: '',
-          maxParticipants: '',
-          onlineLink: ''
+          onlineLink: '',
+          imageUrl: ''
         });
+        setImagePreview(null);
       } else {
         setError(response?.message || `Lỗi khi ${mode === 'edit' ? 'cập nhật' : 'tạo'} sự kiện`);
       }
@@ -299,6 +311,76 @@ const EventManagementModal = ({
               />
             </div>
 
+            <div className="form-group">
+              <label htmlFor="imageUrl">Ảnh sự kiện</label>
+              <input
+                type="url"
+                id="imageUrl"
+                name="imageUrl"
+                value={formData.imageUrl}
+                onChange={(e) => {
+                  handleInputChange(e);
+                  // Update image preview when URL changes
+                  if (e.target.value) {
+                    setImagePreview(e.target.value);
+                  } else {
+                    setImagePreview(null);
+                  }
+                }}
+                placeholder="https://example.com/image.jpg"
+              />
+              {formData.imageUrl && (
+                <div className="image-preview" style={{
+                  margin: '16px 0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100%',
+                  maxWidth: '400px',
+                  minHeight: '120px',
+                  maxHeight: '260px',
+                  overflow: 'hidden',
+                  borderRadius: '12px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  background: '#f8fafc',
+                }}>
+                  <img 
+                    src={formData.imageUrl} 
+                    alt="Event preview" 
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      maxHeight: '240px',
+                      objectFit: 'contain',
+                      borderRadius: '12px',
+                      background: '#fff',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+                    }}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'block';
+                    }}
+                  />
+                  <div style={{ display: 'none', padding: '20px', textAlign: 'center', color: '#999' }}>
+                    Không thể tải ảnh
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-remove-image"
+                    onClick={removeImage}
+                    title="Xóa ảnh"
+                    style={{ marginTop: '8px' }}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              <small className="form-text">
+                Nhập URL ảnh (JPG, PNG, GIF).
+              </small>
+            </div>
+
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="startTime">Thời gian bắt đầu *</label>
@@ -337,19 +419,6 @@ const EventManagementModal = ({
             </div>
 
             <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="maxParticipants">Số lượng tham gia tối đa</label>
-                <input
-                  type="number"
-                  id="maxParticipants"
-                  name="maxParticipants"
-                  value={formData.maxParticipants}
-                  onChange={handleInputChange}
-                  placeholder="0 = Không giới hạn"
-                  min="0"
-                />
-              </div>
-              
               <div className="form-group">
                 <label htmlFor="onlineLink">Link tham gia online</label>
                 <input

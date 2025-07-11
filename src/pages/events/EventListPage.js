@@ -154,15 +154,7 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
           }
         }, ['⚠️ ', error]),
         
-        eventDetails && React.createElement('div', { className: 'event-detail-content', key: 'content' }, [
-          eventDetails.imageUrl && React.createElement('div', { 
-            className: 'detail-image',
-            key: 'image'
-          }, React.createElement('img', {
-            src: eventDetails.imageUrl,
-            alt: eventDetails.title
-          })),
-          
+        eventDetails && React.createElement('div', { className: 'event-detail-content', key: 'content' }, [          
           React.createElement('div', { className: 'detail-info', key: 'info' }, [
             React.createElement('div', { className: 'info-section', key: 'time' }, [
               React.createElement('h3', { key: 'time-title' }, '📅 Thời gian'),
@@ -184,7 +176,7 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
             ]),
             
             eventDetails.creatorName && React.createElement('div', { className: 'info-section', key: 'creator' }, [
-              React.createElement('h3', { key: 'creator-title' }, '👤 Người tạo'),
+              React.createElement('h3', { key: 'creator-title' }, '👤 Tổ chức bởi'),
               React.createElement('p', { key: 'creator-text' }, eventDetails.creatorName)
             ]),
             
@@ -218,7 +210,8 @@ const EventRegistrationButton = ({ event, onRegistrationChange, onFeedbackClick 
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [hasCheckedRegistration, setHasCheckedRegistration] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
-  const [lastCheckedUserId, setLastCheckedUserId] = useState(null); // Track để biết khi nào user thay đổi  // Khởi tạo currentUserId và kiểm tra cache ngay từ đầu
+  const [lastCheckedUserId, setLastCheckedUserId] = useState(null); // Track để biết khi nào user thay đổi
+  const [dropdownOpen, setDropdownOpen] = useState(false); // State cho dropdown menu  // Khởi tạo currentUserId và kiểm tra cache ngay từ đầu
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     setCurrentUserId(userId);
@@ -802,7 +795,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange, onFeedbackClick 
           }}
           className="registration-btn btn-register"
         >
-          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-2 h-2 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
           Đăng ký
@@ -853,7 +846,7 @@ const EventRegistrationButton = ({ event, onRegistrationChange, onFeedbackClick 
     return (
       <div className="registration-btn btn-loading">
         <span className="loading-spinner"></span>
-        Đang kiểm tra...
+        Kiểm tra...
       </div>
     );
   }
@@ -870,64 +863,79 @@ const EventRegistrationButton = ({ event, onRegistrationChange, onFeedbackClick 
     const isEventPast = effectiveEndTime < now;
 
     return (
-      <div className="flex flex-col gap-2">
-        <button
-          type="button"
-          className="registration-btn btn-registered"
-          disabled
-        >
-          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-          Đã đăng ký
-        </button>
-        <button
-          type="button"
-          className="registration-btn btn-cancel"
-          onClick={async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setLoading(true);
-            setError(null);
-            try {
-              await eventService.unregisterFromEvent(event.id);
-              setIsRegistered(false);
-              setHasCheckedRegistration(true);
-              // Xóa cache đăng ký
-              const cacheKey = `event_registration_${event.id}_${localStorage.getItem('userId')}`;
-              localStorage.removeItem(cacheKey);
-              if (onRegistrationChange) {
-                onRegistrationChange(event.id, false);
+      <div>
+        <div className="registered-actions-container">
+          <div className={`registered-btn-wrapper ${dropdownOpen ? 'dropdown-active' : ''}`}>
+            <button
+              type="button"
+              className={`registration-btn btn-registered ${dropdownOpen ? 'dropdown-active' : ''}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDropdownOpen(!dropdownOpen);
+              }}
+            >
+              <svg className="w-2 h-2 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Đã đăng ký
+              <span className="dropdown-arrow">▼</span>
+            </button>
+            <div className={`registration-dropdown-menu ${dropdownOpen ? 'show' : ''}`}>
+              <button
+                type="button"
+                className="registration-dropdown-item cancel-registration"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDropdownOpen(false);
+                  setLoading(true);
+                  setError(null);
+                  try {
+                    await eventService.unregisterFromEvent(event.id);
+                    setIsRegistered(false);
+                    setHasCheckedRegistration(true);
+                    // Xóa cache đăng ký
+                    const cacheKey = `event_registration_${event.id}_${localStorage.getItem('userId')}`;
+                    localStorage.removeItem(cacheKey);
+                    if (onRegistrationChange) {
+                      onRegistrationChange(event.id, false);
+                    }
+                  } catch (err) {
+                    setError('Hủy đăng ký thất bại. Vui lòng thử lại.');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                {loading ? 'Hủy...' : 'Hủy đăng ký'}
+              </button>
+            </div>
+          </div>
+          {/* Nút đánh giá luôn hiển thị, nhưng disabled và có thông báo nếu sự kiện chưa kết thúc */}
+          <button
+            type="button"
+            className="btn-feedback"
+            onClick={() => {
+              if (isEventPast) {
+                if (onFeedbackClick) {
+                  onFeedbackClick(event);
+                }
+              } else {
+                window.alert('Bạn chỉ có thể đánh giá sau khi sự kiện kết thúc.');
               }
-            } catch (err) {
-              setError('Hủy đăng ký thất bại. Vui lòng thử lại.');
-            } finally {
-              setLoading(false);
-            }
-          }}
-          disabled={loading}
-        >
-          {loading ? 'Đang hủy...' : 'Hủy đăng ký'}
-        </button>
-        {/* Nút đánh giá luôn hiển thị, nhưng disabled và có thông báo nếu sự kiện chưa kết thúc */}
-        <button
-          type="button"
-          className="registration-btn btn-feedback"
-          onClick={() => {
-            if (isEventPast) {
-              if (onFeedbackClick) {
-                onFeedbackClick(event);
-              }
-            } else {
-              window.alert('Bạn chỉ có thể đánh giá sau khi sự kiện kết thúc.');
-            }
-          }}
-        >
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-          </svg>
-          Đánh giá sự kiện
-        </button>
+            }}
+          >
+            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+            Đánh giá sự kiện
+          </button>
+        </div>
         {error && (
           <div className="error-message mt-1">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -961,11 +969,11 @@ const EventRegistrationButton = ({ event, onRegistrationChange, onFeedbackClick 
         {loading ? (
           <>
             <span className="loading-spinner"></span>
-            Đang xử lý...
+            Xử lý...
           </>
         ) : (
           <>
-            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-2 h-2 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
             Đăng ký
@@ -1243,7 +1251,7 @@ const EventListPage = () => {
                 className="btn-create-event"
                 onClick={handleCreateEvent}
               >
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
                 Tạo sự kiện mới
@@ -1253,7 +1261,7 @@ const EventListPage = () => {
                 className="btn-view-feedback"
                 onClick={() => setShowFeedbackList(true)}
               >
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 Xem tất cả đánh giá
@@ -1375,12 +1383,7 @@ const EventListPage = () => {
                     {event.title}
                   </h3>
                   
-                  {/* Event Description */}
-                  <p className="event-description">
-                    {truncateDescription(event.description)}
-                  </p>
-                  
-                  {/* Event Meta Info */}
+                  {/* Event Meta Info - Chỉ hiển thị ngày và địa điểm */}
                   <div className="event-meta">
                     <div className="meta-item">
                       <svg className="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1398,92 +1401,10 @@ const EventListPage = () => {
                         {event.location}
                       </div>
                     )}
-                    
-                    {event.participantCount !== undefined && (
-                      <div className="meta-item">
-                        <svg className="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                        </svg>
-                        {event.participantCount} người tham gia
-                      </div>
-                    )}
-
-                    {event.creatorName && (
-                      <div className="meta-item">
-                        <svg className="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        {event.creatorName}
-                      </div>
-                    )}
-                    
-                    {event.onlineLink && (
-                      <div className="meta-item">
-                        <svg className="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                        </svg>
-                        Online
-                      </div>
-                    )}
                   </div>
                     {/* Registration Section */}
                   <div className="registration-section">
-                    {event.maxParticipants && (
-                      <div className="capacity-info">
-                        <span>{event.participantCount || 0}/{event.maxParticipants}</span>
-                        <div className="capacity-bar">
-                          <div 
-                            className="capacity-fill" 
-                            style={{
-                              width: `${Math.min(100, ((event.participantCount || 0) / event.maxParticipants) * 100)}%`
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Staff Event Statistics */}
-                    {isStaff() && (
-                      <div className="event-stats">
-                        <div className="stat-item">
-                          <div className="stat-number">{event.participantCount || 0}</div>
-                          <div className="stat-label">Người tham gia</div>
-                        </div>
-                        {event.maxParticipants && (
-                          <div className="stat-item">
-                            <div className="stat-number">
-                              {Math.round(((event.participantCount || 0) / event.maxParticipants) * 100)}%
-                            </div>
-                            <div className="stat-label">Tỷ lệ lấp đầy</div>
-                          </div>
-                        )}
-                        <div className="stat-item">
-                          <div className="stat-number">
-                            {(() => {
-                              const now = new Date();
-                              const startTime = new Date(event.startTime || event.startDate);
-                              const endTime = new Date(event.endTime || event.endDate || event.startTime || event.startDate);
-                              
-                              let effectiveEndTime = endTime;
-                              if (!event.endTime && !event.endDate) {
-                                effectiveEndTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
-                              }
-                              
-                              if (effectiveEndTime < now) {
-                                return 'Đã kết thúc';
-                              } else if (startTime <= now && now <= effectiveEndTime) {
-                                return 'Đang diễn ra';
-                              } else {
-                                const diffTime = Math.abs(startTime - now);
-                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                return `${diffDays} ngày`;
-                              }
-                            })()}
-                          </div>
-                          <div className="stat-label">Trạng thái</div>
-                        </div>
-                      </div>
-                    )}                    <div className="event-actions">
+                    <div className="event-actions">
                       <button 
                         type="button"
                         className="btn-outline"
