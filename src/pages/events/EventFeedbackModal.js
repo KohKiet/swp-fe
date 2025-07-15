@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import eventService from '../../services/eventService';
 
 const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => {
-  const [formData, setFormData] = useState({
-    rating: 0,
-    comment: ''
-  });
+  const [formData, setFormData] = useState({ rating: 0, comment: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -21,24 +18,17 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
       setError(null);
       checkExistingFeedback();
     } else {
-      // Reset form khi đóng modal
-      setFormData({
-        rating: 0,
-        comment: ''
-      });
+      setFormData({ rating: 0, comment: '' });
       setExistingFeedback(null);
     }
   }, [isOpen, event?.id]);
 
   const checkExistingFeedback = async () => {
     if (!event?.id) return;
-    
     setCheckingExisting(true);
     try {
-      // Try to check if user has existing feedback, but don't fail if endpoint doesn't exist
       const response = await eventService.checkUserFeedbackStatus(event.id);
-      if (response?.success && response?.data && response.data.id) {
-        // User has existing feedback with valid ID
+      if (response?.success && response?.data?.id) {
         setExistingFeedback(response.data);
         setFormData({
           rating: response.data.rating || 0,
@@ -46,21 +36,13 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
         });
         console.log('✅ Found existing feedback:', response.data.id);
       } else {
-        // User doesn't have feedback
         setExistingFeedback(null);
-        setFormData({
-          rating: 0,
-          comment: ''
-        });
+        setFormData({ rating: 0, comment: '' });
       }
     } catch (err) {
       console.log('⚠️ Could not check existing feedback (this is normal if endpoint doesn\'t exist):', err.message);
-      // Set as no existing feedback - we'll handle duplicates during submission
       setExistingFeedback(null);
-      setFormData({
-        rating: 0,
-        comment: ''
-      });
+      setFormData({ rating: 0, comment: '' });
     } finally {
       setCheckingExisting(false);
     }
@@ -76,17 +58,10 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
-
   const handleRatingClick = (rating) => {
-    setFormData(prev => ({
-      ...prev,
-      rating
-    }));
+    setFormData(prev => ({ ...prev, rating }));
   };
 
   const validateForm = () => {
@@ -107,96 +82,54 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setLoading(true);
     setError(null);
-
     try {
       const feedbackData = {
         eventId: event.id,
         rating: parseInt(formData.rating),
         comment: formData.comment.trim()
       };
-
-      console.log('🚀 Submitting feedback:', {
-        eventId: event.id,
-        eventTitle: event.title,
-        feedbackData,
-        existingFeedback: existingFeedback ? 'Yes' : 'No'
-      });
-
       let response;
-      // Always try to create new feedback first since we can't reliably check existing feedback
       try {
         response = await eventService.submitFeedback(feedbackData);
       } catch (createError) {
-        // If create fails and we have existing feedback info, try update
         if (existingFeedback?.id && createError.response?.status === 409) {
-          console.log('🔄 Feedback already exists, trying to update...');
           response = await eventService.updateFeedback(existingFeedback.id, feedbackData);
         } else {
-          throw createError; // Re-throw the original error
+          throw createError;
         }
       }
-
-      console.log('📡 Feedback response:', response);
-
       if (response?.success) {
         setSuccess(true);
         onFeedbackSubmitted && onFeedbackSubmitted();
-        
-        // Đóng modal sau 2 giây
-        setTimeout(() => {
-          handleClose();
-        }, 2000);
+        setTimeout(handleClose, 2000);
       } else {
         setError(response?.message || 'Đã xảy ra lỗi khi gửi đánh giá');
       }
     } catch (err) {
-      console.error('Error submitting feedback:', err);
       let errorMessage = 'Đã xảy ra lỗi khi gửi đánh giá';
-      
+      const data = err.response?.data;
       if (err.response?.status === 400) {
-        const data = err.response?.data;
-        if (data?.message) {
-          errorMessage = data.message;
-        } else if (data?.title) {
-          errorMessage = data.title;
-        } else if (data?.errors) {
-          // Handle validation errors from .NET backend
-          const errors = Object.values(data.errors).flat();
-          errorMessage = errors.join(', ') || 'Dữ liệu không hợp lệ';
-        } else if (typeof data === 'string') {
-          errorMessage = data;
-        } else {
-          errorMessage = 'Dữ liệu không hợp lệ - vui lòng kiểm tra lại thông tin';
-        }
+        if (data?.message) errorMessage = data.message;
+        else if (data?.title) errorMessage = data.title;
+        else if (data?.errors) errorMessage = Object.values(data.errors).flat().join(', ') || 'Dữ liệu không hợp lệ';
+        else if (typeof data === 'string') errorMessage = data;
+        else errorMessage = 'Dữ liệu không hợp lệ - vui lòng kiểm tra lại thông tin';
       } else if (err.response?.status === 401) {
         errorMessage = 'Bạn cần đăng nhập để thực hiện thao tác này';
       } else if (err.response?.status === 403) {
         errorMessage = 'Bạn không có quyền đánh giá sự kiện này';
       } else if (err.response?.status === 404 || err.response?.status === 405) {
-        // Tạm thời xử lý trường hợp backend chưa có endpoint
         errorMessage = 'Chức năng đánh giá đang được phát triển. Cảm ơn bạn đã quan tâm!';
-        
-        // Mock success response để test UI
-        console.log('🔧 Mock feedback submission for development');
         setSuccess(true);
         onFeedbackSubmitted && onFeedbackSubmitted();
-        
-        setTimeout(() => {
-          handleClose();
-        }, 3000);
-        
-        return; // Không set error
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
+        setTimeout(handleClose, 3000);
+        return;
+      } else if (data?.message) {
+        errorMessage = data.message;
       }
-      
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -206,25 +139,22 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
   if (!isOpen) return null;
 
   return (
-    <div 
-      className={`modal-overlay ${isClosing ? 'closing' : ''}`} 
+    <div
+      className={`modal-overlay${isClosing ? ' closing' : ''}`}
       onClick={handleClose}
       role="dialog"
       aria-modal="true"
       tabIndex="-1"
     >
-      <div 
-        className="modal-content event-feedback-modal" 
-        onClick={(e) => e.stopPropagation()}
+      <div
+        className="modal-content event-feedback-modal"
+        onClick={e => e.stopPropagation()}
         role="document"
       >
         <div className="modal-header">
-          <h2>
-            {existingFeedback ? 'Cập nhật đánh giá' : 'Đánh giá sự kiện'}
-          </h2>
+          <h2>{existingFeedback ? 'Cập nhật đánh giá' : 'Đánh giá sự kiện'}</h2>
           <button className="modal-close" onClick={handleClose}>×</button>
         </div>
-
         <div className="modal-body">
           {checkingExisting ? (
             <div className="loading-state">
@@ -243,14 +173,10 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
                 <h3>Sự kiện: {event?.title}</h3>
                 <p className="event-date">
                   {event?.startTime && new Date(event.startTime).toLocaleDateString('vi-VN', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                   })}
                 </p>
               </div>
-
               {error && (
                 <div className="error-message">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -259,16 +185,15 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
                   {error}
                 </div>
               )}
-
               <form onSubmit={handleSubmit} className="feedback-form">
                 <div className="form-group">
                   <label htmlFor="rating">Đánh giá tổng thể *</label>
                   <div className="rating-stars" id="rating" role="radiogroup" aria-labelledby="rating">
-                    {[1, 2, 3, 4, 5].map((star) => (
+                    {[1, 2, 3, 4, 5].map(star => (
                       <button
                         key={star}
                         type="button"
-                        className={`star ${formData.rating >= star ? 'filled' : ''}`}
+                        className={`star${formData.rating >= star ? ' filled' : ''}`}
                         onClick={() => handleRatingClick(star)}
                         aria-label={`${star} sao`}
                       >
@@ -281,7 +206,6 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
                     <span>Tuyệt vời</span>
                   </div>
                 </div>
-
                 <div className="form-group">
                   <label htmlFor="comment">Nhận xét chi tiết *</label>
                   <textarea
@@ -298,7 +222,6 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
                     {formData.comment.length}/1000 ký tự
                   </div>
                 </div>
-
                 <div className="form-suggestions">
                   <p><strong>Gợi ý nội dung đánh giá:</strong></p>
                   <ul>
@@ -312,21 +235,19 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
             </>
           )}
         </div>
-
         {!checkingExisting && !success && (
           <div className="modal-footer">
-            <button 
-              type="button" 
-              className="btn-secondary" 
+            <button
+              type="button"
+              className="btn-secondary"
               onClick={handleClose}
               disabled={loading}
             >
               Hủy
             </button>
-            
-            <button 
-              type="submit" 
-              className="btn-primary" 
+            <button
+              type="submit"
+              className="btn-primary"
               onClick={handleSubmit}
               disabled={loading || formData.rating === 0}
             >

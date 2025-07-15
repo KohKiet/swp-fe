@@ -22,38 +22,52 @@ const EventManagementModal = ({
   const [error, setError] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
+  // Helper: format datetime cho input và backend
+  const formatDateTimeLocal = (dateString) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch {
+      return '';
+    }
+  };
+  const formatDateTime = (dateTimeString) => {
+    if (!dateTimeString) return null;
+    try {
+      const date = new Date(dateTimeString);
+      if (isNaN(date.getTime())) return null;
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+07:00`;
+    } catch {
+      return null;
+    }
+  };
+
+  const emptyForm = {
+    title: '',
+    description: '',
+    startTime: '',
+    endTime: '',
+    location: '',
+    onlineLink: '',
+    imageUrl: ''
+  };
+
   // Initialize form data when editing
   useEffect(() => {
     if (mode === 'edit' && eventToEdit) {
-      const formatDateTimeLocal = (dateString) => {
-        if (!dateString) return '';
-        try {
-          const date = new Date(dateString);
-          if (isNaN(date.getTime())) {
-            console.error('Invalid date for formatting:', dateString);
-            return '';
-          }
-          
-          // Lấy thời gian địa phương (không chuyển đổi múi giờ)
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          const hours = String(date.getHours()).padStart(2, '0');
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          
-          console.log('Formatting datetime:', {
-            original: dateString,
-            parsed: date.toISOString(),
-            formatted: `${year}-${month}-${day}T${hours}:${minutes}`
-          });
-          
-          return `${year}-${month}-${day}T${hours}:${minutes}`;
-        } catch (e) {
-          console.error('Error formatting datetime:', dateString, e);
-          return '';
-        }
-      };
-
       setFormData({
         title: eventToEdit.title || '',
         description: eventToEdit.description || '',
@@ -63,24 +77,9 @@ const EventManagementModal = ({
         onlineLink: eventToEdit.onlineLink || '',
         imageUrl: eventToEdit.imageUrl || ''
       });
-      
-      // Set image preview if editing and there's an existing image
-      if (eventToEdit.imageUrl) {
-        setImagePreview(eventToEdit.imageUrl);
-      } else {
-        setImagePreview(null);
-      }
+      setImagePreview(eventToEdit.imageUrl || null);
     } else {
-      // Reset form for create mode
-      setFormData({
-        title: '',
-        description: '',
-        startTime: '',
-        endTime: '',
-        location: '',
-        onlineLink: '',
-        imageUrl: ''
-      });
+      setFormData({ ...emptyForm });
       setImagePreview(null);
     }
     setError(null);
@@ -101,22 +100,11 @@ const EventManagementModal = ({
   };
 
   const validateForm = () => {
-    if (!formData.title.trim()) {
-      setError('Tiêu đề sự kiện là bắt buộc');
-      return false;
-    }
-    if (!formData.description.trim()) {
-      setError('Mô tả sự kiện là bắt buộc');
-      return false;
-    }
-    if (!formData.startTime) {
-      setError('Thời gian bắt đầu là bắt buộc');
-      return false;
-    }
-    if (formData.endTime && new Date(formData.endTime) <= new Date(formData.startTime)) {
-      setError('Thời gian kết thúc phải sau thời gian bắt đầu');
-      return false;
-    }
+    if (!formData.title.trim()) return setError('Tiêu đề sự kiện là bắt buộc'), false;
+    if (!formData.description.trim()) return setError('Mô tả sự kiện là bắt buộc'), false;
+    if (!formData.startTime) return setError('Thời gian bắt đầu là bắt buộc'), false;
+    if (formData.endTime && new Date(formData.endTime) <= new Date(formData.startTime))
+      return setError('Thời gian kết thúc phải sau thời gian bắt đầu'), false;
     return true;
   };
 
@@ -131,38 +119,6 @@ const EventManagementModal = ({
     setError(null);
 
     try {
-      let imageUrl = formData.imageUrl || '';
-      
-      // Sử dụng URL ảnh từ input
-      
-      // Format datetime cho backend (giữ múi giờ địa phương)
-      const formatDateTime = (dateTimeString) => {
-        if (!dateTimeString) return null;
-        try {
-          const date = new Date(dateTimeString);
-          // Kiểm tra xem date có hợp lệ không
-          if (isNaN(date.getTime())) {
-            console.error('Invalid date:', dateTimeString);
-            return null;
-          }
-          
-          // Chuyển đổi sang ISO string nhưng điều chỉnh múi giờ
-          // Để tránh lệch múi giờ, ta sẽ tạo ISO string từ các thành phần địa phương
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          const hours = String(date.getHours()).padStart(2, '0');
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          const seconds = String(date.getSeconds()).padStart(2, '0');
-          
-          // Trả về format ISO nhưng với thời gian địa phương + múi giờ Việt Nam
-          return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+07:00`;
-        } catch (e) {
-          console.error('Invalid datetime format:', dateTimeString, e);
-          return null;
-        }
-      };
-
       const eventData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -170,7 +126,7 @@ const EventManagementModal = ({
         endTime: formData.endTime ? formatDateTime(formData.endTime) : null,
         location: formData.location.trim() || null,
         onlineLink: formData.onlineLink.trim() || null,
-        imageUrl: imageUrl || null
+        imageUrl: formData.imageUrl || null
       };
 
       // Validate required fields
@@ -178,14 +134,6 @@ const EventManagementModal = ({
         setError('Thời gian bắt đầu không hợp lệ');
         return;
       }
-
-      // Debug logging
-      console.log('🚀 Sending event data:', {
-        mode,
-        eventData,
-        originalFormData: formData,
-        eventToEdit: eventToEdit?.id
-      });
 
       let response;
       if (mode === 'edit' && eventToEdit?.id) {
@@ -199,15 +147,7 @@ const EventManagementModal = ({
         onClose();
         
         // Reset form
-        setFormData({
-          title: '',
-          description: '',
-          startTime: '',
-          endTime: '',
-          location: '',
-          onlineLink: '',
-          imageUrl: ''
-        });
+        setFormData({ ...emptyForm });
         setImagePreview(null);
       } else {
         setError(response?.message || `Lỗi khi ${mode === 'edit' ? 'cập nhật' : 'tạo'} sự kiện`);

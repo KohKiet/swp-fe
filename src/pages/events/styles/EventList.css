@@ -619,8 +619,10 @@
     transition: transform 0.1s ease;
 }
 
-/* Nút quay lại danh sách sự kiện - giống style btn-view-feedback */
-.btn-back-to-events {
+/* Gom nhóm style cho các nút vàng: btn-back-to-events, btn-view-feedback, btn-feedback */
+.btn-back-to-events,
+.btn-view-feedback,
+.btn-feedback {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -636,21 +638,39 @@
     text-decoration: none;
     position: relative;
     overflow: hidden;
+}
+
+/* Điều chỉnh riêng cho btn-feedback nhỏ hơn */
+.btn-feedback {
+    min-width: 90px;
+    font-size: 0.75rem;
+    padding: 0.375rem 0.625rem;
+    border-radius: 6px;
+}
+
+.btn-back-to-events {
     margin-bottom: 2rem;
 }
 
-.btn-back-to-events:hover {
+/* Hover, active, icon, shine, ripple, loading chung */
+.btn-back-to-events:hover,
+.btn-view-feedback:hover,
+.btn-feedback:hover {
     background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
-.btn-back-to-events:active {
+.btn-back-to-events:active,
+.btn-view-feedback:active,
+.btn-feedback:active {
     transform: scale(0.95);
     transition: transform 0.1s ease;
 }
 
-.btn-back-to-events svg {
+.btn-back-to-events svg,
+.btn-view-feedback svg,
+.btn-feedback svg {
     width: 1rem;
     height: 1rem;
     transition: transform 0.2s ease;
@@ -659,9 +679,17 @@
 .btn-back-to-events:hover svg {
     transform: translateX(-2px);
 }
+.btn-view-feedback:hover svg {
+    transform: rotate(5deg);
+}
+.btn-feedback:hover svg {
+    transform: rotate(360deg);
+}
 
-/* Hiệu ứng shine cho btn-back-to-events */
-.btn-back-to-events::before {
+/* Hiệu ứng shine cho cả 3 nút vàng */
+.btn-back-to-events::before,
+.btn-view-feedback::before,
+.btn-feedback::before {
     content: '';
     position: absolute;
     top: 0;
@@ -671,9 +699,36 @@
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
     transition: left 0.6s ease;
 }
-
-.btn-back-to-events:hover::before {
+.btn-back-to-events:hover::before,
+.btn-view-feedback:hover::before,
+.btn-feedback:hover::before {
     left: 100%;
+}
+
+/* Hiệu ứng ripple cho cả 3 nút vàng */
+.btn-back-to-events::after,
+.btn-view-feedback::after,
+.btn-feedback::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
+    pointer-events: none;
+    opacity: 0;
+}
+.btn-back-to-events:active::after,
+.btn-view-feedback:active::after,
+.btn-feedback:active::after {
+    width: 120px;
+    height: 120px;
+    opacity: 1;
+    transition: width 0.1s ease, height 0.1s ease, opacity 0.1s ease;
 }
 
 /* Loading state cho btn-back-to-events */
@@ -682,7 +737,6 @@
     opacity: 0.7;
     position: relative;
 }
-
 .btn-back-to-events.loading::after {
     content: '';
     position: absolute;
@@ -697,46 +751,27 @@
     animation: spin 1s linear infinite;
 }
 
-/* Hiệu ứng ripple cho btn-back-to-events */
-.btn-back-to-events::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.3s ease, height 0.3s ease;
-    pointer-events: none;
-    opacity: 0;
-}
-
-.btn-back-to-events:active::after {
-    width: 120px;
-    height: 120px;
-    opacity: 1;
-    transition: width 0.1s ease, height 0.1s ease, opacity 0.1s ease;
-}
-
-/* Responsive cho btn-back-to-events */
+/* Responsive cho các nút vàng */
 @media (max-width: 768px) {
-    .btn-back-to-events {
+    .btn-back-to-events,
+    .btn-view-feedback,
+    .btn-feedback {
         width: 100%;
         justify-content: center;
         padding: 0.625rem 1rem;
         font-size: 0.8rem;
     }
-    
-    .btn-back-to-events svg {
+    .btn-back-to-events svg,
+    .btn-view-feedback svg,
+    .btn-feedback svg {
         width: 0.875rem;
         height: 0.875rem;
     }
 }
-
 @media (max-width: 480px) {
-    .btn-back-to-events {
+    .btn-back-to-events,
+    .btn-view-feedback,
+    .btn-feedback {
         font-size: 0.75rem;
         padding: 0.5rem 0.75rem;
     }
