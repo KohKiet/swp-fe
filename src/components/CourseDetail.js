@@ -1,56 +1,173 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faPlay,
-  faBookOpen,
-  faClock,
-  faUsers,
-  faEye,
-  faChevronDown,
-  faChevronRight,
-  faSpinner,
-  faExclamationTriangle,
-  faCheckCircle,
-  faUser,
-  faCalendar,
-  faStar,
-  faDownload,
-  faFilePdf,
-  faFileAudio,
-  faFileVideo,
-  faComments,
-  faShare,
-} from "@fortawesome/free-solid-svg-icons";
+  Box,
+  Container,
+  Typography,
+  Card,
+  CardContent,
+  CardMedia,
+  Button,
+  Chip,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Collapse,
+  LinearProgress,
+  Stack,
+  Paper,
+  IconButton,
+  Menu,
+  MenuItem,
+  Alert,
+  CircularProgress,
+  Rating,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Breadcrumbs,
+  Link as MuiLink,
+  Fab,
+  Tooltip,
+} from "@mui/material";
+import {
+  PlayArrow as PlayIcon,
+  Pause as PauseIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  School as SchoolIcon,
+  AccessTime as TimeIcon,
+  Group as GroupIcon,
+  Visibility as EyeIcon,
+  CheckCircle as CheckCircleIcon,
+  RadioButtonUnchecked as UncompletedIcon,
+  Quiz as QuizIcon,
+  MenuBook as BookIcon,
+  Star as StarIcon,
+  Share as ShareIcon,
+  Bookmark as BookmarkIcon,
+  Download as DownloadIcon,
+  VideoLibrary as VideoIcon,
+  AudioFile as AudioIcon,
+  PictureAsPdf as PdfIcon,
+  NavigateNext as NavigateNextIcon,
+  NavigateBefore as NavigateBeforeIcon,
+  Home as HomeIcon,
+  Timer as TimerIcon,
+  Assignment as AssignmentIcon,
+} from "@mui/icons-material";
+import { styled, alpha } from "@mui/material/styles";
 import courseService from "../services/courseService";
 import {
   getCourseTypeLabel,
   getAgeGroupLabel,
   formatDuration,
   calculateCourseProgress,
+  CourseTypeEnum,
 } from "../models/courseModels";
 import "./CourseDetail.css";
+
+// Styled components
+const StyledHeroSection = styled(Box)(({ theme }) => ({
+  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+  color: "white",
+  padding: theme.spacing(6, 0),
+  position: "relative",
+  overflow: "hidden",
+}));
+
+const CourseImageCard = styled(Card)(({ theme }) => ({
+  maxWidth: 400,
+  borderRadius: theme.spacing(2),
+  overflow: "hidden",
+  boxShadow: theme.shadows[8],
+}));
+
+const ChapterAccordion = styled(Accordion)(({ theme }) => ({
+  marginBottom: theme.spacing(1),
+  "&:before": {
+    display: "none",
+  },
+  "&.Mui-expanded": {
+    margin: `${theme.spacing(1)} 0`,
+  },
+}));
+
+const LessonListItem = styled(ListItemButton)(({ theme }) => ({
+  borderRadius: theme.spacing(1),
+  margin: theme.spacing(0.5, 0),
+  "&:hover": {
+    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+  },
+  "&.Mui-selected": {
+    backgroundColor: alpha(theme.palette.primary.main, 0.12),
+    "&:hover": {
+      backgroundColor: alpha(theme.palette.primary.main, 0.16),
+    },
+  },
+}));
+
+// Helper function to get course type icon
+const getCourseTypeIcon = (courseType) => {
+  switch (courseType) {
+    case CourseTypeEnum.BASIC_AWARENESS:
+      return <SchoolIcon />;
+    case CourseTypeEnum.PREVENTION:
+      return <BookIcon />;
+    case CourseTypeEnum.INTERVENTION:
+      return <AssignmentIcon />;
+    case CourseTypeEnum.RECOVERY_SUPPORT:
+      return <GroupIcon />;
+    case CourseTypeEnum.PROFESSIONAL_TRAINING:
+      return <StarIcon />;
+    case CourseTypeEnum.FAMILY_EDUCATION:
+      return <GroupIcon />;
+    default:
+      return <BookIcon />;
+  }
+};
 
 const CourseDetail = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
 
+  // State management
   const [course, setCourse] = useState(null);
+  const [currentChapter, setCurrentChapter] = useState(null);
+  const [currentLesson, setCurrentLesson] = useState(null);
+  const [currentQuiz, setCurrentQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
   const [expandedChapters, setExpandedChapters] = useState(new Set());
-  const [currentLesson, setCurrentLesson] = useState(null);
-  const [progress, setProgress] = useState(0);
-  const [showShareModal, setShowShareModal] = useState(false);
+  const [progress, setProgress] = useState({});
+  const [courseProgress, setCourseProgress] = useState(0);
+  const [showQuizDialog, setShowQuizDialog] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [shareMenuAnchor, setShareMenuAnchor] = useState(null);
 
+  // Load course data on mount
   useEffect(() => {
     if (courseId) {
       loadCourseDetails();
       checkEnrollmentStatus();
     }
   }, [courseId]);
+
+  // Load progress if enrolled
+  useEffect(() => {
+    if (isEnrolled && course) {
+      loadCourseProgress();
+    }
+  }, [isEnrolled, course]);
 
   const loadCourseDetails = async () => {
     try {
@@ -61,28 +178,32 @@ const CourseDetail = () => {
         courseId
       );
 
-      if (response.success && response.data) {
-        setCourse(response.data);
+      if (response?.success && response.data) {
+        const courseData = response.data;
+        setCourse(courseData);
 
-        // Calculate progress if user is enrolled
-        if (response.data.chapters) {
-          const courseProgress = calculateCourseProgress(
-            response.data.chapters
-          );
-          setProgress(courseProgress);
+        // Load chapters for the course
+        if (courseData.chapters && courseData.chapters.length > 0) {
+          // Automatically expand first chapter and select first lesson
+          const firstChapter = courseData.chapters[0];
+          setExpandedChapters(new Set([firstChapter.chapterId]));
+          setCurrentChapter(firstChapter);
+
+          if (
+            firstChapter.lessons &&
+            firstChapter.lessons.length > 0
+          ) {
+            setCurrentLesson(firstChapter.lessons[0]);
+          }
         }
 
-        // Auto-expand first chapter
-        if (
-          response.data.chapters &&
-          response.data.chapters.length > 0
-        ) {
-          setExpandedChapters(
-            new Set([response.data.chapters[0].chapterId])
-          );
-        }
+        // Calculate overall progress
+        const overallProgress = calculateCourseProgress(
+          courseData.chapters || []
+        );
+        setCourseProgress(overallProgress);
       } else {
-        setError(response.message || "Course not found");
+        setError(response?.message || "Course not found");
       }
     } catch (err) {
       console.error("Error loading course details:", err);
@@ -94,55 +215,54 @@ const CourseDetail = () => {
     }
   };
 
-  // Helper function to check if token is valid format
-  const isTokenValid = (token) => {
-    if (!token) return false;
-
-    try {
-      // Basic JWT format check (should have 3 parts separated by dots)
-      const parts = token.split(".");
-      if (parts.length !== 3) return false;
-
-      // Try to decode the payload to check expiration
-      const payload = JSON.parse(atob(parts[1]));
-      const currentTime = Math.floor(Date.now() / 1000);
-
-      // Check if token is expired
-      if (payload.exp && payload.exp < currentTime) {
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      // If we can't decode it, it's probably not a valid JWT
-      return false;
-    }
-  };
-
   const checkEnrollmentStatus = async () => {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token || !isTokenValid(token)) {
-        // User is not logged in or token is invalid/expired
         setIsEnrolled(false);
-        if (token && !isTokenValid(token)) {
-          // Clean up invalid token
-          localStorage.removeItem("accessToken");
-        }
         return;
       }
 
       const response = await courseService.isEnrolled(courseId);
-      // The API returns the enrollment status directly
       setIsEnrolled(response === true || response.data === true);
     } catch (err) {
       console.error("Error checking enrollment status:", err);
-      // If there's an authentication error, assume user is not enrolled
-      if (err.message && err.message.includes("401")) {
-        setIsEnrolled(false);
-        // Clear invalid token
-        localStorage.removeItem("accessToken");
+      setIsEnrolled(false);
+    }
+  };
+
+  const loadCourseProgress = async () => {
+    try {
+      const response = await courseService.getCourseProgress(
+        courseId
+      );
+      if (response?.success && response.data) {
+        const progressData = response.data;
+        const progressMap = {};
+
+        progressData.forEach((item) => {
+          if (item.lessonId) {
+            progressMap[item.lessonId] = item;
+          }
+        });
+
+        setProgress(progressMap);
       }
+    } catch (err) {
+      console.error("Error loading progress:", err);
+    }
+  };
+
+  const isTokenValid = (token) => {
+    if (!token) return false;
+    try {
+      const parts = token.split(".");
+      if (parts.length !== 3) return false;
+      const payload = JSON.parse(atob(parts[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+      return payload.exp && payload.exp > currentTime;
+    } catch {
+      return false;
     }
   };
 
@@ -150,10 +270,6 @@ const CourseDetail = () => {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token || !isTokenValid(token)) {
-        // Clean up invalid token if it exists
-        if (token && !isTokenValid(token)) {
-          localStorage.removeItem("accessToken");
-        }
         navigate("/login", {
           state: { returnUrl: `/education/courses/${courseId}` },
         });
@@ -168,27 +284,24 @@ const CourseDetail = () => {
       } else {
         await courseService.enrollInCourse(courseId);
         setIsEnrolled(true);
+        loadCourseProgress(); // Load progress after enrollment
       }
     } catch (err) {
       console.error("Error with enrollment:", err);
-
-      // Handle authentication errors
       if (err.message && err.message.includes("401")) {
-        // Token is invalid, redirect to login
         localStorage.removeItem("accessToken");
         navigate("/login", {
           state: { returnUrl: `/education/courses/${courseId}` },
         });
-        return;
+      } else {
+        setError("Failed to update enrollment. Please try again.");
       }
-
-      setError("Failed to update enrollment. Please try again.");
     } finally {
       setEnrollmentLoading(false);
     }
   };
 
-  const toggleChapter = (chapterId) => {
+  const handleChapterToggle = (chapterId) => {
     const newExpanded = new Set(expandedChapters);
     if (newExpanded.has(chapterId)) {
       newExpanded.delete(chapterId);
@@ -198,26 +311,122 @@ const CourseDetail = () => {
     setExpandedChapters(newExpanded);
   };
 
-  const selectLesson = (lesson) => {
+  const handleLessonSelect = (chapter, lesson) => {
+    setCurrentChapter(chapter);
     setCurrentLesson(lesson);
+    setCurrentQuiz(null);
+
+    // Mark lesson as viewed
+    if (isEnrolled) {
+      markLessonProgress(lesson.lessonId);
+    }
   };
 
-  const startLearning = () => {
-    // Find the first lesson in the first chapter
-    if (course.chapters && course.chapters.length > 0) {
-      const firstChapter = course.chapters.sort(
-        (a, b) => a.chapterOrder - b.chapterOrder
-      )[0];
+  const handleQuizSelect = (quiz) => {
+    setCurrentQuiz(quiz);
+    setCurrentLesson(null);
+    setShowQuizDialog(true);
+  };
 
-      if (firstChapter.lessons && firstChapter.lessons.length > 0) {
-        const firstLesson = firstChapter.lessons.sort(
-          (a, b) => a.lessonOrder - b.lessonOrder
-        )[0];
+  const markLessonProgress = async (lessonId) => {
+    try {
+      await courseService.createOrUpdateProgress({
+        courseId,
+        lessonId,
+        percent: 100,
+        isCompleted: true,
+      });
 
-        // Expand the first chapter
-        setExpandedChapters(new Set([firstChapter.chapterId]));
-        // Select the first lesson
-        setCurrentLesson(firstLesson);
+      // Update local progress
+      setProgress((prev) => ({
+        ...prev,
+        [lessonId]: {
+          ...prev[lessonId],
+          isCompleted: true,
+          percent: 100,
+        },
+      }));
+    } catch (err) {
+      console.error("Error updating progress:", err);
+    }
+  };
+
+  const getNextLesson = () => {
+    if (!course?.chapters || !currentChapter || !currentLesson)
+      return null;
+
+    const currentChapterIndex = course.chapters.findIndex(
+      (ch) => ch.chapterId === currentChapter.chapterId
+    );
+    const currentLessonIndex = currentChapter.lessons.findIndex(
+      (l) => l.lessonId === currentLesson.lessonId
+    );
+
+    // Try next lesson in current chapter
+    if (currentLessonIndex < currentChapter.lessons.length - 1) {
+      return {
+        chapter: currentChapter,
+        lesson: currentChapter.lessons[currentLessonIndex + 1],
+      };
+    }
+
+    // Try first lesson of next chapter
+    if (currentChapterIndex < course.chapters.length - 1) {
+      const nextChapter = course.chapters[currentChapterIndex + 1];
+      if (nextChapter.lessons && nextChapter.lessons.length > 0) {
+        return {
+          chapter: nextChapter,
+          lesson: nextChapter.lessons[0],
+        };
+      }
+    }
+
+    return null;
+  };
+
+  const getPreviousLesson = () => {
+    if (!course?.chapters || !currentChapter || !currentLesson)
+      return null;
+
+    const currentChapterIndex = course.chapters.findIndex(
+      (ch) => ch.chapterId === currentChapter.chapterId
+    );
+    const currentLessonIndex = currentChapter.lessons.findIndex(
+      (l) => l.lessonId === currentLesson.lessonId
+    );
+
+    // Try previous lesson in current chapter
+    if (currentLessonIndex > 0) {
+      return {
+        chapter: currentChapter,
+        lesson: currentChapter.lessons[currentLessonIndex - 1],
+      };
+    }
+
+    // Try last lesson of previous chapter
+    if (currentChapterIndex > 0) {
+      const prevChapter = course.chapters[currentChapterIndex - 1];
+      if (prevChapter.lessons && prevChapter.lessons.length > 0) {
+        return {
+          chapter: prevChapter,
+          lesson: prevChapter.lessons[prevChapter.lessons.length - 1],
+        };
+      }
+    }
+
+    return null;
+  };
+
+  const navigateToLesson = (direction) => {
+    const target =
+      direction === "next" ? getNextLesson() : getPreviousLesson();
+    if (target) {
+      handleLessonSelect(target.chapter, target.lesson);
+      // Expand the target chapter if it's not expanded
+      if (!expandedChapters.has(target.chapter.chapterId)) {
+        setExpandedChapters(
+          (prev) => new Set([...prev, target.chapter.chapterId])
+        );
       }
     }
   };
@@ -225,463 +434,576 @@ const CourseDetail = () => {
   const getMediaIcon = (mediaType) => {
     switch (mediaType?.toLowerCase()) {
       case "video":
-        return faFileVideo;
+        return <VideoIcon />;
       case "audio":
-        return faFileAudio;
-      case "document":
+        return <AudioIcon />;
       case "pdf":
-        return faFilePdf;
-      case "youtube":
-        return faFileVideo;
+      case "document":
+        return <PdfIcon />;
       default:
-        return faDownload;
+        return <BookIcon />;
     }
   };
 
-  const shareUrl = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url);
-    setShowShareModal(true);
-    setTimeout(() => setShowShareModal(false), 2000);
+  const isLessonCompleted = (lessonId) => {
+    return progress[lessonId]?.isCompleted || false;
+  };
+
+  const getLessonProgress = (lessonId) => {
+    return progress[lessonId]?.percent || 0;
   };
 
   if (loading) {
     return (
-      <div className="course-detail-loading">
-        <FontAwesomeIcon icon={faSpinner} spin size="2x" />
-        <p>Loading course details...</p>
-      </div>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="60vh">
+        <CircularProgress size={60} />
+      </Box>
     );
   }
 
-  if (error || !course) {
+  if (error) {
     return (
-      <div className="course-detail-error">
-        <FontAwesomeIcon icon={faExclamationTriangle} size="2x" />
-        <h2>Course Not Found</h2>
-        <p>{error || "The requested course could not be found."}</p>
-        <button
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+        <Button
           onClick={() => navigate("/education")}
-          className="btn btn-primary">
-          Back to Courses
-        </button>
-      </div>
+          startIcon={<HomeIcon />}>
+          Back to Education Hub
+        </Button>
+      </Container>
+    );
+  }
+
+  if (!course) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="warning">Course not found</Alert>
+      </Container>
     );
   }
 
   return (
-    <div className="course-detail">
-      {/* Course Header */}
-      <div className="course-header">
-        <div className="course-hero">
-          <div className="course-hero-content">
-            <h1>{course.title}</h1>
-            <p className="course-description">{course.description}</p>
+    <Box>
+      {/* Hero Section */}
+      <StyledHeroSection>
+        <Container maxWidth="lg">
+          <Grid container spacing={4} alignItems="center">
+            <Grid size={{ xs: 12, md: 8 }}>
+              {/* Breadcrumbs */}
+              <Breadcrumbs
+                separator={<NavigateNextIcon />}
+                sx={{ mb: 2, color: "rgba(255,255,255,0.8)" }}>
+                <MuiLink
+                  color="inherit"
+                  onClick={() => navigate("/")}
+                  sx={{ cursor: "pointer" }}>
+                  Home
+                </MuiLink>
+                <MuiLink
+                  color="inherit"
+                  onClick={() => navigate("/education")}
+                  sx={{ cursor: "pointer" }}>
+                  Education Hub
+                </MuiLink>
+                <Typography color="white">{course.title}</Typography>
+              </Breadcrumbs>
 
-            <div className="course-meta">
-              <span className="course-type">
-                {getCourseTypeLabel(course.courseType)}
-              </span>
-              <span className="course-age-group">
-                <FontAwesomeIcon icon={faUsers} />
-                {getAgeGroupLabel(course.ageGroup)}
-              </span>
-              <span className="course-duration">
-                <FontAwesomeIcon icon={faClock} />
-                {formatDuration(course.estimatedDuration)}
-              </span>
-              {course.viewCount > 0 && (
-                <span className="course-views">
-                  <FontAwesomeIcon icon={faEye} />
-                  {course.viewCount} views
-                </span>
-              )}
-            </div>
+              <Typography
+                variant="h3"
+                component="h1"
+                gutterBottom
+                sx={{ fontWeight: 700 }}>
+                {course.title}
+              </Typography>
 
-            <div className="course-actions">
-              <button
-                onClick={handleEnrollment}
-                disabled={enrollmentLoading}
-                className={`btn ${
-                  isEnrolled ? "btn-secondary" : "btn-primary"
-                } btn-large`}>
-                {enrollmentLoading ? (
-                  <FontAwesomeIcon icon={faSpinner} spin />
-                ) : isEnrolled ? (
-                  "Drop Course"
-                ) : (
-                  "Enroll Now"
-                )}
-              </button>
+              <Typography
+                variant="h6"
+                sx={{ opacity: 0.9, mb: 3, lineHeight: 1.6 }}>
+                {course.description}
+              </Typography>
 
-              <button onClick={shareUrl} className="btn btn-outline">
-                <FontAwesomeIcon icon={faShare} />
-                Share
-              </button>
-            </div>
+              {/* Course Meta Info */}
+              <Stack
+                direction="row"
+                spacing={2}
+                flexWrap="wrap"
+                sx={{ mb: 3 }}>
+                <Chip
+                  icon={getCourseTypeIcon(course.courseType)}
+                  label={getCourseTypeLabel(course.courseType)}
+                  color="primary"
+                  variant="filled"
+                />
+                <Chip
+                  icon={<GroupIcon />}
+                  label={getAgeGroupLabel(course.ageGroup)}
+                  color="secondary"
+                  variant="filled"
+                />
+                <Chip
+                  icon={<TimeIcon />}
+                  label={formatDuration(course.estimatedDuration)}
+                  variant="outlined"
+                  sx={{
+                    color: "white",
+                    borderColor: "rgba(255,255,255,0.5)",
+                  }}
+                />
+                <Chip
+                  icon={<EyeIcon />}
+                  label={`${course.viewCount} views`}
+                  variant="outlined"
+                  sx={{
+                    color: "white",
+                    borderColor: "rgba(255,255,255,0.5)",
+                  }}
+                />
+              </Stack>
 
-            {isEnrolled && progress > 0 && (
-              <div className="course-progress">
-                <div className="progress-header">
-                  <span>Your Progress</span>
-                  <span>{progress}%</span>
-                </div>
-                <div className="progress-bar">
-                  <div
-                    className="progress-fill"
-                    style={{ width: `${progress}%` }}></div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="course-hero-image">
-            <img
-              src={
-                course.imageUrl ||
-                `https://placehold.co/600x400/e8f5e9/2D7DD2?text=${encodeURIComponent(
-                  course.title
-                )}`
-              }
-              alt={course.title}
-            />
-            {course.isFeatured && (
-              <div className="featured-badge">Featured Course</div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="container">
-        <div className="course-content">
-          {/* Course Sidebar */}
-          <div className="course-sidebar">
-            <div className="course-info-card">
-              <h3>Course Information</h3>
-
-              {course.author && (
-                <div className="info-item">
-                  <FontAwesomeIcon icon={faUser} />
-                  <div>
-                    <strong>Instructor</strong>
-                    <p>
-                      {course.author.firstName}{" "}
-                      {course.author.lastName}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className="info-item">
-                <FontAwesomeIcon icon={faCalendar} />
-                <div>
-                  <strong>Created</strong>
-                  <p>
-                    {new Date(course.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-
-              {course.publishedAt && (
-                <div className="info-item">
-                  <FontAwesomeIcon icon={faCalendar} />
-                  <div>
-                    <strong>Published</strong>
-                    <p>
-                      {new Date(
-                        course.publishedAt
-                      ).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className="info-item">
-                <FontAwesomeIcon icon={faBookOpen} />
-                <div>
-                  <strong>Chapters</strong>
-                  <p>{course.chapters?.length || 0}</p>
-                </div>
-              </div>
-
-              <div className="info-item">
-                <FontAwesomeIcon icon={faPlay} />
-                <div>
-                  <strong>Lessons</strong>
-                  <p>
+              {/* Course Stats */}
+              <Stack direction="row" spacing={3} sx={{ mb: 3 }}>
+                <Box>
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                    {course.chapters?.length || 0}
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                    Chapters
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
                     {course.chapters?.reduce(
-                      (total, chapter) =>
-                        total + (chapter.lessons?.length || 0),
+                      (total, ch) =>
+                        total + (ch.lessons?.length || 0),
                       0
                     ) || 0}
-                  </p>
-                </div>
-              </div>
-            </div>
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                    Lessons
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                    {course.enrollmentCount || 0}
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                    Students
+                  </Typography>
+                </Box>
+              </Stack>
 
-            {/* Course Curriculum */}
-            <div className="course-curriculum">
-              <h3>Course Curriculum</h3>
+              {/* Rating */}
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={1}
+                sx={{ mb: 4 }}>
+                <Rating
+                  value={course.averageRating || 0}
+                  precision={0.5}
+                  readOnly
+                />
+                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                  ({course.averageRating?.toFixed(1) || 0})
+                </Typography>
+              </Stack>
 
-              {isEnrolled &&
-                course.chapters &&
-                course.chapters.length > 0 && (
-                  <p className="curriculum-note">
-                    💡 Click on any lesson below to start learning
-                  </p>
-                )}
+              {/* Action Buttons */}
+              <Stack direction="row" spacing={2}>
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={handleEnrollment}
+                  disabled={enrollmentLoading}
+                  startIcon={
+                    enrollmentLoading ? (
+                      <CircularProgress size={20} />
+                    ) : isEnrolled ? (
+                      <CheckCircleIcon />
+                    ) : (
+                      <PlayIcon />
+                    )
+                  }
+                  sx={{
+                    backgroundColor: "white",
+                    color: "primary.main",
+                    fontWeight: 600,
+                    px: 4,
+                    py: 1.5,
+                    "&:hover": {
+                      backgroundColor: "grey.100",
+                    },
+                  }}>
+                  {isEnrolled ? "Continue Learning" : "Enroll Now"}
+                </Button>
 
-              {course.chapters && course.chapters.length > 0 ? (
-                <div className="chapters-list">
-                  {course.chapters
-                    .sort((a, b) => a.chapterOrder - b.chapterOrder)
-                    .map((chapter) => (
-                      <div
-                        key={chapter.chapterId}
-                        className="chapter-item">
-                        <div
-                          className="chapter-header"
+                <IconButton
+                  onClick={(e) => setShareMenuAnchor(e.currentTarget)}
+                  sx={{
+                    color: "white",
+                    backgroundColor: "rgba(255,255,255,0.1)",
+                  }}>
+                  <ShareIcon />
+                </IconButton>
+
+                <IconButton
+                  sx={{
+                    color: "white",
+                    backgroundColor: "rgba(255,255,255,0.1)",
+                  }}>
+                  <BookmarkIcon />
+                </IconButton>
+              </Stack>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <CourseImageCard>
+                <CardMedia
+                  component="img"
+                  height="250"
+                  image={
+                    course.imageUrl ||
+                    `https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=600&h=400&fit=crop&auto=format`
+                  }
+                  alt={course.title}
+                />
+              </CourseImageCard>
+            </Grid>
+          </Grid>
+        </Container>
+      </StyledHeroSection>
+
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Grid container spacing={4}>
+          {/* Course Content */}
+          <Grid size={{ xs: 12, lg: 8 }}>
+            {currentLesson && (
+              <Card sx={{ mb: 3 }}>
+                <CardContent sx={{ p: 0 }}>
+                  {/* Lesson Header */}
+                  <Box
+                    sx={{
+                      p: 3,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}>
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center">
+                      <Box>
+                        <Typography
+                          variant="h5"
+                          gutterBottom
+                          sx={{ fontWeight: 600 }}>
+                          {currentLesson.title}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary">
+                          Chapter {currentChapter?.chapterOrder}:{" "}
+                          {currentChapter?.title}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        {isLessonCompleted(
+                          currentLesson.lessonId
+                        ) && (
+                          <CheckCircleIcon
+                            color="success"
+                            sx={{ fontSize: 32 }}
+                          />
+                        )}
+                      </Box>
+                    </Stack>
+                  </Box>
+
+                  {/* Lesson Content */}
+                  <Box sx={{ p: 3 }}>
+                    {currentLesson.videoUrl && (
+                      <Box
+                        sx={{
+                          mb: 3,
+                          borderRadius: 2,
+                          overflow: "hidden",
+                        }}>
+                        <video
+                          width="100%"
+                          height="400"
+                          controls
+                          poster={course.imageUrl}>
+                          <source
+                            src={currentLesson.videoUrl}
+                            type="video/mp4"
+                          />
+                          Your browser does not support the video tag.
+                        </video>
+                      </Box>
+                    )}
+
+                    <Typography
+                      variant="body1"
+                      sx={{ lineHeight: 1.8, mb: 3 }}>
+                      {currentLesson.content ||
+                        currentLesson.description}
+                    </Typography>
+
+                    {/* Lesson Navigation */}
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      sx={{ mt: 4 }}>
+                      <Button
+                        variant="outlined"
+                        startIcon={<NavigateBeforeIcon />}
+                        onClick={() => navigateToLesson("previous")}
+                        disabled={!getPreviousLesson()}>
+                        Previous Lesson
+                      </Button>
+
+                      <Button
+                        variant="contained"
+                        endIcon={<NavigateNextIcon />}
+                        onClick={() => navigateToLesson("next")}
+                        disabled={!getNextLesson()}>
+                        Next Lesson
+                      </Button>
+                    </Stack>
+                  </Box>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Progress Bar */}
+            {isEnrolled && (
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{ mb: 2 }}>
+                    <Typography variant="h6">
+                      Course Progress
+                    </Typography>
+                    <Typography variant="h6" color="primary">
+                      {courseProgress.toFixed(0)}%
+                    </Typography>
+                  </Stack>
+                  <LinearProgress
+                    variant="determinate"
+                    value={courseProgress}
+                    sx={{ height: 8, borderRadius: 4 }}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </Grid>
+
+          {/* Course Sidebar */}
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <Paper sx={{ p: 3 }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ fontWeight: 600 }}>
+                Course Content
+              </Typography>
+
+              {course.chapters?.map((chapter, chapterIndex) => (
+                <ChapterAccordion
+                  key={chapter.chapterId}
+                  expanded={expandedChapters.has(chapter.chapterId)}
+                  onChange={() =>
+                    handleChapterToggle(chapter.chapterId)
+                  }>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
+                      sx={{ width: "100%" }}>
+                      <BookIcon color="primary" />
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: 600 }}>
+                          Chapter {chapter.chapterOrder}:{" "}
+                          {chapter.title}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary">
+                          {chapter.lessons?.length || 0} lessons
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </AccordionSummary>
+
+                  <AccordionDetails sx={{ p: 0 }}>
+                    <List>
+                      {chapter.lessons?.map((lesson, lessonIndex) => (
+                        <LessonListItem
+                          key={lesson.lessonId}
+                          selected={
+                            currentLesson?.lessonId ===
+                            lesson.lessonId
+                          }
                           onClick={() =>
-                            toggleChapter(chapter.chapterId)
+                            handleLessonSelect(chapter, lesson)
                           }>
-                          <FontAwesomeIcon
-                            icon={
-                              expandedChapters.has(chapter.chapterId)
-                                ? faChevronDown
-                                : faChevronRight
+                          <ListItemIcon>
+                            {isLessonCompleted(lesson.lessonId) ? (
+                              <CheckCircleIcon color="success" />
+                            ) : (
+                              <UncompletedIcon color="action" />
+                            )}
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={lesson.title}
+                            secondary={
+                              <Stack
+                                direction="row"
+                                spacing={1}
+                                alignItems="center">
+                                <TimeIcon fontSize="small" />
+                                <Typography variant="caption">
+                                  {formatDuration(
+                                    lesson.estimatedDuration || 10
+                                  )}
+                                </Typography>
+                              </Stack>
                             }
                           />
-                          <span className="chapter-title">
-                            {chapter.title}
-                          </span>
-                          <span className="chapter-lesson-count">
-                            {chapter.lessons?.length || 0} lessons
-                          </span>
-                        </div>
-
-                        {expandedChapters.has(chapter.chapterId) &&
-                          chapter.lessons && (
-                            <div className="lessons-list">
-                              {chapter.lessons
-                                .sort(
-                                  (a, b) =>
-                                    a.lessonOrder - b.lessonOrder
-                                )
-                                .map((lesson) => (
-                                  <div
-                                    key={lesson.lessonId}
-                                    className={`lesson-item ${
-                                      currentLesson?.lessonId ===
-                                      lesson.lessonId
-                                        ? "active"
-                                        : ""
-                                    }`}
-                                    onClick={() =>
-                                      selectLesson(lesson)
-                                    }>
-                                    <FontAwesomeIcon
-                                      icon={
-                                        lesson.isCompleted
-                                          ? faCheckCircle
-                                          : faPlay
-                                      }
-                                      className={
-                                        lesson.isCompleted
-                                          ? "completed"
-                                          : ""
-                                      }
-                                    />
-                                    <span className="lesson-title">
-                                      {lesson.title}
-                                    </span>
-                                    {lesson.videoUrl && (
-                                      <FontAwesomeIcon
-                                        icon={faPlay}
-                                        className="media-icon"
-                                      />
-                                    )}
-                                  </div>
-                                ))}
-                            </div>
-                          )}
-                      </div>
-                    ))}
-                </div>
-              ) : (
-                <p className="no-content">
-                  No curriculum available yet.
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Main Content Area */}
-          <div className="course-main">
-            {currentLesson ? (
-              <div className="lesson-content">
-                <div className="lesson-header">
-                  <h2>{currentLesson.title}</h2>
-                  <button
-                    onClick={() => setCurrentLesson(null)}
-                    className="btn btn-secondary btn-small">
-                    Back to Overview
-                  </button>
-                </div>
-
-                {currentLesson.description && (
-                  <p className="lesson-description">
-                    {currentLesson.description}
-                  </p>
-                )}
-
-                {currentLesson.videoUrl && (
-                  <div className="lesson-video">
-                    <video controls width="100%">
-                      <source
-                        src={currentLesson.videoUrl}
-                        type="video/mp4"
-                      />
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                )}
-
-                <div className="lesson-text-content">
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: currentLesson.content,
-                    }}
-                  />
-                </div>
-
-                {currentLesson.media &&
-                  currentLesson.media.length > 0 && (
-                    <div className="lesson-attachments">
-                      <h4>Attachments</h4>
-                      <div className="attachments-list">
-                        {currentLesson.media.map((media, index) => (
-                          <a
-                            key={index}
-                            href={media.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="attachment-item">
-                            <FontAwesomeIcon
-                              icon={getMediaIcon(media.type)}
-                            />
-                            <span>
-                              {media.name ||
-                                `Attachment ${index + 1}`}
-                            </span>
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-              </div>
-            ) : (
-              <div className="course-overview">
-                <h2>Course Overview</h2>
-
-                <div className="overview-content">
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: course.description,
-                    }}
-                  />
-                </div>
-
-                {course.chapters && course.chapters.length > 0 && (
-                  <div className="chapters-overview">
-                    <h3>What You'll Learn</h3>
-                    {course.chapters
-                      .sort((a, b) => a.chapterOrder - b.chapterOrder)
-                      .map((chapter) => (
-                        <div
-                          key={chapter.chapterId}
-                          className="chapter-overview">
-                          <h4>{chapter.title}</h4>
-                          {chapter.description && (
-                            <p>{chapter.description}</p>
-                          )}
-                          {chapter.lessons &&
-                            chapter.lessons.length > 0 && (
-                              <ul className="lessons-overview">
-                                {chapter.lessons
-                                  .sort(
-                                    (a, b) =>
-                                      a.lessonOrder - b.lessonOrder
-                                  )
-                                  .map((lesson) => (
-                                    <li key={lesson.lessonId}>
-                                      {lesson.title}
-                                      {lesson.description && (
-                                        <span className="lesson-description">
-                                          - {lesson.description}
-                                        </span>
-                                      )}
-                                    </li>
-                                  ))}
-                              </ul>
-                            )}
-                        </div>
+                        </LessonListItem>
                       ))}
-                  </div>
-                )}
 
-                {isEnrolled &&
-                  course.chapters &&
-                  course.chapters.length > 0 && (
-                    <div className="start-learning-cta">
-                      <h3>Ready to begin?</h3>
-                      <p>
-                        Start with the first lesson and work your way
-                        through the course at your own pace.
-                      </p>
-                      <button
-                        onClick={startLearning}
-                        className="btn btn-primary btn-large">
-                        <FontAwesomeIcon icon={faPlay} />
-                        Start Learning
-                      </button>
-                    </div>
-                  )}
+                      {/* Chapter Quiz */}
+                      {chapter.quizzes?.map((quiz) => (
+                        <LessonListItem
+                          key={quiz.quizId}
+                          onClick={() => handleQuizSelect(quiz)}>
+                          <ListItemIcon>
+                            <QuizIcon color="secondary" />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={quiz.title}
+                            secondary={
+                              <Stack
+                                direction="row"
+                                spacing={1}
+                                alignItems="center">
+                                <TimerIcon fontSize="small" />
+                                <Typography variant="caption">
+                                  {quiz.timeLimitMinutes} minutes
+                                </Typography>
+                              </Stack>
+                            }
+                          />
+                        </LessonListItem>
+                      ))}
+                    </List>
+                  </AccordionDetails>
+                </ChapterAccordion>
+              ))}
+            </Paper>
 
-                {!isEnrolled && (
-                  <div className="enrollment-cta">
-                    <h3>Ready to start learning?</h3>
-                    <p>
-                      Enroll now to access all course content and
-                      track your progress.
-                    </p>
-                    <button
-                      onClick={handleEnrollment}
-                      disabled={enrollmentLoading}
-                      className="btn btn-primary btn-large">
-                      {enrollmentLoading ? (
-                        <FontAwesomeIcon icon={faSpinner} spin />
-                      ) : (
-                        "Enroll Now"
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+            {/* Course Info */}
+            <Paper sx={{ p: 3, mt: 3 }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ fontWeight: 600 }}>
+                Course Information
+              </Typography>
 
-      {/* Share Modal */}
-      {showShareModal && (
-        <div className="share-modal">
-          <div className="share-modal-content">
-            <FontAwesomeIcon icon={faCheckCircle} />
-            <p>Link copied to clipboard!</p>
-          </div>
-        </div>
+              <Stack spacing={2}>
+                <Box>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary">
+                    Instructor
+                  </Typography>
+                  <Typography variant="body1">
+                    {course.authorName || "Unknown"}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary">
+                    Duration
+                  </Typography>
+                  <Typography variant="body1">
+                    {formatDuration(course.estimatedDuration)}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary">
+                    Enrolled Students
+                  </Typography>
+                  <Typography variant="body1">
+                    {course.enrollmentCount || 0}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary">
+                    Language
+                  </Typography>
+                  <Typography variant="body1">English</Typography>
+                </Box>
+              </Stack>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
+
+      {/* Share Menu */}
+      <Menu
+        anchorEl={shareMenuAnchor}
+        open={Boolean(shareMenuAnchor)}
+        onClose={() => setShareMenuAnchor(null)}>
+        <MenuItem
+          onClick={() =>
+            navigator.clipboard.writeText(window.location.href)
+          }>
+          Copy Link
+        </MenuItem>
+        <MenuItem>Share on Social Media</MenuItem>
+      </Menu>
+
+      {/* Floating Action Button for Quick Navigation */}
+      {currentLesson && (
+        <Fab
+          color="primary"
+          sx={{ position: "fixed", bottom: 24, right: 24 }}
+          onClick={() => {
+            const nextLesson = getNextLesson();
+            if (nextLesson) {
+              handleLessonSelect(
+                nextLesson.chapter,
+                nextLesson.lesson
+              );
+            }
+          }}
+          disabled={!getNextLesson()}>
+          <NavigateNextIcon />
+        </Fab>
       )}
-    </div>
+    </Box>
   );
 };
 

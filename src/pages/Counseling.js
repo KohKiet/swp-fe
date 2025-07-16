@@ -290,7 +290,8 @@ const Counseling = () => {
     }
 
     try {
-      const response = await consultationService.getMyAppointments();
+      const response =
+        await consultationService.getMyAppointmentsWithAgoraToken();
       if (response.success) {
         setMyAppointments(response.data.data || []);
       } else {
@@ -388,7 +389,7 @@ const Counseling = () => {
     e.preventDefault();
 
     const errors = validateForm();
-      setFormErrors(errors);
+    setFormErrors(errors);
 
     if (Object.keys(errors).length > 0) {
       return;
@@ -414,9 +415,19 @@ const Counseling = () => {
     try {
       const appointmentData = {
         slotId: selectedSlot.id,
-        note: bookingForm.note,
+        MemberNote: bookingForm.note,
         attachments: bookingForm.attachments,
       };
+
+      // Debug logging to see what data is being sent
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "Creating appointment with data:",
+          appointmentData
+        );
+        console.log("Member note being sent:", bookingForm.note);
+        console.log("Note length:", bookingForm.note?.length || 0);
+      }
 
       const response = await consultationService.createAppointment(
         appointmentData
@@ -424,6 +435,51 @@ const Counseling = () => {
 
       if (response.success) {
         setSuccessMessage("Appointment booked successfully!");
+
+        // Additional debug logging to check response
+        if (process.env.NODE_ENV === "development") {
+          console.log("Appointment creation response:", response);
+          console.log("Created appointment data:", response.data);
+
+          // Test if we can immediately retrieve the appointment
+          if (response.data && response.data.id) {
+            setTimeout(async () => {
+              try {
+                const checkResponse =
+                  await consultationService.getAppointmentByIdWithAgoraToken(
+                    response.data.id
+                  );
+                console.log(
+                  "Immediately retrieved appointment:",
+                  checkResponse
+                );
+                if (checkResponse.success) {
+                  console.log("Retrieved appointment note fields:", {
+                    note: checkResponse.data.note,
+                    appointmentNote:
+                      checkResponse.data.appointmentNote,
+                    memberNote: checkResponse.data.memberNote,
+                    description: checkResponse.data.description,
+                  });
+                  console.log("Retrieved appointment Agora fields:", {
+                    agoraToken: !!checkResponse.data.agoraToken,
+                    AgoraToken: !!checkResponse.data.AgoraToken,
+                    agoraAppId: !!checkResponse.data.agoraAppId,
+                    AgoraAppId: !!checkResponse.data.AgoraAppId,
+                    agoraChannelName:
+                      !!checkResponse.data.agoraChannelName,
+                    ChannelName: !!checkResponse.data.ChannelName,
+                  });
+                }
+              } catch (err) {
+                console.log(
+                  "Could not immediately retrieve appointment:",
+                  err
+                );
+              }
+            }, 2000);
+          }
+        }
 
         // Reset the booking form and selection
         resetBooking();
@@ -491,7 +547,7 @@ const Counseling = () => {
           setIsLoading(true);
           // Refresh slots to show current availability
           await loadAvailableSlots();
-      setIsLoading(false);
+          setIsLoading(false);
         }
       }
     } catch (err) {
@@ -610,9 +666,9 @@ const Counseling = () => {
     // Scroll to time selection
     setTimeout(() => {
       timeSelectRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
+        behavior: "smooth",
+        block: "nearest",
+      });
     }, 100);
   };
 
@@ -850,7 +906,7 @@ const Counseling = () => {
         )}
 
         {activeTab === "booking" && (
-        <div className="booking-section">
+          <div className="booking-section">
             <>
               <div className="booking-layout fade-in delay-200">
                 {/* Left side - Time selection */}
@@ -1069,10 +1125,10 @@ const Counseling = () => {
                   ref={bookingFormRef}>
                   <div className="card">
                     <h3>Thông Tin Đặt Lịch</h3>
-                <form
-                  onSubmit={handleBookingSubmit}
+                    <form
+                      onSubmit={handleBookingSubmit}
                       className="booking-form">
-                  <div className="form-group">
+                      <div className="form-group">
                         <label htmlFor="note">
                           Ghi chú (tùy chọn)
                         </label>
@@ -1080,21 +1136,21 @@ const Counseling = () => {
                           id="note"
                           name="note"
                           value={bookingForm.note}
-                      onChange={handleInputChange}
+                          onChange={handleInputChange}
                           placeholder="Mô tả vấn đề bạn muốn tư vấn..."
                           rows="4"
                           maxLength="1000"
                           className={formErrors.note ? "error" : ""}
-                    />
+                        />
                         <small>
                           {bookingForm.note.length}/1000 ký tự
                         </small>
                         {formErrors.note && (
-                      <div className="error-text">
+                          <div className="error-text">
                             {formErrors.note}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
 
                       <div className="form-actions">
                         <button
@@ -1103,32 +1159,32 @@ const Counseling = () => {
                           className="btn-secondary">
                           Hủy
                         </button>
-                  <button
-                    type="submit"
+                        <button
+                          type="submit"
                           disabled={isLoading}
                           className="btn-primary">
-                    {isLoading ? (
-                      <>
+                          {isLoading ? (
+                            <>
                               <FontAwesomeIcon
                                 icon={faSpinner}
                                 spin
                               />
                               Đang đặt lịch...
-                      </>
-                    ) : (
+                            </>
+                          ) : (
                             <>
                               <FontAwesomeIcon icon={faCheck} />
                               Xác nhận đặt lịch
                             </>
-                    )}
-                  </button>
+                          )}
+                        </button>
                       </div>
-                </form>
+                    </form>
                   </div>
                 </div>
               )}
             </>
-              </div>
+          </div>
         )}
 
         {/* My Appointments Tab */}
@@ -1226,14 +1282,14 @@ const Counseling = () => {
                               target="_blank"
                               rel="noopener noreferrer">
                               Tham gia cuộc họp
-                  </a>
-                </div>
+                            </a>
+                          </div>
                         )}
 
                       {getStatusLower(appointment.status) ===
                         "pending" && (
                         <div className="appointment-actions">
-                <button
+                          <button
                             onClick={async () => {
                               const reason = prompt(
                                 "Lý do hủy lịch hẹn:"
@@ -1259,15 +1315,15 @@ const Counseling = () => {
                             }}
                             className="btn-danger">
                             Hủy lịch hẹn
-                </button>
-              </div>
+                          </button>
+                        </div>
                       )}
                     </div>
                   );
                 })}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

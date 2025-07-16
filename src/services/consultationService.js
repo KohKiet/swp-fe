@@ -302,6 +302,21 @@ class ConsultationService {
   // Consultation Appointments APIs
   async createAppointment(appointmentData) {
     try {
+      // Debug logging for development
+      if (process.env.NODE_ENV === "development") {
+        console.log("📤 SENDING TO BACKEND - createAppointment:");
+        console.log(
+          "URL:",
+          `${this.baseURL}/api/consultation-appointments`
+        );
+        console.log("Method: POST");
+        console.log("Data being sent:", appointmentData);
+        console.log(
+          "JSON stringified:",
+          JSON.stringify(appointmentData)
+        );
+      }
+
       const response = await this.authenticatedRequest(
         `${this.baseURL}/api/consultation-appointments`,
         {
@@ -309,8 +324,18 @@ class ConsultationService {
           body: JSON.stringify(appointmentData),
         }
       );
+
+      // Debug logging for response
+      if (process.env.NODE_ENV === "development") {
+        console.log("📥 RECEIVED FROM BACKEND - createAppointment:");
+        console.log("Response:", response);
+      }
+
       return { success: true, data: response };
     } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("❌ ERROR - createAppointment:", error);
+      }
       return { success: false, error: error.message };
     }
   }
@@ -319,6 +344,74 @@ class ConsultationService {
     try {
       const response = await this.authenticatedRequest(
         `${this.baseURL}/api/consultation-appointments/my-appointments`
+      );
+      return { success: true, data: response };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get appointments with Agora token data
+  async getMyAppointmentsWithAgoraToken() {
+    try {
+      const response = await this.authenticatedRequest(
+        `${this.baseURL}/api/consultation-appointments/my-appointments?includeAgoraToken=true`
+      );
+      return { success: true, data: response };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // New endpoints to match the API specification
+  async getMyBookedAppointments() {
+    try {
+      const response = await this.authenticatedRequest(
+        `${this.baseURL}/api/consultation-appointments/my-booked-appointments`
+      );
+      return { success: true, data: response };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getMyBookedAppointmentsWithAgoraToken() {
+    try {
+      const response = await this.authenticatedRequest(
+        `${this.baseURL}/api/consultation-appointments/my-booked-appointments?includeAgoraToken=true`
+      );
+      return { success: true, data: response };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getMyCompletedAppointments() {
+    try {
+      const response = await this.authenticatedRequest(
+        `${this.baseURL}/api/consultation-appointments/my-completed-appointments`
+      );
+      return { success: true, data: response };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getMyConfirmedAppointments() {
+    try {
+      const response = await this.authenticatedRequest(
+        `${this.baseURL}/api/consultation-appointments/my-confirmed-appointments`
+      );
+      return { success: true, data: response };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getMyConfirmedAppointmentsWithAgoraToken() {
+    try {
+      const response = await this.authenticatedRequest(
+        `${this.baseURL}/api/consultation-appointments/my-confirmed-appointments?includeAgoraToken=true`
       );
       return { success: true, data: response };
     } catch (error) {
@@ -338,6 +431,21 @@ class ConsultationService {
     }
   }
 
+  async getMyConsultationsWithAgoraToken() {
+    try {
+      const response = await this.authenticatedRequest(
+        `${this.baseURL}/api/consultation-appointments/my-consultations?includeAgoraToken=true`
+      );
+      return { success: true, data: response };
+    } catch (error) {
+      console.error(
+        "Get my consultations with Agora token error:",
+        error
+      );
+      return { success: false, error: error.message };
+    }
+  }
+
   async getAppointmentById(id) {
     try {
       const response = await this.authenticatedRequest(
@@ -346,6 +454,37 @@ class ConsultationService {
       return { success: true, data: response };
     } catch (error) {
       console.error("Get appointment by ID error:", error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getAppointmentByIdWithAgoraToken(id) {
+    try {
+      const response = await this.authenticatedRequest(
+        `${this.baseURL}/api/consultation-appointments/${id}?includeAgoraToken=true`
+      );
+      return { success: true, data: response };
+    } catch (error) {
+      console.error(
+        "Get appointment by ID with Agora token error:",
+        error
+      );
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Agora Video Token Refresh
+  async refreshAgoraToken(appointmentId) {
+    try {
+      const response = await this.authenticatedRequest(
+        `${this.baseURL}/api/consultation-appointments/${appointmentId}/agora-token`,
+        {
+          method: "POST",
+        }
+      );
+      return { success: true, data: response };
+    } catch (error) {
+      console.error("Refresh Agora token error:", error);
       return { success: false, error: error.message };
     }
   }

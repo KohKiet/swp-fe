@@ -36,7 +36,23 @@ class CourseService {
       }
 
       const responseText = await response.text();
-      return responseText ? JSON.parse(responseText) : {};
+      const parsedResponse = responseText
+        ? JSON.parse(responseText)
+        : {};
+
+      // Handle backend's wrapped response format
+      if (
+        parsedResponse.success &&
+        parsedResponse.data !== undefined
+      ) {
+        return {
+          success: true,
+          data: parsedResponse.data,
+          message: parsedResponse.message,
+        };
+      }
+
+      return parsedResponse;
     } catch (error) {
       console.error("API Request failed:", error);
       throw error;
@@ -66,14 +82,30 @@ class CourseService {
       }
 
       const responseText = await response.text();
-      return responseText ? JSON.parse(responseText) : {};
+      const parsedResponse = responseText
+        ? JSON.parse(responseText)
+        : {};
+
+      // Handle backend's wrapped response format
+      if (
+        parsedResponse.success &&
+        parsedResponse.data !== undefined
+      ) {
+        return {
+          success: true,
+          data: parsedResponse.data,
+          message: parsedResponse.message,
+        };
+      }
+
+      return parsedResponse;
     } catch (error) {
       console.error("API Request failed:", error);
       throw error;
     }
   }
 
-  // ==================== PUBLIC COURSE ENDPOINTS ====================
+  // ==================== PUBLIC COURSE DISCOVERY ENDPOINTS ====================
 
   // Get all public courses with pagination and filters
   async getPublicCourses(title = "", pageNumber = 1, pageSize = 10) {
@@ -135,7 +167,59 @@ class CourseService {
     );
   }
 
-  // ==================== PROTECTED COURSE ENDPOINTS ====================
+  // Get latest courses
+  async getLatestCourses(count = 10) {
+    try {
+      // Try with count parameter first
+      const params = new URLSearchParams({
+        count: count.toString(),
+      });
+
+      return await this.publicRequest(
+        `${API_CONFIG.ENDPOINTS.PUBLIC_COURSES_LATEST}?${params}`
+      );
+    } catch (error) {
+      // If that fails, try without parameters
+      try {
+        return await this.publicRequest(
+          API_CONFIG.ENDPOINTS.PUBLIC_COURSES_LATEST
+        );
+      } catch (fallbackError) {
+        console.warn(
+          "Latest courses endpoint not available, returning empty result"
+        );
+        return { success: true, data: [] };
+      }
+    }
+  }
+
+  // Get featured courses
+  async getFeaturedCourses(count = 5) {
+    try {
+      // Try with count parameter first
+      const params = new URLSearchParams({
+        count: count.toString(),
+      });
+
+      return await this.publicRequest(
+        `${API_CONFIG.ENDPOINTS.PUBLIC_COURSES_FEATURED}?${params}`
+      );
+    } catch (error) {
+      // If that fails, try without parameters
+      try {
+        return await this.publicRequest(
+          API_CONFIG.ENDPOINTS.PUBLIC_COURSES_FEATURED
+        );
+      } catch (fallbackError) {
+        console.warn(
+          "Featured courses endpoint not available, returning empty result"
+        );
+        return { success: true, data: [] };
+      }
+    }
+  }
+
+  // ==================== PROTECTED COURSE MANAGEMENT ENDPOINTS ====================
 
   // Get all courses (admin only)
   async getCourses(page = 1, pageSize = 10) {
@@ -152,7 +236,10 @@ class CourseService {
   // Get specific course
   async getCourseById(courseId) {
     return this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.COURSE_BY_ID.replace("{id}", courseId)
+      API_CONFIG.ENDPOINTS.COURSE_BY_ID.replace(
+        "{courseId}",
+        courseId
+      )
     );
   }
 
@@ -170,7 +257,10 @@ class CourseService {
   // Update course
   async updateCourse(courseId, courseFormData) {
     return this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.COURSE_BY_ID.replace("{id}", courseId),
+      API_CONFIG.ENDPOINTS.COURSE_BY_ID.replace(
+        "{courseId}",
+        courseId
+      ),
       {
         method: "PUT",
         body: courseFormData, // FormData object
@@ -181,14 +271,30 @@ class CourseService {
   // Delete course
   async deleteCourse(courseId) {
     return this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.COURSE_BY_ID.replace("{id}", courseId),
+      API_CONFIG.ENDPOINTS.COURSE_BY_ID.replace(
+        "{courseId}",
+        courseId
+      ),
       {
         method: "DELETE",
       }
     );
   }
 
-  // ==================== CHAPTER ENDPOINTS ====================
+  // Publish/unpublish course
+  async publishCourse(courseId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.COURSE_PUBLISH.replace(
+        "{courseId}",
+        courseId
+      ),
+      {
+        method: "PUT",
+      }
+    );
+  }
+
+  // ==================== CHAPTER MANAGEMENT ENDPOINTS ====================
 
   // Get all chapters
   async getChapters() {
@@ -207,7 +313,17 @@ class CourseService {
     );
   }
 
-  // Create chapter
+  // Get chapters by course
+  async getChaptersByCourse(courseId) {
+    return this.publicRequest(
+      API_CONFIG.ENDPOINTS.CHAPTER_BY_COURSE.replace(
+        "{courseId}",
+        courseId
+      )
+    );
+  }
+
+  // Create new chapter
   async createChapter(chapterData) {
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.CHAPTER_ALL,
@@ -245,7 +361,7 @@ class CourseService {
     );
   }
 
-  // ==================== LESSON ENDPOINTS ====================
+  // ==================== LESSON MANAGEMENT ENDPOINTS ====================
 
   // Get all lessons
   async getLessons() {
@@ -254,7 +370,7 @@ class CourseService {
 
   // Get specific lesson
   async getLessonById(lessonId) {
-    return this.authenticatedRequest(
+    return this.publicRequest(
       API_CONFIG.ENDPOINTS.LESSON_BY_ID.replace(
         "{lessonId}",
         lessonId
@@ -262,7 +378,17 @@ class CourseService {
     );
   }
 
-  // Create lesson
+  // Get lessons by chapter
+  async getLessonsByChapter(chapterId) {
+    return this.publicRequest(
+      API_CONFIG.ENDPOINTS.LESSON_BY_CHAPTER.replace(
+        "{chapterId}",
+        chapterId
+      )
+    );
+  }
+
+  // Create new lesson
   async createLesson(lessonData) {
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.LESSON_ALL,
@@ -300,6 +426,162 @@ class CourseService {
     );
   }
 
+  // ==================== QUIZ & ASSESSMENT ENDPOINTS ====================
+
+  // Get all quizzes
+  async getQuizzes() {
+    return this.authenticatedRequest(API_CONFIG.ENDPOINTS.QUIZ_ALL);
+  }
+
+  // Get specific quiz with questions
+  async getQuizById(quizId) {
+    return this.publicRequest(
+      API_CONFIG.ENDPOINTS.QUIZ_BY_ID.replace("{quizId}", quizId)
+    );
+  }
+
+  // Get quizzes by lesson
+  async getQuizzesByLesson(lessonId) {
+    return this.publicRequest(
+      API_CONFIG.ENDPOINTS.QUIZ_BY_LESSON.replace(
+        "{lessonId}",
+        lessonId
+      )
+    );
+  }
+
+  // Get quizzes by course
+  async getQuizzesByCourse(courseId) {
+    return this.publicRequest(
+      API_CONFIG.ENDPOINTS.QUIZ_BY_COURSE.replace(
+        "{courseId}",
+        courseId
+      )
+    );
+  }
+
+  // Create new quiz
+  async createQuiz(quizData) {
+    return this.authenticatedRequest(API_CONFIG.ENDPOINTS.QUIZ_ALL, {
+      method: "POST",
+      body: JSON.stringify(quizData),
+    });
+  }
+
+  // Update quiz
+  async updateQuiz(quizId, quizData) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.QUIZ_BY_ID.replace("{quizId}", quizId),
+      {
+        method: "PUT",
+        body: JSON.stringify(quizData),
+      }
+    );
+  }
+
+  // Delete quiz
+  async deleteQuiz(quizId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.QUIZ_BY_ID.replace("{quizId}", quizId),
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  // ==================== QUESTION MANAGEMENT ENDPOINTS ====================
+
+  // Get questions by quiz
+  async getQuestionsByQuiz(quizId) {
+    return this.publicRequest(
+      API_CONFIG.ENDPOINTS.QUESTION_BY_QUIZ.replace(
+        "{quizId}",
+        quizId
+      )
+    );
+  }
+
+  // Get specific question
+  async getQuestionById(questionId) {
+    return this.publicRequest(
+      API_CONFIG.ENDPOINTS.QUESTION_BY_ID.replace(
+        "{questionId}",
+        questionId
+      )
+    );
+  }
+
+  // Create new question
+  async createQuestion(questionData) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.QUESTION_ALL,
+      {
+        method: "POST",
+        body: JSON.stringify(questionData),
+      }
+    );
+  }
+
+  // Update question
+  async updateQuestion(questionId, questionData) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.QUESTION_BY_ID.replace(
+        "{questionId}",
+        questionId
+      ),
+      {
+        method: "PUT",
+        body: JSON.stringify(questionData),
+      }
+    );
+  }
+
+  // Delete question
+  async deleteQuestion(questionId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.QUESTION_BY_ID.replace(
+        "{questionId}",
+        questionId
+      ),
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  // ==================== QUIZ RESULTS ENDPOINTS ====================
+
+  // Submit quiz answers
+  async submitQuizAnswers(quizData) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.QUIZ_RESULT_SUBMIT,
+      {
+        method: "POST",
+        body: JSON.stringify(quizData),
+      }
+    );
+  }
+
+  // Get quiz results by quiz
+  async getQuizResultsByQuiz(quizId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.QUIZ_RESULT_BY_QUIZ.replace(
+        "{quizId}",
+        quizId
+      )
+    );
+  }
+
+  // Get quiz results by user
+  async getQuizResultsByUser(userId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.QUIZ_RESULT_BY_USER.replace(
+        "{userId}",
+        userId
+      )
+    );
+  }
+
   // ==================== MEDIA ENDPOINTS ====================
 
   // Add YouTube video to lesson
@@ -311,7 +593,7 @@ class CourseService {
       ),
       {
         method: "POST",
-        body: JSON.stringify({ YoutubeUrl: youtubeUrl }),
+        body: JSON.stringify({ youtubeUrl }),
       }
     );
   }
@@ -319,57 +601,60 @@ class CourseService {
   // Upload video file
   async uploadVideo(lessonId, courseId, videoFile) {
     const formData = new FormData();
-    formData.append("video", videoFile);
+    formData.append("file", videoFile);
+    formData.append("courseId", courseId);
 
-    const url =
+    return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.MEDIA_UPLOAD_VIDEO.replace(
         "{lessonId}",
         lessonId
-      ) + `?courseId=${courseId}`;
-
-    return this.authenticatedRequest(url, {
-      method: "POST",
-      body: formData,
-    });
+      ),
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
   }
 
   // Upload audio file
   async uploadAudio(lessonId, courseId, audioFile) {
     const formData = new FormData();
-    formData.append("audio", audioFile);
+    formData.append("file", audioFile);
+    formData.append("courseId", courseId);
 
-    const url =
+    return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.MEDIA_UPLOAD_AUDIO.replace(
         "{lessonId}",
         lessonId
-      ) + `?courseId=${courseId}`;
-
-    return this.authenticatedRequest(url, {
-      method: "POST",
-      body: formData,
-    });
+      ),
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
   }
 
-  // Upload document
+  // Upload document file
   async uploadDocument(lessonId, courseId, documentFile) {
     const formData = new FormData();
-    formData.append("document", documentFile);
+    formData.append("file", documentFile);
+    formData.append("courseId", courseId);
 
-    const url =
+    return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.MEDIA_UPLOAD_DOCUMENT.replace(
         "{lessonId}",
         lessonId
-      ) + `?courseId=${courseId}`;
-
-    return this.authenticatedRequest(url, {
-      method: "POST",
-      body: formData,
-    });
+      ),
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
   }
 
   // Get lesson files
   async getLessonFiles(lessonId) {
-    return this.authenticatedRequest(
+    return this.publicRequest(
       API_CONFIG.ENDPOINTS.MEDIA_LESSON_FILES.replace(
         "{lessonId}",
         lessonId
@@ -377,7 +662,7 @@ class CourseService {
     );
   }
 
-  // ==================== ENROLLMENT ENDPOINTS ====================
+  // ==================== COURSE ENROLLMENT ENDPOINTS ====================
 
   // Enroll in course
   async enrollInCourse(courseId) {
@@ -412,7 +697,7 @@ class CourseService {
     );
   }
 
-  // Get enrollment status for specific course
+  // Check enrollment status
   async getEnrollmentStatus(courseId) {
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.ENROLLMENT_STATUS.replace(
@@ -422,7 +707,7 @@ class CourseService {
     );
   }
 
-  // Check if enrolled in course
+  // Check if enrolled
   async isEnrolled(courseId) {
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.ENROLLMENT_IS_ENROLLED.replace(
@@ -447,14 +732,14 @@ class CourseService {
 
   // ==================== ADMIN ENROLLMENT ENDPOINTS ====================
 
-  // Get all enrollments (Admin only)
+  // Get all enrollments (admin)
   async getAllEnrollments() {
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.ENROLLMENT_ALL
     );
   }
 
-  // Get course enrollments
+  // Get course enrollments (admin)
   async getCourseEnrollments(courseId) {
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.ENROLLMENT_BY_COURSE.replace(
@@ -464,7 +749,7 @@ class CourseService {
     );
   }
 
-  // Get enrollment count
+  // Get enrollment count (admin)
   async getEnrollmentCount(courseId) {
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.ENROLLMENT_COUNT.replace(
@@ -474,7 +759,7 @@ class CourseService {
     );
   }
 
-  // Update enrollment status
+  // Update enrollment status (admin)
   async updateEnrollmentStatus(enrollmentId, status) {
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.ENROLLMENT_UPDATE_STATUS.replace(
@@ -483,12 +768,12 @@ class CourseService {
       ),
       {
         method: "PUT",
-        body: JSON.stringify({ Status: status }),
+        body: JSON.stringify({ status }),
       }
     );
   }
 
-  // Delete enrollment
+  // Delete enrollment (admin)
   async deleteEnrollment(enrollmentId) {
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.ENROLLMENT_DELETE.replace(
@@ -501,16 +786,26 @@ class CourseService {
     );
   }
 
-  // ==================== PROGRESS ENDPOINTS ====================
+  // ==================== PROGRESS TRACKING ENDPOINTS ====================
 
-  // Get all progress (Admin)
-  async getAllProgress() {
+  // Get my progress
+  async getMyProgress() {
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.PROGRESS_ALL
     );
   }
 
-  // Get specific progress
+  // Get course progress
+  async getCourseProgress(courseId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.PROGRESS_BY_COURSE.replace(
+        "{courseId}",
+        courseId
+      )
+    );
+  }
+
+  // Get progress by ID
   async getProgressById(progressId) {
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.PROGRESS_BY_ID.replace(
@@ -520,13 +815,24 @@ class CourseService {
     );
   }
 
-  // Create progress entry
-  async createProgress(progressData) {
+  // Create or update progress
+  async createOrUpdateProgress(progressData) {
     return this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.PROGRESS_ALL,
+      API_CONFIG.ENDPOINTS.PROGRESS_CREATE_UPDATE,
       {
         method: "POST",
         body: JSON.stringify(progressData),
+      }
+    );
+  }
+
+  // Complete lesson
+  async completeLessonProgress(lessonData) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.PROGRESS_LESSON_COMPLETE,
+      {
+        method: "POST",
+        body: JSON.stringify(lessonData),
       }
     );
   }
@@ -545,54 +851,11 @@ class CourseService {
     );
   }
 
-  // ==================== QUIZ ENDPOINTS ====================
-
-  // Get all quizzes
-  async getQuizzes() {
-    return this.authenticatedRequest(API_CONFIG.ENDPOINTS.QUIZ_ALL);
-  }
-
-  // Get specific quiz
-  async getQuizById(quizId) {
-    return this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.QUIZ_BY_ID.replace("{quizId}", quizId)
-    );
-  }
-
-  // Create quiz
-  async createQuiz(quizData) {
-    return this.authenticatedRequest(API_CONFIG.ENDPOINTS.QUIZ_ALL, {
-      method: "POST",
-      body: JSON.stringify(quizData),
-    });
-  }
-
-  // Update quiz
-  async updateQuiz(quizId, quizData) {
-    return this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.QUIZ_BY_ID.replace("{quizId}", quizId),
-      {
-        method: "PUT",
-        body: JSON.stringify(quizData),
-      }
-    );
-  }
-
-  // Delete quiz
-  async deleteQuiz(quizId) {
-    return this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.QUIZ_BY_ID.replace("{quizId}", quizId),
-      {
-        method: "DELETE",
-      }
-    );
-  }
-
-  // ==================== COMMENT ENDPOINTS ====================
+  // ==================== COMMENT & REVIEW ENDPOINTS ====================
 
   // Get course comments
   async getCourseComments(courseId) {
-    return this.authenticatedRequest(
+    return this.publicRequest(
       API_CONFIG.ENDPOINTS.COMMENT_BY_COURSE.replace(
         "{courseId}",
         courseId
@@ -602,7 +865,7 @@ class CourseService {
 
   // Get lesson comments
   async getLessonComments(lessonId) {
-    return this.authenticatedRequest(
+    return this.publicRequest(
       API_CONFIG.ENDPOINTS.COMMENT_BY_LESSON.replace(
         "{lessonId}",
         lessonId
@@ -612,7 +875,7 @@ class CourseService {
 
   // Get chapter comments
   async getChapterComments(chapterId) {
-    return this.authenticatedRequest(
+    return this.publicRequest(
       API_CONFIG.ENDPOINTS.COMMENT_BY_CHAPTER.replace(
         "{chapterId}",
         chapterId
@@ -620,11 +883,9 @@ class CourseService {
     );
   }
 
-  // ==================== REVIEW ENDPOINTS ====================
-
   // Get course reviews
   async getCourseReviews(courseId) {
-    return this.authenticatedRequest(
+    return this.publicRequest(
       API_CONFIG.ENDPOINTS.REVIEW_BY_COURSE.replace(
         "{courseId}",
         courseId
@@ -633,6 +894,4 @@ class CourseService {
   }
 }
 
-// Create and export a singleton instance
-const courseService = new CourseService();
-export default courseService;
+export default new CourseService();

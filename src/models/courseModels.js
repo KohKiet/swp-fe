@@ -1,4 +1,4 @@
-// Course Type Enum
+// Course Type Enum - Updated to match new architecture
 export const CourseTypeEnum = {
   BASIC_AWARENESS: 1,
   PREVENTION: 2,
@@ -17,21 +17,15 @@ export const CourseTypeLabels = {
   [CourseTypeEnum.FAMILY_EDUCATION]: "Family Education",
 };
 
-// Age Group Enum
+// Age Group Enum - Updated to match new architecture (Teenagers 15-21, Adults 22-70)
 export const AgeGroupEnum = {
-  CHILDREN: 1,
-  TEENAGERS: 2,
-  YOUNG_ADULTS: 3,
-  ADULTS: 4,
-  ALL_AGES: 5,
+  TEENAGERS: 1, // 15-21 years
+  ADULTS: 2, // 22-70 years
 };
 
 export const AgeGroupLabels = {
-  [AgeGroupEnum.CHILDREN]: "Children (6-12 years)",
-  [AgeGroupEnum.TEENAGERS]: "Teenagers (13-17 years)",
-  [AgeGroupEnum.YOUNG_ADULTS]: "Young Adults (18-25 years)",
-  [AgeGroupEnum.ADULTS]: "Adults (26+ years)",
-  [AgeGroupEnum.ALL_AGES]: "All Ages",
+  [AgeGroupEnum.TEENAGERS]: "Teenagers (15-21)",
+  [AgeGroupEnum.ADULTS]: "Adults (22-70)",
 };
 
 // Enrollment Status Enum
@@ -51,6 +45,19 @@ export const EnrollmentStatusLabels = {
   [EnrollmentStatusEnum.SUSPENDED]: "Suspended",
 };
 
+// Quiz Question Types
+export const QuestionTypeEnum = {
+  MULTIPLE_CHOICE: 1,
+  TRUE_FALSE: 2,
+  SINGLE_SELECT: 3,
+};
+
+export const QuestionTypeLabels = {
+  [QuestionTypeEnum.MULTIPLE_CHOICE]: "Multiple Choice",
+  [QuestionTypeEnum.TRUE_FALSE]: "True/False",
+  [QuestionTypeEnum.SINGLE_SELECT]: "Single Select",
+};
+
 // API Response Interface (JavaScript Style)
 export const createApiResponse = (
   success,
@@ -62,14 +69,14 @@ export const createApiResponse = (
   data,
 });
 
-// Course Model Factory
+// Course Model Factory - Updated with new fields
 export const createCourse = ({
   courseId = "",
   title = "",
   description = "",
   imageUrl = "",
   courseType = CourseTypeEnum.BASIC_AWARENESS,
-  ageGroup = AgeGroupEnum.ALL_AGES,
+  ageGroup = AgeGroupEnum.ADULTS,
   authorId = "",
   categoryId = "",
   isPublished = false,
@@ -80,10 +87,17 @@ export const createCourse = ({
   viewCount = 0,
   isFeatured = false,
   author = null,
+  authorName = "",
   category = null,
   chapters = [],
   courseEnrollments = [],
   courseSubstances = [],
+  completionRequirements = {
+    minimumTimeMinutes: 30,
+    minimumScore: 70,
+    allLessonsRequired: true,
+    allQuizzesRequired: true,
+  },
 } = {}) => ({
   courseId,
   title,
@@ -101,10 +115,12 @@ export const createCourse = ({
   viewCount,
   isFeatured,
   author,
+  authorName,
   category,
   chapters,
   courseEnrollments,
   courseSubstances,
+  completionRequirements,
 });
 
 // Chapter Model Factory
@@ -115,6 +131,7 @@ export const createChapter = ({
   description = "",
   chapterOrder = 1,
   lessons = [],
+  isCompleted = false,
 } = {}) => ({
   chapterId,
   courseId,
@@ -122,9 +139,10 @@ export const createChapter = ({
   description,
   chapterOrder,
   lessons,
+  isCompleted,
 });
 
-// Lesson Model Factory
+// Lesson Model Factory - Enhanced with completion tracking
 export const createLesson = ({
   lessonId = "",
   chapterId = "",
@@ -134,8 +152,11 @@ export const createLesson = ({
   videoUrl = "",
   lessonOrder = 1,
   isCompleted = false,
+  timeSpentMinutes = 0,
+  viewCount = 0,
   media = [],
   quizzes = [],
+  notes = "",
 } = {}) => ({
   lessonId,
   chapterId,
@@ -145,11 +166,77 @@ export const createLesson = ({
   videoUrl,
   lessonOrder,
   isCompleted,
+  timeSpentMinutes,
+  viewCount,
   media,
   quizzes,
+  notes,
 });
 
-// Progress Model Factory
+// Quiz Model Factory - Enhanced with new requirements
+export const createQuiz = ({
+  quizId = "",
+  lessonId = "",
+  title = "",
+  description = "",
+  timeLimitMinutes = 30,
+  passingScore = 70,
+  maxAttempts = 3,
+  questions = [],
+  attempts = 0,
+  bestScore = 0,
+  isCompleted = false,
+} = {}) => ({
+  quizId,
+  lessonId,
+  title,
+  description,
+  timeLimitMinutes,
+  passingScore,
+  maxAttempts,
+  questions,
+  attempts,
+  bestScore,
+  isCompleted,
+});
+
+// Question Model Factory
+export const createQuestion = ({
+  questionId = "",
+  quizId = "",
+  questionText = "",
+  questionOrder = 1,
+  questionType = QuestionTypeEnum.MULTIPLE_CHOICE,
+  answers = [],
+  correctAnswerId = "",
+  explanation = "",
+} = {}) => ({
+  questionId,
+  quizId,
+  questionText,
+  questionOrder,
+  questionType,
+  answers,
+  correctAnswerId,
+  explanation,
+});
+
+// Answer Model Factory
+export const createAnswer = ({
+  answerId = "",
+  questionId = "",
+  answerText = "",
+  isCorrect = false,
+  answerOrder = 1,
+} = {}) => ({
+  answerId,
+  questionId,
+  answerText,
+  isCorrect,
+  answerOrder,
+});
+
+// Progress Model Factory - Enhanced for comprehensive tracking
 export const createProgress = ({
   progressId = "",
   userId = "",
@@ -158,6 +245,11 @@ export const createProgress = ({
   lessonId = "",
   percent = 0,
   isCompleted = false,
+  timeSpentMinutes = 0,
+  viewCount = 0,
+  notes = "",
+  completedAt = null,
+  lastAccessedAt = new Date(),
 } = {}) => ({
   progressId,
   userId,
@@ -166,25 +258,63 @@ export const createProgress = ({
   lessonId,
   percent,
   isCompleted,
+  timeSpentMinutes,
+  viewCount,
+  notes,
+  completedAt,
+  lastAccessedAt,
 });
 
-// Course Enrollment Model Factory
+// Course Enrollment Model Factory - Enhanced with more status tracking
 export const createCourseEnrollment = ({
   enrollmentId = "",
   userId = "",
   courseId = "",
-  enrollmentDate = new Date(),
+  enrolledAt = new Date(),
+  completedAt = null,
   status = EnrollmentStatusEnum.ENROLLED,
-  completionDate = null,
   progress = 0,
+  timeSpentMinutes = 0,
+  certificateIssued = false,
+  certificateUrl = "",
 } = {}) => ({
   enrollmentId,
   userId,
   courseId,
-  enrollmentDate,
+  enrolledAt,
+  completedAt,
   status,
-  completionDate,
   progress,
+  timeSpentMinutes,
+  certificateIssued,
+  certificateUrl,
+});
+
+// Quiz Result Model Factory
+export const createQuizResult = ({
+  resultId = "",
+  quizId = "",
+  userId = "",
+  score = 0,
+  totalQuestions = 0,
+  correctAnswers = 0,
+  timeSpentMinutes = 0,
+  attempts = 1,
+  passed = false,
+  completedAt = new Date(),
+  answers = [],
+} = {}) => ({
+  resultId,
+  quizId,
+  userId,
+  score,
+  totalQuestions,
+  correctAnswers,
+  timeSpentMinutes,
+  attempts,
+  passed,
+  completedAt,
+  answers,
 });
 
 // Form Data Helpers
@@ -192,7 +322,8 @@ export const createCourseFormData = ({
   Title = "",
   Description = "",
   CourseType = "BasicAwareness",
-  AgeGroup = 5,
+  AgeGroup = 2, // Adults by default
+  CategoryId = "", // Add required CategoryId
   Image = null,
 } = {}) => {
   const formData = new FormData();
@@ -200,6 +331,7 @@ export const createCourseFormData = ({
   if (Description) formData.append("Description", Description);
   formData.append("CourseType", CourseType);
   formData.append("AgeGroup", AgeGroup.toString());
+  if (CategoryId) formData.append("CategoryId", CategoryId); // Add CategoryId to form data
   if (Image) formData.append("Image", Image);
   return formData;
 };
@@ -302,11 +434,8 @@ export const mapCourseTypeFromString = (courseTypeString) => {
 
 export const mapAgeGroupFromString = (ageGroupString) => {
   const mapping = {
-    Children: AgeGroupEnum.CHILDREN,
     Teenagers: AgeGroupEnum.TEENAGERS,
-    YoungAdults: AgeGroupEnum.YOUNG_ADULTS,
     Adults: AgeGroupEnum.ADULTS,
-    AllAges: AgeGroupEnum.ALL_AGES,
   };
-  return mapping[ageGroupString] || AgeGroupEnum.ALL_AGES;
+  return mapping[ageGroupString] || AgeGroupEnum.ADULTS;
 };

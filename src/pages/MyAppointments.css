@@ -261,6 +261,22 @@
     border-top: 1px solid #e9ecef;
 }
 
+/* Combined Actions Row - Notes and Cancel buttons */
+.appointment-actions-row {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.appointment-actions-row .btn {
+    flex: 1;
+    max-width: 150px;
+}
+
 /* Button Styles */
 .btn {
     display: inline-flex;
@@ -295,6 +311,26 @@
 
 .btn-danger:hover {
     background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62;
+    transform: translateY(-1px);
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
     transform: translateY(-1px);
 }
 
@@ -344,6 +380,16 @@
         justify-content: stretch;
     }
 
+    .appointment-actions-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .appointment-actions-row .btn {
+        max-width: none;
+        width: 100%;
+    }
+
     .btn {
         flex: 1;
     }
@@ -366,8 +412,224 @@
         font-size: 1rem;
     }
 
+    .appointment-actions-row {
+        gap: 0.5rem;
+    }
+
+    .appointment-actions-row .btn {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
     .btn {
         padding: 0.75rem;
         font-size: 0.85rem;
+    }
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.video-call-overlay {
+    z-index: 9999;
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.video-call-modal {
+    width: 95vw;
+    max-width: 1200px;
+    height: 90vh;
+    max-height: 800px;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+.video-call-modal .modal-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 20px 24px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.video-call-modal .modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.video-call-modal .modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.video-call-modal .modal-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.video-call-modal .modal-body {
+    padding: 0;
+    height: calc(100% - 70px);
+    overflow: hidden;
+}
+
+.notes-modal {
+    width: 90vw;
+    max-width: 800px;
+    max-height: 80vh;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border-radius: 16px 16px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.appointment-features {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.appointment-features .btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+/* Mobile responsiveness for modals */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95vw;
+        margin: 10px;
+        max-height: 85vh;
+    }
+
+    .video-call-modal {
+        width: 98vw;
+        margin: 5px;
+    }
+
+    .modal-header {
+        padding: 16px 20px;
+    }
+
+    .modal-header h3 {
+        font-size: 18px;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .appointment-features {
+        flex-direction: column;
+    }
+
+    .appointment-features .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        border-radius: 0;
+        max-height: 100vh;
+    }
+
+    .modal-header {
+        border-radius: 0;
     }
 }

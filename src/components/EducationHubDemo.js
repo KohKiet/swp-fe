@@ -113,7 +113,7 @@ const EducationHubDemo = () => {
       {/* Features Grid */}
       <Grid container spacing={4} sx={{ mb: 6 }}>
         {features.map((feature, index) => (
-          <Grid item xs={12} md={6} lg={4} key={index}>
+          <Grid size={{ xs: 12, md: 6, lg: 4 }} key={index}>
             <FeatureCard>
               <CardContent sx={{ p: 3, flexGrow: 1 }}>
                 <Box display="flex" alignItems="center" mb={2}>
@@ -147,7 +147,7 @@ const EducationHubDemo = () => {
         </Typography>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Typography
               variant="h6"
               gutterBottom
@@ -177,7 +177,7 @@ const EducationHubDemo = () => {
             </List>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Typography
               variant="h6"
               gutterBottom

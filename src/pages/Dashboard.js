@@ -290,15 +290,19 @@ const Dashboard = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    // Load data for the selected tab
+
+    // Handle special navigation cases
     switch (tab) {
-      case DASHBOARD_TABS.USERS:
-        fetchUsers();
+      case DASHBOARD_TABS.COURSES:
+        navigate("/admin/courses");
         break;
-      case DASHBOARD_TABS.STATS:
-        fetchStats();
+      case DASHBOARD_TABS.CATEGORIES:
+        navigate("/admin/categories");
         break;
-      // Add cases for other tabs as needed
+      default:
+        // For other tabs, load data and stay on dashboard
+        loadDashboardData();
+        break;
     }
   };
 

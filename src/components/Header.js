@@ -108,6 +108,14 @@ const Header = () => {
                   </Link>
                 </li>
               )}
+
+              {isAdmin() && (
+                <li className="nav-item">
+                  <Link to="/admin/courses" className="nav-link">
+                    Course Management
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
 
@@ -169,6 +177,13 @@ const Header = () => {
                     <Link to="/dashboard" className="dropdown-item">
                       <FontAwesomeIcon icon={faTachometerAlt} />{" "}
                       Dashboard
+                    </Link>
+                  )}
+                  {isAdmin() && (
+                    <Link
+                      to="/admin/courses"
+                      className="dropdown-item">
+                      Course Management
                     </Link>
                   )}
                   <button

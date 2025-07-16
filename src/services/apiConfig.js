@@ -1,5 +1,7 @@
 // API Configuration
 export const API_CONFIG = {
+  // Change this URL to match your backend server
+  // Examples: "http://localhost:3000", "https://your-api.com"
   BASE_URL: "http://localhost:5150",
   ENDPOINTS: {
     // Authentication endpoints
@@ -40,25 +42,69 @@ export const API_CONFIG = {
     ROLE_USER: "/api/role/user/{userId}",
     ROLE_ASSIGN: "/api/role/assign",
 
-    // Public Course endpoints
-    PUBLIC_COURSES_ALL: "/api/public/courses",
-    PUBLIC_COURSE_BY_ID: "/api/public/courses/{courseId}",
-    PUBLIC_COURSES_BY_AGE: "/api/public/courses/by-age/{ageGroup}",
-    PUBLIC_COURSES_BY_TYPE:
-      "/api/public/courses/by-type/{courseType}",
-    PUBLIC_COURSES_SEARCH: "/api/public/courses/search",
+    // Course Discovery endpoints - Updated to match actual backend
+    PUBLIC_COURSES_ALL: "/api/Course",
+    PUBLIC_COURSE_BY_ID: "/api/Course/{courseId}",
+    PUBLIC_COURSES_BY_AGE: "/api/Course/by-age/{ageGroup}",
+    PUBLIC_COURSES_BY_TYPE: "/api/Course/by-type/{courseType}",
+    PUBLIC_COURSES_SEARCH: "/api/Course/search",
+    PUBLIC_COURSES_LATEST: "/api/Course/latest",
+    PUBLIC_COURSES_FEATURED: "/api/Course/featured",
 
-    // Protected Course endpoints
-    COURSE_ALL: "/api/course",
-    COURSE_BY_ID: "/api/course/{id}",
+    // Protected Course Management endpoints (Admin/Manager only)
+    COURSE_ALL: "/api/Course",
+    COURSE_BY_ID: "/api/Course/{courseId}",
+    COURSE_PUBLISH: "/api/Course/{courseId}/publish",
 
-    // Chapter endpoints
-    CHAPTER_ALL: "/api/chapter",
-    CHAPTER_BY_ID: "/api/chapter/{chapterId}",
+    // Chapter Management endpoints
+    CHAPTER_ALL: "/api/Chapter",
+    CHAPTER_BY_ID: "/api/Chapter/{chapterId}",
+    CHAPTER_BY_COURSE: "/api/Chapter/course/{courseId}",
 
-    // Lesson endpoints
-    LESSON_ALL: "/api/lesson",
-    LESSON_BY_ID: "/api/lesson/{lessonId}",
+    // Lesson Management endpoints
+    LESSON_ALL: "/api/Lesson",
+    LESSON_BY_ID: "/api/Lesson/{lessonId}",
+    LESSON_BY_CHAPTER: "/api/Lesson/chapter/{chapterId}",
+
+    // Quiz & Assessment endpoints
+    QUIZ_ALL: "/api/Quiz",
+    QUIZ_BY_ID: "/api/Quiz/{quizId}",
+    QUIZ_BY_LESSON: "/api/Quiz/lesson/{lessonId}",
+    QUIZ_BY_COURSE: "/api/Quiz/course/{courseId}",
+
+    // Question endpoints
+    QUESTION_ALL: "/api/Question",
+    QUESTION_BY_ID: "/api/Question/{questionId}",
+    QUESTION_BY_QUIZ: "/api/Question/quiz/{quizId}",
+
+    // Quiz Results endpoints
+    QUIZ_RESULT_SUBMIT: "/api/QuizResult/submit",
+    QUIZ_RESULT_BY_QUIZ: "/api/QuizResult/quiz/{quizId}",
+    QUIZ_RESULT_BY_USER: "/api/QuizResult/user/{userId}",
+
+    // Course Enrollment endpoints (Authentication Required)
+    ENROLLMENT_ENROLL: "/api/CourseEnrollment/enroll/{courseId}",
+    ENROLLMENT_DROP: "/api/CourseEnrollment/drop/{courseId}",
+    ENROLLMENT_MY_ENROLLMENTS: "/api/CourseEnrollment/my-enrollments",
+    ENROLLMENT_STATUS: "/api/CourseEnrollment/status/{courseId}",
+    ENROLLMENT_IS_ENROLLED:
+      "/api/CourseEnrollment/is-enrolled/{courseId}",
+    ENROLLMENT_COMPLETE: "/api/CourseEnrollment/complete/{courseId}",
+
+    // Admin Enrollment endpoints (Admin/Manager only)
+    ENROLLMENT_ALL: "/api/CourseEnrollment/all",
+    ENROLLMENT_BY_COURSE: "/api/CourseEnrollment/course/{courseId}",
+    ENROLLMENT_COUNT: "/api/CourseEnrollment/course/{courseId}/count",
+    ENROLLMENT_UPDATE_STATUS:
+      "/api/CourseEnrollment/{enrollmentId}/status",
+    ENROLLMENT_DELETE: "/api/CourseEnrollment/{enrollmentId}",
+
+    // Progress Tracking endpoints
+    PROGRESS_ALL: "/api/Progress",
+    PROGRESS_BY_ID: "/api/Progress/{progressId}",
+    PROGRESS_BY_COURSE: "/api/Progress/course/{courseId}",
+    PROGRESS_LESSON_COMPLETE: "/api/Progress/lesson/complete",
+    PROGRESS_CREATE_UPDATE: "/api/Progress",
 
     // Media endpoints
     MEDIA_YOUTUBE_ADD:
@@ -69,31 +115,6 @@ export const API_CONFIG = {
       "/api/lessons/{lessonId}/Media/upload/document",
     MEDIA_LESSON_FILES: "/api/FileAttachment/lesson/{lessonId}",
 
-    // Course Enrollment endpoints
-    ENROLLMENT_ENROLL: "/api/CourseEnrollment/enroll/{courseId}",
-    ENROLLMENT_DROP: "/api/CourseEnrollment/drop/{courseId}",
-    ENROLLMENT_MY_ENROLLMENTS: "/api/CourseEnrollment/my-enrollments",
-    ENROLLMENT_STATUS: "/api/CourseEnrollment/status/{courseId}",
-    ENROLLMENT_IS_ENROLLED:
-      "/api/CourseEnrollment/is-enrolled/{courseId}",
-    ENROLLMENT_COMPLETE: "/api/CourseEnrollment/complete/{courseId}",
-
-    // Admin Enrollment endpoints
-    ENROLLMENT_ALL: "/api/CourseEnrollment/all",
-    ENROLLMENT_BY_COURSE: "/api/CourseEnrollment/course/{courseId}",
-    ENROLLMENT_COUNT: "/api/CourseEnrollment/course/{courseId}/count",
-    ENROLLMENT_UPDATE_STATUS:
-      "/api/CourseEnrollment/{enrollmentId}/status",
-    ENROLLMENT_DELETE: "/api/CourseEnrollment/{enrollmentId}",
-
-    // Progress endpoints
-    PROGRESS_ALL: "/api/Progress",
-    PROGRESS_BY_ID: "/api/Progress/{progressId}",
-
-    // Quiz endpoints
-    QUIZ_ALL: "/api/Quiz",
-    QUIZ_BY_ID: "/api/Quiz/{quizId}",
-
     // Comment endpoints
     COMMENT_BY_COURSE: "/api/Comment/course/{courseId}",
     COMMENT_BY_LESSON: "/api/Comment/lesson/{lessonId}",
@@ -102,10 +123,10 @@ export const API_CONFIG = {
     // Review endpoints
     REVIEW_BY_COURSE: "/api/Review/course/{courseId}",
 
-    // Category endpoints
-    CATEGORY_ALL: "/api/category",
-    CATEGORY_BY_ID: "/api/category/{id}",
-    CATEGORY_PARENT: "/api/category/parent/{parentId}",
+    // Category endpoints - Updated to match actual backend
+    CATEGORY_ALL: "/api/Category",
+    CATEGORY_BY_ID: "/api/Category/{id}",
+    CATEGORY_PARENT: "/api/Category/parent/{parentId}",
 
     // Substance endpoints
     SUBSTANCE_ALL: "/api/substance",
@@ -138,22 +159,85 @@ export const API_CONFIG = {
     HEALTH_DATABASE: "/api/healthchecks/database",
     HEALTH_FIREBASE: "/api/healthchecks/firebase",
     HEALTH_CLOUDINARY: "/api/healthchecks/cloudinary",
-    
+
+    // Community Events endpoints
     COMMUNITY_EVENTS: "/api/community-events",
     COMMUNITY_EVENTS_UPCOMING: "/api/community-events/upcoming",
     COMMUNITY_EVENTS_PAST: "/api/community-events/past",
     COMMUNITY_EVENTS_MY_EVENTS: "/api/community-events/my-events",
-    COMMUNITY_EVENTS_BY_ID: "/api/community-events/{id}",    // Event Participants endpoints (for registration)
+    COMMUNITY_EVENTS_BY_ID: "/api/community-events/{id}",
+
+    // Event Participants endpoints (for registration)
     EVENT_PARTICIPANTS_REGISTER: "/api/event-participants/register",
-    EVENT_PARTICIPANTS_UNREGISTER: "/api/event-participants/unregister/{eventId}",
-    EVENT_PARTICIPANTS_CHECK_REGISTRATION: "/api/event-participants/check-registration/{eventId}",
-    EVENT_PARTICIPANTS_BY_EVENT: "/api/event-participants/event/{eventId}",    // Event Feedback endpoints
+    EVENT_PARTICIPANTS_UNREGISTER:
+      "/api/event-participants/unregister/{eventId}",
+    EVENT_PARTICIPANTS_CHECK_REGISTRATION:
+      "/api/event-participants/check-registration/{eventId}",
+    EVENT_PARTICIPANTS_BY_EVENT:
+      "/api/event-participants/event/{eventId}",
+
+    // Event Feedback endpoints
     EVENT_FEEDBACK: "/api/event-feedback",
     EVENT_FEEDBACK_BY_ID: "/api/event-feedback/{id}",
     EVENT_FEEDBACK_BY_EVENT: "/api/event-feedback/event/{eventId}",
     EVENT_FEEDBACK_BY_USER: "/api/event-feedback/user",
     EVENT_FEEDBACK_SUBMIT: "/api/event-feedback/submit",
-    EVENT_FEEDBACK_CHECK_USER: "/api/event-feedback/check-user-feedback/{eventId}",
+    EVENT_FEEDBACK_CHECK_USER:
+      "/api/event-feedback/check-user-feedback/{eventId}",
+
+    // Consultation Appointment endpoints
+    CONSULTATION_APPOINTMENTS: "/api/consultation-appointments",
+    CONSULTATION_APPOINTMENTS_MY:
+      "/api/consultation-appointments/my-appointments",
+    CONSULTATION_APPOINTMENTS_MY_BOOKED:
+      "/api/consultation-appointments/my-booked-appointments",
+    CONSULTATION_APPOINTMENTS_MY_COMPLETED:
+      "/api/consultation-appointments/my-completed-appointments",
+    CONSULTATION_APPOINTMENTS_MY_CONFIRMED:
+      "/api/consultation-appointments/my-confirmed-appointments",
+    CONSULTATION_APPOINTMENTS_MY_CONSULTATIONS:
+      "/api/consultation-appointments/my-consultations",
+    CONSULTATION_APPOINTMENTS_BY_ID:
+      "/api/consultation-appointments/{id}",
+    CONSULTATION_APPOINTMENTS_STATUS:
+      "/api/consultation-appointments/{id}/status",
+    CONSULTATION_APPOINTMENTS_CANCEL:
+      "/api/consultation-appointments/{id}/cancel",
+    CONSULTATION_APPOINTMENTS_CANCEL_BY_MEMBER:
+      "/api/consultation-appointments/{id}/cancel-by-member",
+    CONSULTATION_APPOINTMENTS_CANCEL_BY_CONSULTANT:
+      "/api/consultation-appointments/{id}/cancel-by-consultant",
+
+    // Agora Video Call endpoints
+    AGORA_TOKEN_REFRESH:
+      "/api/consultation-appointments/{appointmentId}/agora-token",
+
+    // Consultation Notes endpoints
+    CONSULTATION_NOTES_BY_APPOINTMENT:
+      "/api/consultation-notes/appointment/{appointmentId}",
+    CONSULTATION_NOTES_MEMBER:
+      "/api/consultation-notes/member/appointment/{appointmentId}",
+    CONSULTATION_NOTES_ALL_MEMBER: "/api/consultation-notes/member",
+    CONSULTATION_NOTES_ALL_CONSULTANT:
+      "/api/consultation-notes/consultant",
+    CONSULTATION_NOTES_BY_ID: "/api/consultation-notes/{id}",
+    CONSULTATION_NOTES_CREATE: "/api/consultation-notes",
+    CONSULTATION_NOTES_UPDATE: "/api/consultation-notes/{id}",
+    CONSULTATION_NOTES_DELETE: "/api/consultation-notes/{id}",
+
+    // Consultation Slot endpoints
+    CONSULTATION_SLOTS: "/api/consultation-slots",
+    CONSULTATION_SLOTS_MY: "/api/consultation-slots/my-slots",
+    CONSULTATION_SLOTS_SEARCH: "/api/consultation-slots/search",
+    CONSULTATION_SLOTS_AVAILABLE: "/api/consultation-slots/available",
+    CONSULTATION_SLOTS_PUBLIC_AVAILABLE:
+      "/api/consultation-slots/public/available",
+    CONSULTATION_SLOTS_ALL_AVAILABLE:
+      "/api/consultation-slots/all-available",
+    CONSULTATION_SLOTS_ALL_DEBUG: "/api/consultation-slots/all-debug",
+    CONSULTATION_SLOTS_BY_ID: "/api/consultation-slots/{id}",
+    CONSULTATION_SLOTS_UPDATE: "/api/consultation-slots/{id}",
+    CONSULTATION_SLOTS_DELETE: "/api/consultation-slots/{id}",
   },
 };
 
