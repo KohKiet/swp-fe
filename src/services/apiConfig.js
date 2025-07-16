@@ -48,13 +48,14 @@ export const API_CONFIG = {
     PUBLIC_COURSES_BY_AGE: "/api/Course/by-age/{ageGroup}",
     PUBLIC_COURSES_BY_TYPE: "/api/Course/by-type/{courseType}",
     PUBLIC_COURSES_SEARCH: "/api/Course/search",
-    PUBLIC_COURSES_LATEST: "/api/Course/latest",
+    PUBLIC_COURSES_LATEST: "/api/Course/public",
     PUBLIC_COURSES_FEATURED: "/api/Course/featured",
 
     // Protected Course Management endpoints (Admin/Manager only)
     COURSE_ALL: "/api/Course",
     COURSE_BY_ID: "/api/Course/{courseId}",
     COURSE_PUBLISH: "/api/Course/{courseId}/publish",
+    COURSE_UNPUBLISH: "/api/Course/{courseId}/unpublish",
 
     // Chapter Management endpoints
     CHAPTER_ALL: "/api/Chapter",

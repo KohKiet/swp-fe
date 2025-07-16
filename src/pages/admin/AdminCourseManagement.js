@@ -62,6 +62,7 @@ import {
   AgeGroupEnum,
   createCourseFormData,
 } from "../../models/courseModels";
+import courseService from "../../services/courseService";
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: "100%",
@@ -317,11 +318,12 @@ const AdminCourseManagement = () => {
   const handleTogglePublish = useCallback(
     async (course) => {
       try {
-        const response = await adminService.updateCourse(
-          course.courseId,
-          {
-            isPublished: !course.isPublished,
-          }
+        const response = course.isPublished 
+        ? await courseService.unpublishCourse(
+          course.courseId
+        )
+        : await courseService.publishCourse(
+          course.courseId
         );
 
         if (response.success) {

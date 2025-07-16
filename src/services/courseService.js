@@ -108,7 +108,7 @@ class CourseService {
   // ==================== PUBLIC COURSE DISCOVERY ENDPOINTS ====================
 
   // Get all public courses with pagination and filters
-  async getPublicCourses(title = "", pageNumber = 1, pageSize = 10) {
+  async getPublicCourses(title = "", pageNumber = 1, pageSize = 12) {
     const params = new URLSearchParams({
       ...(title && { title }),
       pageNumber: pageNumber.toString(),
@@ -116,7 +116,7 @@ class CourseService {
     });
 
     return this.publicRequest(
-      `${API_CONFIG.ENDPOINTS.PUBLIC_COURSES_ALL}?${params}`
+      `${API_CONFIG.ENDPOINTS.PUBLIC_COURSES_LATEST}?${params}`
     );
   }
 
@@ -154,7 +154,7 @@ class CourseService {
   async searchPublicCourses(
     searchTerm,
     pageNumber = 1,
-    pageSize = 10
+    pageSize = 12
   ) {
     const params = new URLSearchParams({
       title: searchTerm,
@@ -168,11 +168,12 @@ class CourseService {
   }
 
   // Get latest courses
-  async getLatestCourses(count = 10) {
+  async getLatestCourses(pageNumber = 1, pageSize = 12) {
     try {
       // Try with count parameter first
       const params = new URLSearchParams({
-        count: count.toString(),
+        pageNumber: pageNumber.toString(),
+        pageSize: pageSize.toString(),
       });
 
       return await this.publicRequest(
@@ -222,9 +223,9 @@ class CourseService {
   // ==================== PROTECTED COURSE MANAGEMENT ENDPOINTS ====================
 
   // Get all courses (admin only)
-  async getCourses(page = 1, pageSize = 10) {
+  async getCourses(pageNumber = 1, pageSize = 10) {
     const params = new URLSearchParams({
-      page: page.toString(),
+      pageNumber: pageNumber.toString(),
       pageSize: pageSize.toString(),
     });
 
@@ -285,6 +286,18 @@ class CourseService {
   async publishCourse(courseId) {
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.COURSE_PUBLISH.replace(
+        "{courseId}",
+        courseId
+      ),
+      {
+        method: "PUT",
+      }
+    );
+  }
+
+  async unpublishCourse(courseId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.COURSE_UNPUBLISH.replace(
         "{courseId}",
         courseId
       ),

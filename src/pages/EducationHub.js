@@ -405,8 +405,8 @@ const EducationHub = () => {
   const loadFeaturedAndLatestCourses = async () => {
     try {
       const [featuredResponse, latestResponse] = await Promise.all([
-        courseService.getFeaturedCourses(10),
-        courseService.getLatestCourses(10),
+        courseService.getFeaturedCourses(1, 12),
+        courseService.getLatestCourses(1, 12),
       ]);
 
       if (featuredResponse?.success && featuredResponse.data) {
