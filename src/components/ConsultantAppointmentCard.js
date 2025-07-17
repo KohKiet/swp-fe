@@ -14,6 +14,7 @@ import {
 import AgoraVideoCall from "./AgoraVideoCall";
 import ConsultantNotes from "./ConsultantNotes";
 import "./ConsultantAppointmentCard.css";
+import { useAuth } from "../context/AuthContext";
 
 const ConsultantAppointmentCard = ({
   appointment,
@@ -26,6 +27,26 @@ const ConsultantAppointmentCard = ({
   const [showVideoCall, setShowVideoCall] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showCreateNote, setShowCreateNote] = useState(false);
+  const { currentUser, isConsultant } = useAuth();
+
+  // Helper: xác định vai trò hiện tại
+  const isCurrentConsultant = typeof isConsultant === 'function' ? isConsultant() : false;
+
+  // Helper: lấy thông tin video call đúng theo vai trò
+  const getAgoraInfo = () => {
+    const info = appointment.agoraInfo || {};
+    return {
+      appId: info.appId || appointment.agoraAppId || appointment.AgoraAppId,
+      channelName: info.channelName || appointment.agoraChannelName || appointment.ChannelName,
+      token: isCurrentConsultant
+        ? info.consultant?.token || appointment.agoraToken || appointment.AgoraToken
+        : info.member?.token || appointment.agoraToken || appointment.AgoraToken,
+      userId: isCurrentConsultant
+        ? info.consultant?.userId
+        : info.member?.userId,
+      expireAt: appointment.agoraExpireAt,
+    };
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "Không có ngày";
@@ -278,21 +299,25 @@ const ConsultantAppointmentCard = ({
               </button>
             </div>
             <div className="modal-body">
-              <AgoraVideoCall
-                appointmentId={appointment.id}
-                agoraAppId={appointment.agoraAppId}
-                agoraChannelName={appointment.agoraChannelName}
-                agoraToken={appointment.agoraToken}
-                agoraExpireAt={appointment.agoraExpireAt}
-                AgoraAppId={appointment.AgoraAppId}
-                ChannelName={appointment.ChannelName}
-                AgoraToken={appointment.AgoraToken}
-                onCallEnd={() => setShowVideoCall(false)}
-                onError={(error) => {
-                  console.error("Video call error:", error);
-                  setShowVideoCall(false);
-                }}
-              />
+              {/* Lấy đúng thông tin video call theo vai trò */}
+              {(() => {
+                const agora = getAgoraInfo();
+                return (
+                  <AgoraVideoCall
+                    appointmentId={appointment.id}
+                    agoraAppId={agora.appId}
+                    agoraChannelName={agora.channelName}
+                    agoraToken={agora.token}
+                    agoraUserId={agora.userId}
+                    agoraExpireAt={agora.expireAt}
+                    onCallEnd={() => setShowVideoCall(false)}
+                    onError={(error) => {
+                      console.error("Video call error:", error);
+                      setShowVideoCall(false);
+                    }}
+                  />
+                );
+              })()}
             </div>
           </div>
         </div>

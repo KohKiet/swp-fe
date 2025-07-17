@@ -262,6 +262,21 @@ const MyAppointments = () => {
     return null; // Return null if no note found
   };
 
+  // Helper: lấy thông tin video call đúng theo vai trò
+  const getAgoraInfo = (appointment, isConsultant = false) => {
+    const info = appointment.agoraInfo || {};
+    return {
+      appId: info.appId,
+      channelName: info.channelName,
+      token: isConsultant
+        ? info.consultant?.token
+        : info.member?.token,
+      userId: isConsultant
+        ? info.consultant?.userId
+        : info.member?.userId,
+    };
+  };
+
   const clearMessages = () => {
     setError("");
     setSuccess("");
@@ -328,6 +343,11 @@ const MyAppointments = () => {
                 appointment.status?.toLowerCase() === "confirmed";
               const canCancel = isPending || isConfirmed;
 
+              // Lấy đúng thông tin video call
+              const agora = getAgoraInfo(appointment);
+              const hasAgoraChannel = !!agora.channelName;
+              const hasAgoraToken = !!agora.token;
+
               return (
                 <div
                   key={appointment.id}
@@ -375,68 +395,28 @@ const MyAppointments = () => {
                   {/* Video Call and Notes for Confirmed Appointments */}
                   {isConfirmed && (
                     <div className="appointment-features">
-                      {(appointment.agoraChannelName ||
-                        appointment.ChannelName) &&
-                        (appointment.agoraToken ||
-                          appointment.AgoraToken) && (
-                          <button
-                            onClick={() => {
-                              console.log(
-                                "Opening video call for appointment:",
-                                appointment
-                              );
-                              setShowVideoCall(appointment);
-                            }}
-                            className="btn btn-primary btn-small">
-                            <FontAwesomeIcon icon={faVideo} />
-                            Tham gia video call
-                          </button>
-                        )}
-
-                      {/* Show debug button if no Agora credentials */}
-                      {(!appointment.agoraChannelName &&
-                        !appointment.ChannelName) ||
-                        (!appointment.agoraToken &&
-                          !appointment.AgoraToken && (
-                            <button
-                              onClick={() => {
-                                console.log(
-                                  "Appointment data:",
-                                  appointment
-                                );
-                                const hasChannel = !!(
-                                  appointment.agoraChannelName ||
-                                  appointment.ChannelName
-                                );
-                                const hasToken = !!(
-                                  appointment.agoraToken ||
-                                  appointment.AgoraToken
-                                );
-                                const hasAppId = !!(
-                                  appointment.agoraAppId ||
-                                  appointment.AgoraAppId
-                                );
-                                alert(`Debug Info:
-Frontend Fields:
-- Channel: ${!!appointment.agoraChannelName}
-- Token: ${!!appointment.agoraToken}
-- AppId: ${!!appointment.agoraAppId}
-
-Backend Fields:
-- ChannelName: ${!!appointment.ChannelName}
-- AgoraToken: ${!!appointment.AgoraToken}  
-- AgoraAppId: ${!!appointment.AgoraAppId}
-
-Combined:
-- Has Channel: ${hasChannel}
-- Has Token: ${hasToken}
-- Has AppId: ${hasAppId}`);
-                              }}
-                              className="btn btn-warning btn-small">
-                              <FontAwesomeIcon icon={faVideo} />
-                              Debug Video Call
-                            </button>
-                          ))}
+                      {hasAgoraChannel && hasAgoraToken && (
+                        <button
+                          onClick={() => {
+                            setShowVideoCall(appointment);
+                          }}
+                          className="btn btn-primary btn-small">
+                          <FontAwesomeIcon icon={faVideo} />
+                          Tham gia video call
+                        </button>
+                      )}
+                      {/* Debug Info button */}
+                      <button
+                        onClick={() => {
+                          const agora = getAgoraInfo(appointment);
+                          alert(`AGORA DEBUG INFO:\n\nApp ID: ${agora.appId}\nChannel Name: ${agora.channelName}\nToken: ${agora.token}\nUser ID: ${agora.userId}`);
+                          console.log('AGORA DEBUG INFO:', agora);
+                        }}
+                        className="btn btn-warning btn-small"
+                        style={{ marginLeft: 8 }}
+                      >
+                        Debug Info
+                      </button>
                     </div>
                   )}
 
@@ -531,25 +511,23 @@ Combined:
               </button>
             </div>
             <div className="modal-body">
-              <AgoraVideoCall
-                appointmentId={showVideoCall.id}
-                agoraAppId={showVideoCall.agoraAppId}
-                agoraChannelName={showVideoCall.agoraChannelName}
-                agoraToken={showVideoCall.agoraToken}
-                agoraExpireAt={showVideoCall.agoraExpireAt}
-                AgoraAppId={showVideoCall.AgoraAppId}
-                ChannelName={showVideoCall.ChannelName}
-                AgoraToken={showVideoCall.AgoraToken}
-                onCallEnd={() => {
-                  console.log("Video call ended, closing modal");
-                  setShowVideoCall(null);
-                }}
-                onError={(error) => {
-                  console.log("Video call error:", error);
-                  setError("Lỗi video call: " + error.message);
-                  setShowVideoCall(null);
-                }}
-              />
+              {(() => {
+                const agora = getAgoraInfo(showVideoCall);
+                return (
+                  <AgoraVideoCall
+                    appointmentId={showVideoCall.id}
+                    agoraAppId={agora.appId}
+                    agoraChannelName={agora.channelName}
+                    agoraToken={agora.token}
+                    agoraUserId={agora.userId}
+                    onCallEnd={() => setShowVideoCall(null)}
+                    onError={(error) => {
+                      setError("Lỗi video call: " + error.message);
+                      setShowVideoCall(null);
+                    }}
+                  />
+                );
+              })()}
             </div>
           </div>
         </div>

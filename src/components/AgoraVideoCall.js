@@ -8,6 +8,7 @@ const AgoraVideoCall = ({
   agoraAppId,
   agoraChannelName,
   agoraToken,
+  agoraUserId, // thêm prop này
   agoraExpireAt,
   AgoraAppId,
   AgoraToken,
@@ -502,8 +503,7 @@ const AgoraVideoCall = ({
 
     // Check if we're stuck in connecting state for too long
     if (isConnectingRef.current) {
-      const stuckTime =
-        Date.now() - (window.lastJoinAttempt || Date.now());
+      const stuckTime = Date.now() - (window.lastJoinAttempt || Date.now());
       if (stuckTime > 15000) {
         // 15 seconds timeout
         console.log(
@@ -523,15 +523,6 @@ const AgoraVideoCall = ({
             joinCall();
           }
         }, 1000);
-        return;
-      } else {
-        console.log(
-          "Still in connecting state, skipping join attempt",
-          {
-            instanceId: instanceIdRef.current,
-            stuckTime,
-          }
-        );
         return;
       }
     }
@@ -748,7 +739,8 @@ const AgoraVideoCall = ({
       const uid = await clientRef.current.join(
         finalAppId,
         finalChannelName,
-        tokenToUse
+        tokenToUse,
+        agoraUserId ? Number(agoraUserId) : undefined
       );
       console.log("Joined channel successfully with UID:", uid);
 
