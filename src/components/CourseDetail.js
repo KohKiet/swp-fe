@@ -180,15 +180,20 @@ const CourseDetail = () => {
 
       if (response?.success && response.data) {
         const courseData = response.data;
+        var chapterByCourse = await courseService.getChaptersByCourse(courseId);
+        courseData.chapters = chapterByCourse;
         setCourse(courseData);
 
         // Load chapters for the course
-        if (courseData.chapters && courseData.chapters.length > 0) {
+        
+        if (chapterByCourse && chapterByCourse.length > 0) {
           // Automatically expand first chapter and select first lesson
-          const firstChapter = courseData.chapters[0];
+          const firstChapter = chapterByCourse[0];
           setExpandedChapters(new Set([firstChapter.chapterId]));
           setCurrentChapter(firstChapter);
 
+          var lession = await courseService.getLessonsByChapter(firstChapter.chapterId);
+                    firstChapter.lessons = lession;
           if (
             firstChapter.lessons &&
             firstChapter.lessons.length > 0
@@ -224,7 +229,7 @@ const CourseDetail = () => {
       }
 
       const response = await courseService.isEnrolled(courseId);
-      setIsEnrolled(response === true || response.data === true);
+      setIsEnrolled(response === true || response.data.isEnrolled === true);
     } catch (err) {
       console.error("Error checking enrollment status:", err);
       setIsEnrolled(false);

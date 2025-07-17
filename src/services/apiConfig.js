@@ -19,7 +19,7 @@ export const API_CONFIG = {
     // User profile endpoints
     USER_PROFILE_ME: "/api/userprofile/me",
     USER_PROFILE_BADGES: "/api/userprofile/me/badges",
-    USER_PROFILE_ENROLLMENTS: "/api/userprofile/me/enrollments",
+    USER_PROFILE_ENROLLMENTS: "/api/CourseEnrollment/user",
     USER_PROFILE_REVIEWS: "/api/userprofile/me/reviews",
     USER_PROFILE_POSTS: "/api/userprofile/me/posts",
     USER_PROFILE_DASHBOARD: "/api/userprofile/me/dashboard",
@@ -89,7 +89,7 @@ export const API_CONFIG = {
     ENROLLMENT_MY_ENROLLMENTS: "/api/CourseEnrollment/my-enrollments",
     ENROLLMENT_STATUS: "/api/CourseEnrollment/status/{courseId}",
     ENROLLMENT_IS_ENROLLED:
-      "/api/CourseEnrollment/is-enrolled/{courseId}",
+      "/api/CourseEnrollment/status/{courseId}",
     ENROLLMENT_COMPLETE: "/api/CourseEnrollment/complete/{courseId}",
 
     // Admin Enrollment endpoints (Admin/Manager only)

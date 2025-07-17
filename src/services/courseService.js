@@ -328,12 +328,13 @@ class CourseService {
 
   // Get chapters by course
   async getChaptersByCourse(courseId) {
-    return this.publicRequest(
+    var res = await this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.CHAPTER_BY_COURSE.replace(
         "{courseId}",
         courseId
       )
     );
+    return res.data;
   }
 
   // Create new chapter
@@ -383,7 +384,7 @@ class CourseService {
 
   // Get specific lesson
   async getLessonById(lessonId) {
-    return this.publicRequest(
+    return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.LESSON_BY_ID.replace(
         "{lessonId}",
         lessonId
@@ -393,12 +394,13 @@ class CourseService {
 
   // Get lessons by chapter
   async getLessonsByChapter(chapterId) {
-    return this.publicRequest(
+    var res = await this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.LESSON_BY_CHAPTER.replace(
         "{chapterId}",
         chapterId
       )
     );
+    return res.data;
   }
 
   // Create new lesson
@@ -722,7 +724,7 @@ class CourseService {
 
   // Check if enrolled
   async isEnrolled(courseId) {
-    return this.authenticatedRequest(
+    return await this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.ENROLLMENT_IS_ENROLLED.replace(
         "{courseId}",
         courseId

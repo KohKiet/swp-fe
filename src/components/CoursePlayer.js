@@ -212,15 +212,19 @@ const CoursePlayer = () => {
 
       if (response?.success && response.data) {
         const courseData = response.data;
+        var chapterByCourse = await courseService.getChaptersByCourse(courseId);
+        courseData.chapters = chapterByCourse;
         setCourse(courseData);
 
         // Load chapters for the course
+        
         if (courseData.chapters && courseData.chapters.length > 0) {
-          // Automatically expand first chapter and select first lesson
           const firstChapter = courseData.chapters[0];
-          setExpandedChapters(new Set([firstChapter.chapterId]));
+          var lession = await courseService.getLessonsByChapter(firstChapter.id);
+          firstChapter.lessons = lession;
+          // Automatically expand first chapter and select first lesson
+          setExpandedChapters(new Set([firstChapter.id]));
           setCurrentChapter(firstChapter);
-
           if (
             firstChapter.lessons &&
             firstChapter.lessons.length > 0
@@ -262,7 +266,7 @@ const CoursePlayer = () => {
       // Check enrollment status
       try {
         const response = await courseService.isEnrolled(courseId);
-        const enrolled = response === true || response.data === true;
+        const enrolled = response.data.isEnrolled === true;
         setIsEnrolled(enrolled);
 
         if (enrolled) {
@@ -480,7 +484,7 @@ const CoursePlayer = () => {
 
     // Mark lesson as viewed
     if (isEnrolled) {
-      markLessonProgress(lesson.lessonId);
+      markLessonProgress(lesson.id);
     }
   };
 
@@ -636,10 +640,10 @@ const CoursePlayer = () => {
       return null;
 
     const currentChapterIndex = course.chapters.findIndex(
-      (ch) => ch.chapterId === currentChapter.chapterId
+      (ch) => ch.id === currentChapter.id
     );
     const currentLessonIndex = currentChapter.lessons.findIndex(
-      (l) => l.lessonId === currentLesson.lessonId
+      (l) => l.id === currentLesson.id
     );
 
     // Try next lesson in current chapter
@@ -669,10 +673,10 @@ const CoursePlayer = () => {
       return null;
 
     const currentChapterIndex = course.chapters.findIndex(
-      (ch) => ch.chapterId === currentChapter.chapterId
+      (ch) => ch.id === currentChapter.id
     );
     const currentLessonIndex = currentChapter.lessons.findIndex(
-      (l) => l.lessonId === currentLesson.lessonId
+      (l) => l.id === currentLesson.id
     );
 
     // Try previous lesson in current chapter
@@ -703,9 +707,9 @@ const CoursePlayer = () => {
     if (target) {
       handleLessonSelect(target.chapter, target.lesson);
       // Expand the target chapter if it's not expanded
-      if (!expandedChapters.has(target.chapter.chapterId)) {
+      if (!expandedChapters.has(target.chapter.id)) {
         setExpandedChapters(
-          (prev) => new Set([...prev, target.chapter.chapterId])
+          (prev) => new Set([...prev, target.chapter.id])
         );
       }
     }
@@ -870,7 +874,7 @@ const CoursePlayer = () => {
         </Container>
       )}
 
-      <Container maxWidth="lg" sx={{ py: 3 }}>
+      { isEnrolled && <Container maxWidth="lg" sx={{ py: 3 }}>
         <Grid container spacing={3}>
           {/* Main Content Area */}
           <Grid size={{ xs: 12, lg: 8 }}>
@@ -904,7 +908,7 @@ const CoursePlayer = () => {
                       </Box>
                       <Box>
                         {isLessonCompleted(
-                          currentLesson.lessonId
+                          currentLesson.id
                         ) && (
                           <CheckCircleIcon
                             color="success"
@@ -1052,7 +1056,7 @@ const CoursePlayer = () => {
           </Grid>
 
           {/* Course Sidebar */}
-          <Grid size={{ xs: 12, lg: 4 }}>
+          { isEnrolled && <Grid size={{ xs: 12, lg: 4 }}>
             <Paper sx={{ p: 3 }}>
               <Typography
                 variant="h6"
@@ -1063,10 +1067,10 @@ const CoursePlayer = () => {
 
               {course.chapters?.map((chapter) => (
                 <ChapterAccordion
-                  key={chapter.chapterId}
-                  expanded={expandedChapters.has(chapter.chapterId)}
+                  key={chapter.id}
+                  expanded={expandedChapters.has(chapter.id)}
                   onChange={() =>
-                    handleChapterToggle(chapter.chapterId)
+                    handleChapterToggle(chapter.id)
                   }>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Stack
@@ -1097,17 +1101,17 @@ const CoursePlayer = () => {
                     <List>
                       {chapter.lessons?.map((lesson) => (
                         <LessonListItem
-                          key={lesson.lessonId}
+                          key={lesson.id}
                           selected={
-                            currentLesson?.lessonId ===
-                            lesson.lessonId
+                            currentLesson?.id ===
+                            lesson.id
                           }
                           onClick={() =>
                             handleLessonSelect(chapter, lesson)
                           }
                           disabled={!isEnrolled}>
                           <ListItemIcon>
-                            {isLessonCompleted(lesson.lessonId) ? (
+                            {isLessonCompleted(lesson.id) ? (
                               <CheckCircleIcon color="success" />
                             ) : (
                               <UncompletedIcon color="action" />
@@ -1164,8 +1168,10 @@ const CoursePlayer = () => {
               ))}
             </Paper>
           </Grid>
+}
         </Grid>
       </Container>
+}
 
       {/* Enhanced Quiz Dialog */}
       <Dialog

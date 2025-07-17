@@ -144,7 +144,7 @@ const ProfilePage = () => {
     setLoading((prev) => ({ ...prev, enrollments: true }));
     try {
       const response = await authService.authenticatedRequest(
-        `${API_CONFIG.BASE_URL}/api/userprofile/me/enrollments`,
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER_PROFILE_ENROLLMENTS}`,
         { method: "GET" }
       );
 
@@ -152,7 +152,7 @@ const ProfilePage = () => {
         const data = await response.json();
         setUserProfileData((prev) => ({
           ...prev,
-          enrollments: data,
+          enrollments: data["data"],
         }));
         return { success: true, data };
       } else {
@@ -640,7 +640,7 @@ const ProfilePage = () => {
                       <div key={index} className="enrollment-item">
                         <div className="enrollment-info">
                           <h4>
-                            {enrollment.courseName || "Tên khóa học"}
+                            {enrollment.courseTitle || "Tên khóa học"}
                           </h4>
                           <p>
                             {enrollment.courseDescription ||
@@ -649,9 +649,9 @@ const ProfilePage = () => {
                           <div className="enrollment-details">
                             <span className="enrollment-date">
                               Đăng ký:{" "}
-                              {enrollment.enrollmentDate
+                              {enrollment.enrolledAt
                                 ? new Date(
-                                    enrollment.enrollmentDate
+                                    enrollment.enrolledAt
                                   ).toLocaleDateString("vi-VN")
                                 : "Chưa xác định"}
                             </span>
