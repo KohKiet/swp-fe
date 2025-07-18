@@ -16,6 +16,8 @@ const Lesson = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [quizId, setQuizId] = useState(null);
+  const [quizResults, setQuizResults] = useState([]);
+  const [lastQuizResult, setLastQuizResult] = useState(null);
 
   useEffect(() => {
     const fetchLesson = async () => {
@@ -34,6 +36,7 @@ const Lesson = () => {
             quizRes.data.length > 0
           ) {
             setQuizId(quizRes.data[0].id);
+            return quizRes.data[0].id;
           } else {
             setQuizId(null);
           }
@@ -46,7 +49,31 @@ const Lesson = () => {
         setLoading(false);
       }
     };
-    fetchLesson();
+    const handleQuizResults = async (quizId) => {
+    try {
+      const results = await courseService.getQuizResultsByUserQuiz(
+        quizId
+      );  
+      if (results && results.length > 0) {
+        setQuizResults(results);
+        getLastQuizResult(results);
+        return results;
+      }
+    } catch (error) {
+      console.error("Error fetching quiz results:", error);
+    }
+  };
+  const getLastQuizResult = (quizResults) => {
+    if (quizResults.length === 0) return null;
+    const sortedResults = quizResults.sort(
+      (a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)
+    );
+    setLastQuizResult(sortedResults[0]);
+    return sortedResults[0];
+  };
+    fetchLesson().then((quizId) => {
+      return handleQuizResults(quizId)
+    });
   }, [lessonId]);
 
   if (loading)
@@ -98,15 +125,75 @@ const Lesson = () => {
       <Typography variant="body1" mb={3}>
         {lesson.content}
       </Typography>
+      
+      {/* Quiz Section */}
+      {quizId && (
+        <Box mb={3} p={3} bgcolor="background.paper" borderRadius={2} border="1px solid" borderColor="divider">
+          <Typography variant="h6" mb={2}>Quiz</Typography>
+          {(() => {
+            if (lastQuizResult) {
+              return (
+                <Box>
+                  <Typography variant="subtitle1" color="text.primary" mb={2}>
+                    Kết quả Quiz gần nhất:
+                  </Typography>
+                  <Stack spacing={2}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Typography variant="body2">Điểm số:</Typography>
+                      <Typography variant="body1" fontWeight={600} color={lastQuizResult.isPassed ? "success.main" : "error.main"}>
+                        {lastQuizResult.score.toFixed(1)}%
+                      </Typography>
+                    </Box>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Typography variant="body2">Trạng thái:</Typography>
+                      <Typography 
+                        variant="body1" 
+                        fontWeight={600}
+                        color={lastQuizResult.isPassed ? "success.main" : "error.main"}
+                      >
+                        {lastQuizResult.isPassed ? "Đạt" : "Không đạt"}
+                      </Typography>
+                    </Box>
+                    {lastQuizResult.notes && (
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">Ghi chú:</Typography>
+                        <Typography variant="body1">{lastQuizResult.notes}</Typography>
+                      </Box>
+                    )}
+                  </Stack>
+                  <Box mt={2}>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      onClick={handleNext}
+                      size="small"
+                    >
+                      Làm lại Quiz
+                    </Button>
+                  </Box>
+                </Box>
+              );
+            } else {
+              return (
+                <Box>
+                  <Typography variant="body2" color="text.secondary" mb={2}>
+                    Bạn chưa thực hiện quiz này.
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleNext}
+                  >
+                    Làm Quiz
+                  </Button>
+                </Box>
+              );
+            }
+          })()}
+        </Box>
+      )}
+      
       <Stack direction="row" spacing={2}>
-        {quizId && (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleNext}>
-            Làm Quiz
-          </Button>
-        )}
         {!quizId && lesson.nextLessonId && (
           <Button
             variant="contained"

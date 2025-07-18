@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import courseService from "../services/courseService";
 import {
   Box,
@@ -14,6 +14,7 @@ import {
 
 const Quiz = () => {
   const { quizId } = useParams();
+  const navigate = useNavigate();
   const [quiz, setQuiz] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
@@ -141,22 +142,40 @@ const Quiz = () => {
           </RadioGroup>
         </Paper>
       ))}
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleSubmit}
-        disabled={
-          submitting ||
-          Object.keys(answers).length !== questions.length
-        }>
-        {submitting ? "Đang nộp..." : "Nộp bài"}
-      </Button>
+      {!result && (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleSubmit}
+          disabled={
+            submitting ||
+            Object.keys(answers).length !== questions.length
+          }>
+          {submitting ? "Đang nộp..." : "Nộp bài"}
+        </Button>
+      )}
+      {result && result.isPassed && (
+        <Button
+          variant="contained"
+          color="success"
+          onClick={() => navigate(-1)}>
+          Quay lại
+        </Button>
+      )}
+      {result && !result.isPassed && (
+        <Button
+          variant="contained"
+          color="error"
+          onClick={() => window.location.reload()}>
+          Làm lại
+        </Button>
+      )}
       {result && (
         <Box mt={3}>
           <Typography
             variant="h6"
-            color={result.passed ? "success.main" : "error.main"}>
-            {result.passed
+            color={result.isPassed ? "success.main" : "error.main"}>
+            {result.isPassed
               ? "Bạn đã vượt qua quiz!"
               : "Bạn chưa đạt yêu cầu."}
           </Typography>

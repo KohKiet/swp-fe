@@ -937,6 +937,12 @@ class CourseService {
   async startQuizSession(quizId) {
     return this.authenticatedRequest(`/api/Quiz/${quizId}/start`);
   }
+
+  async getQuizResultsByUserQuiz(quizId) {
+    return await this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.QUIZ_RESULT_BY_USER_QUIZ.replace("{quizId}", quizId)
+    );
+  }
 }
 
 export default new CourseService();

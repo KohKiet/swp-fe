@@ -82,6 +82,7 @@ export const API_CONFIG = {
     QUIZ_RESULT_SUBMIT: "/api/Question/submit",
     QUIZ_RESULT_BY_QUIZ: "/api/QuizResult/quiz/{quizId}",
     QUIZ_RESULT_BY_USER: "/api/QuizResult/user/{userId}",
+    QUIZ_RESULT_BY_USER_QUIZ: "/api/Quiz/result?quizId={quizId}",
 
     // Course Enrollment endpoints (Authentication Required)
     ENROLLMENT_ENROLL: "/api/CourseEnrollment/enroll/{courseId}",
