@@ -8,6 +8,7 @@ const AgoraVideoCall = ({
   agoraAppId,
   agoraChannelName,
   agoraToken,
+  agoraUserId, // thêm prop này
   agoraExpireAt,
   AgoraAppId,
   AgoraToken,
@@ -56,15 +57,6 @@ const AgoraVideoCall = ({
   };
 
   useEffect(() => {
-    console.log("AgoraVideoCall mounted with props:", {
-      instanceId: instanceIdRef.current,
-      appointmentId,
-      agoraAppId,
-      agoraChannelName,
-      hasToken: !!agoraToken,
-      agoraExpireAt,
-    });
-
     isMountedRef.current = true;
 
     // Set stable after short delay to prevent immediate unmounting
@@ -77,13 +69,7 @@ const AgoraVideoCall = ({
     // Add page visibility change handler to prevent unnecessary unmounting
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        console.log("Page hidden, but keeping component mounted", {
-          instanceId: instanceIdRef.current,
-        });
       } else {
-        console.log("Page visible again", {
-          instanceId: instanceIdRef.current,
-        });
       }
     };
 
@@ -98,14 +84,6 @@ const AgoraVideoCall = ({
     }
 
     return () => {
-      console.log("AgoraVideoCall cleanup starting...", {
-        instanceId: instanceIdRef.current,
-        isStable,
-        isHidden: document.hidden,
-        isJoined,
-        isConnecting: isConnectingRef.current,
-      });
-
       isMountedRef.current = false;
       document.removeEventListener(
         "visibilitychange",
@@ -114,9 +92,6 @@ const AgoraVideoCall = ({
       clearTimeout(stabilityTimer);
 
       // Always cleanup when component unmounts, regardless of stability
-      console.log("AgoraVideoCall unmounting - cleaning up...", {
-        instanceId: instanceIdRef.current,
-      });
       isLeavingRef.current = true; // Prevent new join attempts during cleanup
 
       // Force cleanup of all resources
@@ -141,18 +116,6 @@ const AgoraVideoCall = ({
       finalToken &&
       !document.hidden // Don't join if page is hidden
     ) {
-      console.log("Auto-joining call with credentials:", {
-        instanceId: instanceIdRef.current,
-        finalAppId: !!finalAppId,
-        finalChannelName: !!finalChannelName,
-        finalToken: !!finalToken,
-        isStable,
-        isConnecting: isConnectingRef.current,
-        isLeaving: isLeavingRef.current,
-        isMounted: isMountedRef.current,
-        isHidden: document.hidden,
-      });
-
       joinAttemptRef.current = true;
       isConnectingRef.current = true;
 
@@ -164,15 +127,6 @@ const AgoraVideoCall = ({
           // Reset flags if component unmounted during delay or page became hidden
           isConnectingRef.current = false;
           joinAttemptRef.current = false;
-          console.log(
-            "Join cancelled - component unmounted, page hidden, or already joined",
-            {
-              instanceId: instanceIdRef.current,
-              isMounted: isMountedRef.current,
-              isHidden: document.hidden,
-              isJoined,
-            }
-          );
         }
       }, 1000);
     }
@@ -203,15 +157,8 @@ const AgoraVideoCall = ({
       const currentTime = new Date().getTime();
       const timeUntilExpire = expireTime - currentTime;
 
-      console.log(
-        "Token check - time until expire:",
-        timeUntilExpire / 1000 / 60,
-        "minutes"
-      );
-
       // Refresh token 5 minutes before expiry
       if (timeUntilExpire > 0 && timeUntilExpire < 5 * 60 * 1000) {
-        console.log("Token expiring soon, refreshing...");
         refreshToken();
       }
     }
@@ -221,7 +168,6 @@ const AgoraVideoCall = ({
   useEffect(() => {
     const newToken = agoraToken || AgoraToken;
     if (newToken && newToken !== currentToken) {
-      console.log("Token props updated, updating current token");
       setCurrentToken(newToken);
       setCurrentExpireAt(agoraExpireAt);
     }
@@ -230,16 +176,9 @@ const AgoraVideoCall = ({
   const initAgoraClient = () => {
     try {
       if (clientRef.current) {
-        console.log(
-          "Agora client already exists, skipping initialization",
-          { instanceId: instanceIdRef.current }
-        );
         return;
       }
 
-      console.log("Initializing Agora client...", {
-        instanceId: instanceIdRef.current,
-      });
       clientRef.current = AgoraRTC.createClient({
         mode: "rtc",
         codec: "vp8",
@@ -257,10 +196,7 @@ const AgoraVideoCall = ({
         "token-privilege-did-expire",
         handleTokenExpired
       );
-
-      console.log("Agora client initialized successfully");
     } catch (error) {
-      console.error("Failed to initialize Agora client:", error);
       setError("Không thể khởi tạo video call: " + error.message);
       if (onError) onError(error);
     }
@@ -268,14 +204,8 @@ const AgoraVideoCall = ({
 
   const refreshToken = async () => {
     try {
-      console.log("Refreshing Agora token...");
       const response = await consultationService.refreshAgoraToken(
         appointmentId
-      );
-
-      console.log(
-        "Token refresh response:",
-        JSON.stringify(response, null, 2)
       );
 
       if (response.success && response.data) {
@@ -285,25 +215,18 @@ const AgoraVideoCall = ({
         if (response.data.agoraToken) {
           newToken = response.data.agoraToken;
           newExpireAt = response.data.agoraExpireAt;
-          console.log("Using agoraToken format");
         } else if (response.data.token) {
           // Handle the actual backend response format
           newToken = response.data.token;
           newExpireAt = response.data.expireAt || null;
-          console.log(
-            "Using backend token format (response.data.token)"
-          );
         } else if (response.data.AgoraToken) {
           newToken = response.data.AgoraToken;
           newExpireAt = response.data.AgoraExpireAt;
-          console.log("Using AgoraToken format");
         } else if (typeof response.data === "string") {
           // Handle case where token is returned as string
           newToken = response.data;
           newExpireAt = null;
-          console.log("Using string token format");
         } else {
-          console.error("Unknown response format:", response);
           throw new Error(
             "Invalid response format from token refresh API"
           );
@@ -319,16 +242,6 @@ const AgoraVideoCall = ({
             await clientRef.current.renewToken(newToken);
           }
 
-          console.log("Token refreshed successfully", {
-            newExpireAt,
-            timeUntilExpire: newExpireAt
-              ? (new Date(newExpireAt).getTime() -
-                  new Date().getTime()) /
-                1000 /
-                60
-              : "unknown",
-          });
-
           return newToken;
         }
       }
@@ -338,7 +251,9 @@ const AgoraVideoCall = ({
           (response.error || "Unknown error")
       );
     } catch (error) {
-      console.error("Failed to refresh token:", error);
+      setError(
+        "Không thể làm mới token video call: " + error.message
+      );
 
       // Handle specific error cases
       if (error.message && error.message.includes("404")) {
@@ -361,11 +276,7 @@ const AgoraVideoCall = ({
   };
 
   const handleTokenExpired = () => {
-    console.log(
-      "Token expired event received, attempting to refresh..."
-    );
     refreshToken().catch((error) => {
-      console.error("Failed to handle token expiration:", error);
       setError(
         "Token đã hết hạn và không thể làm mới. Vui lòng đóng và mở lại video call."
       );
@@ -374,9 +285,7 @@ const AgoraVideoCall = ({
 
   const handleUserPublished = async (user, mediaType) => {
     try {
-      console.log("User published:", user.uid, mediaType);
       await clientRef.current.subscribe(user, mediaType);
-      console.log("Subscribed to user:", user.uid, mediaType);
 
       if (mediaType === "video") {
         setRemoteUsers((prev) => {
@@ -421,7 +330,6 @@ const AgoraVideoCall = ({
         });
       }
     } catch (error) {
-      console.error("Failed to subscribe to user:", error);
       setError(
         "Không thể kết nối với người dùng khác: " + error.message
       );
@@ -429,8 +337,6 @@ const AgoraVideoCall = ({
   };
 
   const handleUserUnpublished = (user, mediaType) => {
-    console.log("User unpublished:", user.uid, mediaType);
-
     setRemoteUsers((prev) =>
       prev.map((u) => {
         if (u.uid === user.uid) {
@@ -447,45 +353,24 @@ const AgoraVideoCall = ({
   };
 
   const handleUserLeft = (user) => {
-    console.log("User left:", user.uid);
     setRemoteUsers((prev) => prev.filter((u) => u.uid !== user.uid));
   };
 
   const joinCall = async () => {
     if (!isMountedRef.current) {
-      console.log("Component unmounted, skipping join attempt", {
-        instanceId: instanceIdRef.current,
-      });
       isConnectingRef.current = false;
       joinAttemptRef.current = false;
       return;
     }
 
     if (document.hidden) {
-      console.log("Page is hidden, skipping join attempt", {
-        instanceId: instanceIdRef.current,
-      });
       isConnectingRef.current = false;
       joinAttemptRef.current = false;
       return;
     }
 
-    console.log("Attempting to join call", {
-      instanceId: instanceIdRef.current,
-      hasAppId: !!finalAppId,
-      hasChannelName: !!finalChannelName,
-      hasToken: !!finalToken,
-      isHidden: document.hidden,
-    });
-
     if (!finalAppId || !finalChannelName) {
       const errorMsg = "Thiếu thông tin cấu hình video call";
-      console.error("Missing video call configuration:", {
-        instanceId: instanceIdRef.current,
-        hasAppId: !!finalAppId,
-        hasChannelName: !!finalChannelName,
-        hasToken: !!finalToken,
-      });
       setError(errorMsg);
       isConnectingRef.current = false;
       joinAttemptRef.current = false;
@@ -494,9 +379,6 @@ const AgoraVideoCall = ({
 
     // Check if we're already connected
     if (isJoined) {
-      console.log("Already joined, skipping join attempt", {
-        instanceId: instanceIdRef.current,
-      });
       return;
     }
 
@@ -506,32 +388,13 @@ const AgoraVideoCall = ({
         Date.now() - (window.lastJoinAttempt || Date.now());
       if (stuckTime > 15000) {
         // 15 seconds timeout
-        console.log(
-          "Detected stuck connecting state, forcing reset",
-          {
-            instanceId: instanceIdRef.current,
-            stuckTime,
-          }
-        );
         forceResetAllStates();
         // Try joining again after a short delay
         setTimeout(() => {
           if (isMountedRef.current) {
-            console.log("Retrying join after force reset", {
-              instanceId: instanceIdRef.current,
-            });
             joinCall();
           }
         }, 1000);
-        return;
-      } else {
-        console.log(
-          "Still in connecting state, skipping join attempt",
-          {
-            instanceId: instanceIdRef.current,
-            stuckTime,
-          }
-        );
         return;
       }
     }
@@ -539,20 +402,11 @@ const AgoraVideoCall = ({
     // Check if client is already in connecting/connected state
     if (clientRef.current) {
       const connectionState = clientRef.current.connectionState;
-      console.log(
-        "Current client connection state:",
-        connectionState,
-        { instanceId: instanceIdRef.current }
-      );
 
       if (
         connectionState === "CONNECTING" ||
         connectionState === "CONNECTED"
       ) {
-        console.log(
-          "Client already connecting/connected, skipping join attempt",
-          { instanceId: instanceIdRef.current }
-        );
         isConnectingRef.current = false;
         joinAttemptRef.current = false;
         return;
@@ -565,23 +419,10 @@ const AgoraVideoCall = ({
 
     // Track join attempt timestamp
     window.lastJoinAttempt = Date.now();
-    console.log(
-      "Join attempt started at:",
-      new Date(window.lastJoinAttempt).toISOString(),
-      {
-        instanceId: instanceIdRef.current,
-      }
-    );
 
     // Add a timeout to reset connecting state if join takes too long
     const connectionTimeout = setTimeout(() => {
       if (isConnectingRef.current && !isJoined) {
-        console.log(
-          "Connection timeout, resetting connecting state",
-          {
-            instanceId: instanceIdRef.current,
-          }
-        );
         isConnectingRef.current = false;
         joinAttemptRef.current = false;
         setIsLoading(false);
@@ -591,15 +432,9 @@ const AgoraVideoCall = ({
 
     try {
       // Check device availability first
-      console.log("Checking device availability before joining...");
       try {
         await checkDeviceAvailability();
-        console.log("Device availability check passed");
       } catch (deviceError) {
-        console.error(
-          "Device availability check failed:",
-          deviceError
-        );
         setError(deviceError.message);
         isConnectingRef.current = false;
         joinAttemptRef.current = false;
@@ -609,9 +444,6 @@ const AgoraVideoCall = ({
       // Check if token is expired or expiring soon and refresh if needed
       let tokenToUse = finalToken;
       if (!tokenToUse || isTokenExpiredOrExpiring(currentExpireAt)) {
-        console.log(
-          "Token is expired or expiring soon, refreshing..."
-        );
         try {
           tokenToUse = await refreshToken();
           if (!tokenToUse) {
@@ -643,7 +475,6 @@ const AgoraVideoCall = ({
         return;
       }
 
-      console.log("Creating local tracks...");
       // Create local tracks with better error handling
       let audioTrack, videoTrack;
 
@@ -651,12 +482,7 @@ const AgoraVideoCall = ({
         // First try to create both audio and video tracks
         [audioTrack, videoTrack] =
           await AgoraRTC.createMicrophoneAndCameraTracks();
-        console.log(
-          "Both audio and video tracks created successfully"
-        );
       } catch (trackError) {
-        console.error("Failed to create tracks:", trackError);
-
         // Check if it's a permission error
         if (
           trackError.message &&
@@ -678,10 +504,8 @@ const AgoraVideoCall = ({
 
         // Try creating audio-only track if video fails
         try {
-          console.log("Trying to create audio-only track...");
           audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
           videoTrack = null;
-          console.log("Audio-only track created successfully");
           setError(
             "⚠️ Không thể truy cập camera\n\n" +
               "Cuộc gọi sẽ tiếp tục với âm thanh chỉ.\n" +
@@ -706,10 +530,6 @@ const AgoraVideoCall = ({
         }
       }
 
-      console.log("Local tracks created successfully", {
-        hasAudio: !!audioTrack,
-        hasVideo: !!videoTrack,
-      });
       setLocalAudioTrack(audioTrack);
       setLocalVideoTrack(videoTrack);
 
@@ -717,9 +537,7 @@ const AgoraVideoCall = ({
       if (localVideoRef.current && videoTrack) {
         try {
           videoTrack.play(localVideoRef.current);
-          console.log("Local video playing successfully");
         } catch (playError) {
-          console.error("Failed to play local video:", playError);
           setError(
             "⚠️ Không thể hiển thị video local\n\n" +
               "Cuộc gọi sẽ tiếp tục nhưng bạn không thể thấy video của mình.\n\n" +
@@ -728,39 +546,26 @@ const AgoraVideoCall = ({
           );
         }
       } else if (!videoTrack) {
-        console.log(
-          "No video track available, showing audio-only message"
-        );
         setError(
           "📞 Cuộc gọi audio-only\n\n" +
             "Camera không khả dụng, cuộc gọi sẽ chỉ có âm thanh."
         );
       }
 
-      console.log("Joining channel with:", {
-        appId: finalAppId,
-        channel: finalChannelName,
-        hasToken: !!tokenToUse,
-        tokenExpiry: currentExpireAt,
-      });
-
       // Join channel with potentially refreshed token
       const uid = await clientRef.current.join(
         finalAppId,
         finalChannelName,
-        tokenToUse
+        tokenToUse,
+        agoraUserId ? Number(agoraUserId) : undefined
       );
-      console.log("Joined channel successfully with UID:", uid);
 
       await clientRef.current.publish([audioTrack, videoTrack]);
-      console.log("Published local tracks successfully");
 
       setIsJoined(true);
       isConnectingRef.current = false;
       joinAttemptRef.current = false;
-      console.log("Successfully joined video call");
     } catch (error) {
-      console.error("Failed to join call:", error);
       isConnectingRef.current = false;
       joinAttemptRef.current = false;
 
@@ -775,19 +580,14 @@ const AgoraVideoCall = ({
           error.message.includes("token") ||
           error.message.includes("invalid token"))
       ) {
-        console.log(
-          "Token expired during join, attempting refresh..."
-        );
         try {
           const newToken = await refreshToken();
           if (newToken) {
             // Reset join attempt flag and try again
             joinAttemptRef.current = false;
-            setIsLoading(false);
             setTimeout(() => joinCall(), 1000); // Retry after 1 second
             return;
           } else {
-            console.log("Token refresh returned null, cannot retry");
             userFriendlyError =
               "Token video call đã hết hạn và không thể làm mới. Vui lòng đóng và mở lại video call.";
           }
@@ -830,15 +630,12 @@ const AgoraVideoCall = ({
 
   const leaveCall = async () => {
     if (isLeavingRef.current) {
-      console.log("Already leaving call, skipping...");
       return;
     }
 
     isLeavingRef.current = true;
 
     try {
-      console.log("Leaving call...");
-
       if (localAudioTrack) {
         localAudioTrack.close();
         setLocalAudioTrack(null);
@@ -850,7 +647,6 @@ const AgoraVideoCall = ({
 
       if (clientRef.current && isJoined) {
         await clientRef.current.leave();
-        console.log("Left channel successfully");
       }
 
       setRemoteUsers([]);
@@ -870,7 +666,6 @@ const AgoraVideoCall = ({
     if (localAudioTrack) {
       localAudioTrack.setEnabled(isMuted);
       setIsMuted(!isMuted);
-      console.log("Audio", isMuted ? "enabled" : "disabled");
     }
   };
 
@@ -878,17 +673,10 @@ const AgoraVideoCall = ({
     if (localVideoTrack) {
       localVideoTrack.setEnabled(isCameraOff);
       setIsCameraOff(!isCameraOff);
-      console.log("Video", isCameraOff ? "enabled" : "disabled");
     }
   };
 
   const resetConnectionState = () => {
-    console.log("Manually resetting connection state", {
-      instanceId: instanceIdRef.current,
-      wasConnecting: isConnectingRef.current,
-      wasJoined: isJoined,
-      wasLeaving: isLeavingRef.current,
-    });
     isConnectingRef.current = false;
     joinAttemptRef.current = false;
     isLeavingRef.current = false;
@@ -898,10 +686,6 @@ const AgoraVideoCall = ({
 
   // Force reset all connection states - more aggressive reset
   const forceResetAllStates = () => {
-    console.log("Force resetting all connection states", {
-      instanceId: instanceIdRef.current,
-    });
-
     // Reset all refs
     isConnectingRef.current = false;
     joinAttemptRef.current = false;
@@ -929,14 +713,10 @@ const AgoraVideoCall = ({
         console.log("Error leaving channel during force reset:", err);
       });
     }
-
-    console.log("All states force reset completed");
   };
 
   const checkDeviceAvailability = async () => {
     try {
-      console.log("Checking device availability...");
-
       // Check if getUserMedia is supported
       if (
         !navigator.mediaDevices ||
@@ -953,7 +733,6 @@ const AgoraVideoCall = ({
         audio: false,
       });
       videoStream.getTracks().forEach((track) => track.stop());
-      console.log("Camera is available");
 
       // Check microphone availability
       const audioStream = await navigator.mediaDevices.getUserMedia({
@@ -961,12 +740,9 @@ const AgoraVideoCall = ({
         audio: true,
       });
       audioStream.getTracks().forEach((track) => track.stop());
-      console.log("Microphone is available");
 
       return { camera: true, microphone: true };
     } catch (error) {
-      console.error("Device availability check failed:", error);
-
       if (error.name === "NotAllowedError") {
         throw new Error(
           "Quyền truy cập camera/microphone bị từ chối. Vui lòng cho phép trong trình duyệt."
@@ -986,23 +762,6 @@ const AgoraVideoCall = ({
       }
     }
   };
-
-  // Debug information
-  console.log("Current state:", {
-    hasAppId: !!finalAppId,
-    hasChannelName: !!finalChannelName,
-    hasToken: !!finalToken,
-    tokenExpiry: currentExpireAt,
-    isTokenExpired: currentExpireAt
-      ? isTokenExpiredOrExpiring(currentExpireAt, 0)
-      : "unknown",
-    isTokenExpiringSoon: currentExpireAt
-      ? isTokenExpiredOrExpiring(currentExpireAt, 5)
-      : "unknown",
-    isJoined,
-    remoteUsersCount: remoteUsers.length,
-    error,
-  });
 
   if (!finalAppId || !finalChannelName) {
     return (
@@ -1045,7 +804,7 @@ const AgoraVideoCall = ({
 
         {remoteUsers.length === 0 && isJoined && (
           <div className="waiting-message">
-            <p>Đang chờ chuyên gia tham gia...</p>
+            <p>Đang chờ tham gia...</p>
           </div>
         )}
       </div>
@@ -1060,22 +819,6 @@ const AgoraVideoCall = ({
               {isLoading || isConnectingRef.current
                 ? "Đang tham gia..."
                 : "Tham gia Video Call"}
-            </button>
-
-            {/* Manual join button that bypasses auto-join */}
-            <button
-              onClick={() => {
-                console.log("Manual join triggered", {
-                  instanceId: instanceIdRef.current,
-                });
-                // Reset flags to allow manual join
-                isConnectingRef.current = false;
-                joinAttemptRef.current = false;
-                joinCall();
-              }}
-              disabled={isLoading}
-              className="btn btn-primary btn-small">
-              Tham gia thủ công
             </button>
 
             {/* Show reset button if stuck in connecting state */}
@@ -1095,51 +838,6 @@ const AgoraVideoCall = ({
                 Khởi động lại hoàn toàn
               </button>
             )}
-
-            {/* Manual reset button for any state */}
-            <button
-              onClick={forceResetAllStates}
-              className="btn btn-secondary btn-small">
-              Làm mới hoàn toàn
-            </button>
-
-            {/* Debug button to show current state */}
-            <button
-              onClick={() => {
-                const debugInfo = {
-                  instanceId: instanceIdRef.current,
-                  isJoined,
-                  isConnecting: isConnectingRef.current,
-                  isLeaving: isLeavingRef.current,
-                  isMounted: isMountedRef.current,
-                  hasLocalAudio: !!localAudioTrack,
-                  hasLocalVideo: !!localVideoTrack,
-                  clientState: clientRef.current?.connectionState,
-                  hasAppId: !!finalAppId,
-                  hasChannelName: !!finalChannelName,
-                  hasToken: !!finalToken,
-                  stuckTime: window.lastJoinAttempt
-                    ? Date.now() - window.lastJoinAttempt
-                    : 0,
-                };
-                console.log("Debug Info:", debugInfo);
-                alert(`Debug Info:
-Instance ID: ${debugInfo.instanceId}
-Is Joined: ${debugInfo.isJoined}
-Is Connecting: ${debugInfo.isConnecting}
-Is Leaving: ${debugInfo.isLeaving}
-Is Mounted: ${debugInfo.isMounted}
-Has Local Audio: ${debugInfo.hasLocalAudio}
-Has Local Video: ${debugInfo.hasLocalVideo}
-Client State: ${debugInfo.clientState}
-Has App ID: ${debugInfo.hasAppId}
-Has Channel Name: ${debugInfo.hasChannelName}
-Has Token: ${debugInfo.hasToken}
-Stuck Time: ${debugInfo.stuckTime}ms`);
-              }}
-              className="btn btn-info btn-small">
-              Debug Info
-            </button>
           </div>
         ) : (
           <>
@@ -1175,7 +873,6 @@ const RemoteVideoPlayer = ({ user }) => {
   useEffect(() => {
     if (user.videoTrack && videoRef.current) {
       user.videoTrack.play(videoRef.current);
-      console.log("Playing remote video for user:", user.uid);
     }
   }, [user.videoTrack]);
 
@@ -1184,7 +881,7 @@ const RemoteVideoPlayer = ({ user }) => {
       <div
         ref={videoRef}
         className="video-player remote-player"></div>
-      <span className="video-label">Chuyên gia</span>
+      <span className="video-label"></span>
     </div>
   );
 };
