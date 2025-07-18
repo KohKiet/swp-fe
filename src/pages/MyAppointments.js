@@ -405,18 +405,6 @@ const MyAppointments = () => {
                           Tham gia video call
                         </button>
                       )}
-                      {/* Debug Info button */}
-                      <button
-                        onClick={() => {
-                          const agora = getAgoraInfo(appointment);
-                          alert(`AGORA DEBUG INFO:\n\nApp ID: ${agora.appId}\nChannel Name: ${agora.channelName}\nToken: ${agora.token}\nUser ID: ${agora.userId}`);
-                          console.log('AGORA DEBUG INFO:', agora);
-                        }}
-                        className="btn btn-warning btn-small"
-                        style={{ marginLeft: 8 }}
-                      >
-                        Debug Info
-                      </button>
                     </div>
                   )}
 

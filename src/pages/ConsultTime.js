@@ -1634,17 +1634,22 @@ Check console for detailed results.`);
                             <div className="appointment-features">
                               {/* Video call button - supports both field naming conventions */}
                               {(() => {
-                                const agora = getAgoraInfo(appointment);
-                                const hasAgoraChannel = !!agora.channelName;
+                                const agora =
+                                  getAgoraInfo(appointment);
+                                const hasAgoraChannel =
+                                  !!agora.channelName;
                                 const hasAgoraToken = !!agora.token;
                                 return (
-                                  hasAgoraChannel && hasAgoraToken && (
+                                  hasAgoraChannel &&
+                                  hasAgoraToken && (
                                     <button
                                       onClick={() =>
                                         setShowVideoCall(appointment)
                                       }
                                       className="btn btn-primary btn-small">
-                                      <FontAwesomeIcon icon={faVideo} />
+                                      <FontAwesomeIcon
+                                        icon={faVideo}
+                                      />
                                       Tham gia video call
                                     </button>
                                   )
@@ -1670,19 +1675,6 @@ Check console for detailed results.`);
                                 className="btn btn-info btn-small">
                                 <FontAwesomeIcon icon={faPlus} />
                                 Thêm ghi chú
-                              </button>
-
-                              {/* Debug Info button */}
-                              <button
-                                onClick={() => {
-                                  const agora = getAgoraInfo(appointment);
-                                  alert(`AGORA DEBUG INFO:\n\nApp ID: ${agora.appId}\nChannel Name: ${agora.channelName}\nToken: ${agora.token}\nUser ID: ${agora.userId}`);
-                                  console.log('AGORA DEBUG INFO:', agora);
-                                }}
-                                className="btn btn-warning btn-small"
-                                style={{ marginLeft: 8 }}
-                              >
-                                Debug Info
                               </button>
                             </div>
                           )}
