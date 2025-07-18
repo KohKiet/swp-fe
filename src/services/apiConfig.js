@@ -79,7 +79,7 @@ export const API_CONFIG = {
     QUESTION_BY_QUIZ: "/api/Question/quiz/{quizId}",
 
     // Quiz Results endpoints
-    QUIZ_RESULT_SUBMIT: "/api/QuizResult/submit",
+    QUIZ_RESULT_SUBMIT: "/api/Question/submit",
     QUIZ_RESULT_BY_QUIZ: "/api/QuizResult/quiz/{quizId}",
     QUIZ_RESULT_BY_USER: "/api/QuizResult/user/{userId}",
 
@@ -88,8 +88,7 @@ export const API_CONFIG = {
     ENROLLMENT_DROP: "/api/CourseEnrollment/drop/{courseId}",
     ENROLLMENT_MY_ENROLLMENTS: "/api/CourseEnrollment/my-enrollments",
     ENROLLMENT_STATUS: "/api/CourseEnrollment/status/{courseId}",
-    ENROLLMENT_IS_ENROLLED:
-      "/api/CourseEnrollment/status/{courseId}",
+    ENROLLMENT_IS_ENROLLED: "/api/CourseEnrollment/status/{courseId}",
     ENROLLMENT_COMPLETE: "/api/CourseEnrollment/complete/{courseId}",
 
     // Admin Enrollment endpoints (Admin/Manager only)

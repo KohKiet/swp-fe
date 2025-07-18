@@ -80,7 +80,7 @@ import QuizTimer from "./QuizTimer";
 
 // Styled components
 const StyledHeroSection = styled(Box)(({ theme }) => ({
-  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+  background: "linear-gradient(135deg, #4f8cff 0%, #6fd6ff 100%)", // gradient xanh nhạt
   color: "white",
   padding: theme.spacing(4, 0),
   position: "relative",
@@ -159,7 +159,7 @@ const CoursePlayer = () => {
   const [showQuizDialog, setShowQuizDialog] = useState(false);
 
   // Progress tracking
-  const [progress, setProgress] = useState({});
+  // Xóa: const [progress, setProgress] = useState({});
 
   // Quiz state
   const [quizQuestions, setQuizQuestions] = useState([]);
@@ -212,15 +212,19 @@ const CoursePlayer = () => {
 
       if (response?.success && response.data) {
         const courseData = response.data;
-        var chapterByCourse = await courseService.getChaptersByCourse(courseId);
+        var chapterByCourse = await courseService.getChaptersByCourse(
+          courseId
+        );
         courseData.chapters = chapterByCourse;
         setCourse(courseData);
 
         // Load chapters for the course
-        
+
         if (courseData.chapters && courseData.chapters.length > 0) {
           const firstChapter = courseData.chapters[0];
-          var lession = await courseService.getLessonsByChapter(firstChapter.id);
+          var lession = await courseService.getLessonsByChapter(
+            firstChapter.id
+          );
           firstChapter.lessons = lession;
           // Automatically expand first chapter and select first lesson
           setExpandedChapters(new Set([firstChapter.id]));
@@ -520,17 +524,10 @@ const CoursePlayer = () => {
         percent: 100,
         isCompleted: true,
       });
-
-      // Update local progress
-      setProgress((prev) => ({
+      setLessonProgress((prev) => ({
         ...prev,
-        [lessonId]: {
-          ...prev[lessonId],
-          isCompleted: true,
-          percent: 100,
-        },
+        [lessonId]: true,
       }));
-
       // Recalculate course progress
       loadCourseProgress();
     } catch (err) {
@@ -716,7 +713,7 @@ const CoursePlayer = () => {
   };
 
   const isLessonCompleted = (lessonId) => {
-    return progress[lessonId]?.isCompleted || false;
+    return lessonProgress[lessonId] === true;
   };
 
   const formatTime = (seconds) => {
@@ -789,7 +786,7 @@ const CoursePlayer = () => {
                 variant="h4"
                 component="h1"
                 gutterBottom
-                sx={{ fontWeight: 600 }}>
+                sx={{ fontWeight: 600, color: "white" }}>
                 {course.title}
               </Typography>
 
@@ -811,27 +808,6 @@ const CoursePlayer = () => {
                   variant="filled"
                 />
               </Stack>
-
-              {isEnrolled && (
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  spacing={2}>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                    Progress: {courseProgress.toFixed(0)}%
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={courseProgress}
-                    sx={{
-                      flexGrow: 1,
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: "rgba(255,255,255,0.3)",
-                    }}
-                  />
-                </Stack>
-              )}
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
@@ -874,304 +850,315 @@ const CoursePlayer = () => {
         </Container>
       )}
 
-      { isEnrolled && <Container maxWidth="lg" sx={{ py: 3 }}>
-        <Grid container spacing={3}>
-          {/* Main Content Area */}
-          <Grid size={{ xs: 12, lg: 8 }}>
-            {currentLesson && (
-              <Card sx={{ mb: 3 }}>
-                <CardContent sx={{ p: 0 }}>
-                  {/* Lesson Header */}
-                  <Box
-                    sx={{
-                      p: 3,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}>
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center">
-                      <Box>
-                        <Typography
-                          variant="h5"
-                          gutterBottom
-                          sx={{ fontWeight: 600 }}>
-                          {currentLesson.title}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary">
-                          Chapter {currentChapter?.chapterOrder}:{" "}
-                          {currentChapter?.title}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        {isLessonCompleted(
-                          currentLesson.id
-                        ) && (
-                          <CheckCircleIcon
-                            color="success"
-                            sx={{ fontSize: 32 }}
-                          />
-                        )}
-                      </Box>
-                    </Stack>
-                  </Box>
+      {isEnrolled && (
+        <Container maxWidth="lg" sx={{ py: 3 }}>
+          <Grid container spacing={3}>
+            {/* Main Content Area */}
+            <Grid size={{ xs: 12, lg: 8 }}>
+              {currentLesson && (
+                <Card sx={{ mb: 3 }}>
+                  <CardContent sx={{ p: 0 }}>
+                    {/* Lesson Header */}
+                    <Box
+                      sx={{
+                        p: 3,
+                        borderBottom: 1,
+                        borderColor: "divider",
+                      }}>
+                      <Stack
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="center">
+                        <Box>
+                          <Typography
+                            variant="h5"
+                            gutterBottom
+                            sx={{ fontWeight: 600 }}>
+                            {currentLesson.title}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary">
+                            Chapter {currentChapter?.chapterOrder}:{" "}
+                            {currentChapter?.title}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          {isLessonCompleted(currentLesson.id) && (
+                            <CheckCircleIcon
+                              color="success"
+                              sx={{ fontSize: 32 }}
+                            />
+                          )}
+                        </Box>
+                      </Stack>
+                    </Box>
 
-                  {/* Lesson Content */}
-                  <Box sx={{ p: 3 }}>
-                    {currentLesson.videoUrl && (
-                      <Box
-                        sx={{
-                          mb: 3,
-                          borderRadius: 2,
-                          overflow: "hidden",
-                        }}>
-                        <video
-                          width="100%"
-                          height="400"
-                          controls
-                          poster={course.imageUrl}>
-                          <source
-                            src={currentLesson.videoUrl}
-                            type="video/mp4"
-                          />
-                          Your browser does not support the video tag.
-                        </video>
-                      </Box>
-                    )}
+                    {/* Lesson Content */}
+                    <Box sx={{ p: 3 }}>
+                      {currentLesson.videoUrl && (
+                        <Box
+                          sx={{
+                            mb: 3,
+                            borderRadius: 2,
+                            overflow: "hidden",
+                          }}>
+                          <video
+                            width="100%"
+                            height="400"
+                            controls
+                            poster={course.imageUrl}>
+                            <source
+                              src={currentLesson.videoUrl}
+                              type="video/mp4"
+                            />
+                            Your browser does not support the video
+                            tag.
+                          </video>
+                        </Box>
+                      )}
 
-                    <Typography
-                      variant="body1"
-                      sx={{ lineHeight: 1.8, mb: 3 }}>
-                      {currentLesson.content ||
-                        currentLesson.description}
-                    </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{ lineHeight: 1.8, mb: 3 }}>
+                        {currentLesson.content ||
+                          currentLesson.description}
+                      </Typography>
 
-                    {/* Lesson Navigation */}
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      sx={{ mt: 4 }}>
-                      <Button
-                        variant="outlined"
-                        startIcon={<NavigateBeforeIcon />}
-                        onClick={() => navigateToLesson("previous")}
-                        disabled={!getPreviousLesson()}>
-                        Previous
-                      </Button>
+                      {/* Lesson Navigation */}
+                      <Stack
+                        direction="row"
+                        justifyContent="space-between"
+                        sx={{ mt: 4 }}>
+                        <Button
+                          variant="outlined"
+                          startIcon={<NavigateBeforeIcon />}
+                          onClick={() => navigateToLesson("previous")}
+                          disabled={!getPreviousLesson()}>
+                          Previous
+                        </Button>
+                      </Stack>
+                    </Box>
+                  </CardContent>
+                </Card>
+              )}
 
-                      <Button
-                        variant="contained"
-                        endIcon={<NavigateNextIcon />}
-                        onClick={() => navigateToLesson("next")}
-                        disabled={!getNextLesson()}>
-                        Next Lesson
-                      </Button>
-                    </Stack>
-                  </Box>
-                </CardContent>
-              </Card>
-            )}
+              {!currentLesson && !currentQuiz && (
+                <Card sx={{ p: 4, textAlign: "center" }}>
+                  <SchoolIcon
+                    sx={{ fontSize: 64, color: "grey.400", mb: 2 }}
+                  />
+                  <Typography
+                    variant="h6"
+                    color="text.secondary"
+                    gutterBottom>
+                    Welcome to {course.title}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 3 }}>
+                    {enrollmentStatus.isCompleted
+                      ? "Congratulations! You have completed this course."
+                      : isEnrolled
+                      ? "Select a lesson from the course content to continue learning"
+                      : "Select a lesson from the course content to start learning"}
+                  </Typography>
 
-            {!currentLesson && !currentQuiz && (
-              <Card sx={{ p: 4, textAlign: "center" }}>
-                <SchoolIcon
-                  sx={{ fontSize: 64, color: "grey.400", mb: 2 }}
-                />
-                <Typography
-                  variant="h6"
-                  color="text.secondary"
-                  gutterBottom>
-                  Welcome to {course.title}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 3 }}>
-                  {enrollmentStatus.isCompleted
-                    ? "Congratulations! You have completed this course."
-                    : isEnrolled
-                    ? "Select a lesson from the course content to continue learning"
-                    : "Select a lesson from the course content to start learning"}
-                </Typography>
+                  {/* Progress bar for enrolled users */}
+                  {isEnrolled && (
+                    <Box sx={{ mb: 3 }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 1 }}>
+                        Course Progress:{" "}
+                        {Math.round(enrollmentStatus.progress)}%
+                      </Typography>
+                      <LinearProgress
+                        variant="determinate"
+                        value={enrollmentStatus.progress}
+                        sx={{ height: 8, borderRadius: 4 }}
+                      />
+                    </Box>
+                  )}
 
-                {/* Progress bar for enrolled users */}
-                {isEnrolled && (
-                  <Box sx={{ mb: 3 }}>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 1 }}>
-                      Course Progress:{" "}
-                      {Math.round(enrollmentStatus.progress)}%
-                    </Typography>
-                    <LinearProgress
-                      variant="determinate"
-                      value={enrollmentStatus.progress}
-                      sx={{ height: 8, borderRadius: 4 }}
-                    />
-                  </Box>
-                )}
+                  {/* Enrollment/Status Button */}
+                  {!isEnrolled ? (
+                    <Button
+                      variant="contained"
+                      onClick={handleEnrollment}
+                      disabled={enrollmentLoading}
+                      startIcon={<PlayIcon />}>
+                      {enrollmentLoading
+                        ? "Enrolling..."
+                        : "Enroll to Start Learning"}
+                    </Button>
+                  ) : enrollmentStatus.isCompleted ? (
+                    <Button
+                      variant="contained"
+                      color="success"
+                      disabled
+                      startIcon={<CheckCircleIcon />}>
+                      Đã hoàn thành
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => {
+                        // Navigate to first incomplete lesson or first lesson
+                        const firstChapter = course.chapters?.[0];
+                        const firstLesson =
+                          firstChapter?.lessons?.[0];
+                        if (firstLesson) {
+                          setCurrentLesson(firstLesson);
+                          setCurrentQuiz(null);
+                        }
+                      }}
+                      startIcon={<PlayIcon />}>
+                      Tiếp tục học
+                    </Button>
+                  )}
+                </Card>
+              )}
+            </Grid>
 
-                {/* Enrollment/Status Button */}
-                {!isEnrolled ? (
-                  <Button
-                    variant="contained"
-                    onClick={handleEnrollment}
-                    disabled={enrollmentLoading}
-                    startIcon={<PlayIcon />}>
-                    {enrollmentLoading
-                      ? "Enrolling..."
-                      : "Enroll to Start Learning"}
-                  </Button>
-                ) : enrollmentStatus.isCompleted ? (
-                  <Button
-                    variant="contained"
-                    color="success"
-                    disabled
-                    startIcon={<CheckCircleIcon />}>
-                    Đã hoàn thành
-                  </Button>
-                ) : (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => {
-                      // Navigate to first incomplete lesson or first lesson
-                      const firstChapter = course.chapters?.[0];
-                      const firstLesson = firstChapter?.lessons?.[0];
-                      if (firstLesson) {
-                        setCurrentLesson(firstLesson);
-                        setCurrentQuiz(null);
-                      }
-                    }}
-                    startIcon={<PlayIcon />}>
-                    Tiếp tục học
-                  </Button>
-                )}
-              </Card>
+            {/* Course Sidebar */}
+            {isEnrolled && (
+              <Grid size={{ xs: 12, lg: 4 }}>
+                <Paper sx={{ p: 3 }}>
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    sx={{ fontWeight: 600 }}>
+                    Course Content
+                  </Typography>
+
+                  {course.chapters?.map((chapter) => (
+                    <ChapterAccordion
+                      key={chapter.id}
+                      expanded={expandedChapters.has(chapter.id)}
+                      onChange={() =>
+                        handleChapterToggle(chapter.id)
+                      }>
+                      <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing={1}
+                          sx={{ width: "100%" }}>
+                          <BookIcon color="primary" />
+                          <Box sx={{ flexGrow: 1 }}>
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 600 }}>
+                              Chapter {chapter.chapterOrder}:{" "}
+                              {chapter.title}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary">
+                              {chapter.lessons?.length || 0} lessons
+                              {chapter.quizzes?.length > 0 &&
+                                ` • ${chapter.quizzes.length} quiz(es)`}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </AccordionSummary>
+
+                      <AccordionDetails sx={{ p: 0 }}>
+                        <List>
+                          {chapter.lessons?.map((lesson) => (
+                            <LessonListItem
+                              key={lesson.id}
+                              selected={
+                                currentLesson?.id === lesson.id
+                              }
+                              onClick={() =>
+                                navigate(`/lesson/${lesson.id}`)
+                              }
+                              disabled={!isEnrolled}>
+                              <ListItemIcon>
+                                {isLessonCompleted(lesson.id) ? (
+                                  <CheckCircleIcon color="success" />
+                                ) : (
+                                  <UncompletedIcon color="action" />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={
+                                  <span
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                    }}>
+                                    {lesson.title}
+                                    {isLessonCompleted(lesson.id) && (
+                                      <CheckCircleIcon
+                                        color="success"
+                                        fontSize="small"
+                                        style={{ marginLeft: 6 }}
+                                      />
+                                    )}
+                                  </span>
+                                }
+                                secondary={
+                                  <Stack
+                                    direction="row"
+                                    spacing={1}
+                                    alignItems="center">
+                                    <TimeIcon fontSize="small" />
+                                    <Typography variant="caption">
+                                      {formatDuration(
+                                        lesson.estimatedDuration || 10
+                                      )}
+                                    </Typography>
+                                  </Stack>
+                                }
+                              />
+                            </LessonListItem>
+                          ))}
+
+                          {/* Chapter Quizzes */}
+                          {chapter.quizzes?.map((quiz) => (
+                            <LessonListItem
+                              key={quiz.quizId}
+                              onClick={() =>
+                                navigate(`/quiz/${quiz.quizId}`)
+                              }
+                              disabled={!isEnrolled}>
+                              <ListItemIcon>
+                                <QuizIcon color="secondary" />
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={quiz.title}
+                                secondary={
+                                  <Stack
+                                    direction="row"
+                                    spacing={1}
+                                    alignItems="center">
+                                    <TimerIcon fontSize="small" />
+                                    <Typography variant="caption">
+                                      {quiz.timeLimitMinutes} minutes
+                                      • {quiz.passingScore}% to pass
+                                    </Typography>
+                                  </Stack>
+                                }
+                              />
+                            </LessonListItem>
+                          ))}
+                        </List>
+                      </AccordionDetails>
+                    </ChapterAccordion>
+                  ))}
+                </Paper>
+              </Grid>
             )}
           </Grid>
-
-          {/* Course Sidebar */}
-          { isEnrolled && <Grid size={{ xs: 12, lg: 4 }}>
-            <Paper sx={{ p: 3 }}>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{ fontWeight: 600 }}>
-                Course Content
-              </Typography>
-
-              {course.chapters?.map((chapter) => (
-                <ChapterAccordion
-                  key={chapter.id}
-                  expanded={expandedChapters.has(chapter.id)}
-                  onChange={() =>
-                    handleChapterToggle(chapter.id)
-                  }>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Stack
-                      direction="row"
-                      alignItems="center"
-                      spacing={1}
-                      sx={{ width: "100%" }}>
-                      <BookIcon color="primary" />
-                      <Box sx={{ flexGrow: 1 }}>
-                        <Typography
-                          variant="subtitle1"
-                          sx={{ fontWeight: 600 }}>
-                          Chapter {chapter.chapterOrder}:{" "}
-                          {chapter.title}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary">
-                          {chapter.lessons?.length || 0} lessons
-                          {chapter.quizzes?.length > 0 &&
-                            ` • ${chapter.quizzes.length} quiz(es)`}
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </AccordionSummary>
-
-                  <AccordionDetails sx={{ p: 0 }}>
-                    <List>
-                      {chapter.lessons?.map((lesson) => (
-                        <LessonListItem
-                          key={lesson.id}
-                          selected={
-                            currentLesson?.id ===
-                            lesson.id
-                          }
-                          onClick={() =>
-                            handleLessonSelect(chapter, lesson)
-                          }
-                          disabled={!isEnrolled}>
-                          <ListItemIcon>
-                            {isLessonCompleted(lesson.id) ? (
-                              <CheckCircleIcon color="success" />
-                            ) : (
-                              <UncompletedIcon color="action" />
-                            )}
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={lesson.title}
-                            secondary={
-                              <Stack
-                                direction="row"
-                                spacing={1}
-                                alignItems="center">
-                                <TimeIcon fontSize="small" />
-                                <Typography variant="caption">
-                                  {formatDuration(
-                                    lesson.estimatedDuration || 10
-                                  )}
-                                </Typography>
-                              </Stack>
-                            }
-                          />
-                        </LessonListItem>
-                      ))}
-
-                      {/* Chapter Quizzes */}
-                      {chapter.quizzes?.map((quiz) => (
-                        <LessonListItem
-                          key={quiz.quizId}
-                          onClick={() => handleQuizSelect(quiz)}
-                          disabled={!isEnrolled}>
-                          <ListItemIcon>
-                            <QuizIcon color="secondary" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={quiz.title}
-                            secondary={
-                              <Stack
-                                direction="row"
-                                spacing={1}
-                                alignItems="center">
-                                <TimerIcon fontSize="small" />
-                                <Typography variant="caption">
-                                  {quiz.timeLimitMinutes} minutes •{" "}
-                                  {quiz.passingScore}% to pass
-                                </Typography>
-                              </Stack>
-                            }
-                          />
-                        </LessonListItem>
-                      ))}
-                    </List>
-                  </AccordionDetails>
-                </ChapterAccordion>
-              ))}
-            </Paper>
-          </Grid>
-}
-        </Grid>
-      </Container>
-}
+        </Container>
+      )}
 
       {/* Enhanced Quiz Dialog */}
       <Dialog

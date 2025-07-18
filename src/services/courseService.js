@@ -450,14 +450,14 @@ class CourseService {
 
   // Get specific quiz with questions
   async getQuizById(quizId) {
-    return this.publicRequest(
+    return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.QUIZ_BY_ID.replace("{quizId}", quizId)
     );
   }
 
   // Get quizzes by lesson
   async getQuizzesByLesson(lessonId) {
-    return this.publicRequest(
+    return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.QUIZ_BY_LESSON.replace(
         "{lessonId}",
         lessonId
@@ -567,12 +567,30 @@ class CourseService {
   // ==================== QUIZ RESULTS ENDPOINTS ====================
 
   // Submit quiz answers
-  async submitQuizAnswers(quizData) {
+  async submitQuizAnswers({ quizId, answers }) {
+    // Tạo sessionId mới mỗi lần nộp (nếu backend yêu cầu)
+    const sessionId =
+      window.crypto && window.crypto.randomUUID
+        ? window.crypto.randomUUID()
+        : Date.now().toString();
+    const submittedAt = new Date().toISOString();
+    const body = {
+      quizId,
+      sessionId,
+      userAnswers: answers.map((a) => ({
+        questionId: a.questionId,
+        answerId: a.selectedAnswerId,
+        isSelected: true,
+      })),
+      timeSpentMinutes: 0,
+      notes: "",
+      submittedAt,
+    };
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.QUIZ_RESULT_SUBMIT,
       {
         method: "POST",
-        body: JSON.stringify(quizData),
+        body: JSON.stringify(body),
       }
     );
   }
@@ -906,6 +924,18 @@ class CourseService {
         courseId
       )
     );
+  }
+
+  // Lấy trạng thái session quiz
+  async getQuizSessionStatus(quizId) {
+    return this.authenticatedRequest(
+      `/api/Quiz/${quizId}/session/status`
+    );
+  }
+
+  // Khởi tạo session quiz (dùng GET)
+  async startQuizSession(quizId) {
+    return this.authenticatedRequest(`/api/Quiz/${quizId}/start`);
   }
 }
 

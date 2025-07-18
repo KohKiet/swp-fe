@@ -24,6 +24,8 @@ import ConsultTime from "./pages/ConsultTime";
 import Dashboard from "./pages/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
 import MyAppointments from "./pages/MyAppointments";
+import Lesson from "./pages/Lesson";
+import Quiz from "./pages/Quiz";
 
 // Components
 import Header from "./components/Header";
@@ -142,6 +144,9 @@ function AppContent() {
             }
           />
           {/* End Survey Flow */}
+
+          <Route path="/lesson/:lessonId" element={<Lesson />} />
+          <Route path="/quiz/:quizId" element={<Quiz />} />
 
           <Route path="/demo" element={<FeatureDemo />} />
 
