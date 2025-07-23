@@ -5,7 +5,7 @@
 // Set this to false to use real services
 export const USE_MOCK_SERVICES = false;
 
-// Set this to false to use real admin services
+// Set this to false to use real backend API as requested
 export const USE_MOCK_ADMIN = false;
 
 // API base URL

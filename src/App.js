@@ -24,12 +24,15 @@ import ConsultTime from "./pages/ConsultTime";
 import Dashboard from "./pages/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
 import MyAppointments from "./pages/MyAppointments";
+import Lesson from "./pages/Lesson";
+import Quiz from "./pages/Quiz";
 
 // Components
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ApiTest from "./components/ApiTest";
-import CourseDetail from "./components/CourseDetail";
+import CoursePlayer from "./components/CoursePlayer";
+import UserDashboard from "./components/UserDashboard";
 
 // Survey Flow Pages
 import SurveyEntryPage from "./pages/surveys/SurveyEntryPage";
@@ -38,6 +41,13 @@ import SurveyResultsPage from "./pages/surveys/SurveyResultsPage";
 import SurveyHistoryPage from "./pages/surveys/SurveyHistoryPage";
 //Events
 import EventListPage from "./pages/events/EventListPage";
+
+// Admin Pages
+import AdminCourseManagement from "./pages/admin/AdminCourseManagement";
+import CourseContentManager from "./pages/admin/CourseContentManager";
+import CourseEditor from "./pages/admin/CourseEditor";
+import CategoryManagement from "./components/admin/CategoryManagement";
+import FeatureDemo from "./components/FeatureDemo";
 
 // Protected route component
 const ProtectedRoute = ({ element }) => {
@@ -90,7 +100,13 @@ function AppContent() {
           <Route path="/education" element={<EducationHub />} />
           <Route
             path="/education/courses/:courseId"
-            element={<CourseDetail />}
+            element={<CoursePlayer />}
+          />
+          <Route
+            path="/education/dashboard"
+            element={
+              <UserProtectedRoute element={<UserDashboard />} />
+            }
           />
           <Route path="/counseling" element={<Counseling />} />
           <Route
@@ -100,10 +116,8 @@ function AppContent() {
             }
           />
 
-          <Route
-            path="/programs" element={<EventListPage />}
-          />
-          
+          <Route path="/programs" element={<EventListPage />} />
+
           {/* Survey Flow Routes */}
           <Route
             path="/surveys"
@@ -130,6 +144,36 @@ function AppContent() {
             }
           />
           {/* End Survey Flow */}
+
+          <Route path="/lesson/:lessonId" element={<Lesson />} />
+          <Route path="/quiz/:quizId" element={<Quiz />} />
+
+          <Route path="/demo" element={<FeatureDemo />} />
+
+          {/* Admin Routes */}
+          <Route
+            path="/admin/courses"
+            element={
+              <ProtectedRoute element={<AdminCourseManagement />} />
+            }
+          />
+          <Route
+            path="/admin/courses/:courseId/content"
+            element={
+              <ProtectedRoute element={<CourseContentManager />} />
+            }
+          />
+          <Route
+            path="/admin/courses/:courseId/edit"
+            element={<ProtectedRoute element={<CourseEditor />} />}
+          />
+          <Route
+            path="/admin/categories"
+            element={
+              <ProtectedRoute element={<CategoryManagement />} />
+            }
+          />
+          {/* End Admin Routes */}
 
           <Route
             path="/profile"

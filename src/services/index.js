@@ -11,18 +11,15 @@ import consultationService from "./consultationService";
 
 // Import mock services
 import mockAuthService from "./mockAuthService";
-import mockAdminService from "./mockAdminService";
 
 // Export services based on configuration
 export const authService = USE_MOCK_SERVICES
   ? mockAuthService
   : realAuthService;
 
-// Use mock admin service if either mock services are enabled or mock admin specifically is enabled
-export const adminService =
-  USE_MOCK_SERVICES || USE_MOCK_ADMIN
-    ? mockAdminService
-    : realAdminService;
+// Always use real admin service since it has built-in mock functionality for courses
+// when SERVICE_CONFIG.useMockAdmin is true, and mockAdminService is not implemented
+export const adminService = realAdminService;
 
 // Export consultation service (always use real service)
 export { consultationService };

@@ -1,0 +1,248 @@
+.agora-video-call {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    min-height: 600px;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 20px;
+    margin: 16px;
+    border-radius: 8px;
+    border: 1px solid #f5c6cb;
+    white-space: pre-line;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.5;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.error-message p {
+    margin: 0 0 12px 0;
+    font-weight: 500;
+}
+
+.error-message .btn {
+    margin-top: 12px;
+}
+
+.video-container {
+    position: relative;
+    width: 100%;
+    height: 75vh;
+    /* increased from 60vh */
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.remote-video {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remote-video .video-player.remote-player {
+    width: 100%;
+    height: 100%;
+    max-width: 90vw;
+    max-height: 70vh;
+    margin: auto;
+    object-fit: contain;
+    background: #222;
+    border-radius: 0;
+}
+
+.local-video {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    width: 180px;
+    height: 120px;
+    z-index: 2;
+    background: #222;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    overflow: hidden;
+}
+
+.local-video .video-player.local-player {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #222;
+}
+
+.video-label {
+    position: absolute;
+    bottom: 4px;
+    left: 8px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    z-index: 3;
+}
+
+.waiting-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 16px 32px;
+    border-radius: 12px;
+    z-index: 10;
+    font-size: 1.1rem;
+}
+
+.video-controls {
+    background-color: #2d2d2d;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    border-top: 1px solid #444;
+}
+
+.join-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.join-controls .btn {
+    min-width: 200px;
+}
+
+.video-controls .btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+    font-size: 14px;
+}
+
+.video-controls .btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.video-controls .btn-primary:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.video-controls .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.video-controls .btn-secondary:hover:not(:disabled) {
+    background-color: #545b62;
+}
+
+.video-controls .btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.video-controls .btn-danger:hover:not(:disabled) {
+    background-color: #bd2130;
+}
+
+.video-controls .btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.video-controls .btn-warning:hover:not(:disabled) {
+    background-color: #e0a800;
+}
+
+.video-controls .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.video-call-error {
+    padding: 40px;
+    text-align: center;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 16px;
+}
+
+.video-call-error p {
+    color: #6c757d;
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.video-call-error small {
+    color: #999;
+    font-size: 12px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .video-container {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .local-player {
+        width: 200px;
+        height: 150px;
+    }
+
+    .remote-player {
+        width: 300px;
+        height: 225px;
+    }
+
+    .video-controls {
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .video-controls .btn {
+        padding: 10px 20px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .video-controls {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .video-controls .btn {
+        width: 100%;
+        max-width: 200px;
+    }
+}

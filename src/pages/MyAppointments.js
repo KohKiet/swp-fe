@@ -11,9 +11,13 @@ import {
   faCalendar,
   faMapMarkerAlt,
   faEnvelope,
+  faVideo,
+  faStickyNote,
 } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../context/AuthContext";
 import { consultationService } from "../services/consultationService";
+import AgoraVideoCall from "../components/AgoraVideoCall";
+import ConsultationNotes from "../components/ConsultationNotes";
 import "./MyAppointments.css";
 
 const MyAppointments = () => {
@@ -22,6 +26,8 @@ const MyAppointments = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showVideoCall, setShowVideoCall] = useState(null);
+  const [showNotes, setShowNotes] = useState(null);
 
   useEffect(() => {
     loadMyAppointments();
@@ -30,10 +36,48 @@ const MyAppointments = () => {
   const loadMyAppointments = async () => {
     setLoading(true);
     try {
-      const response = await consultationService.getMyAppointments();
+      const response =
+        await consultationService.getMyAppointmentsWithAgoraToken();
       if (response.success) {
         const appointmentsData = response.data.data || [];
         setAppointments(appointmentsData);
+
+        // Debug logging to help identify note fields (member side)
+        if (
+          process.env.NODE_ENV === "development" &&
+          appointmentsData.length > 0
+        ) {
+          console.log(
+            "Member's appointment data for debugging notes:",
+            appointmentsData[0]
+          );
+          appointmentsData.forEach((appointment, index) => {
+            const memberNote = getAppointmentMemberNote(appointment);
+            console.log(`Member Appointment ${index + 1}:`, {
+              id: appointment.id,
+              status: appointment.status,
+              hasMemberNote: !!memberNote,
+              memberNote: memberNote,
+              hasAgoraToken: !!(
+                appointment.agoraToken || appointment.AgoraToken
+              ),
+              agoraFields: {
+                agoraToken: !!appointment.agoraToken,
+                AgoraToken: !!appointment.AgoraToken,
+                agoraAppId: !!appointment.agoraAppId,
+                AgoraAppId: !!appointment.AgoraAppId,
+                agoraChannelName: !!appointment.agoraChannelName,
+                ChannelName: !!appointment.ChannelName,
+              },
+              rawNoteFields: {
+                note: appointment.note,
+                appointmentNote: appointment.appointmentNote,
+                memberNote: appointment.memberNote,
+                description: appointment.description,
+              },
+            });
+          });
+        }
       } else {
         setError(
           "Không thể tải danh sách lịch hẹn: " + response.error
@@ -190,6 +234,49 @@ const MyAppointments = () => {
     );
   };
 
+  // Helper function to get member's note from appointment
+  const getAppointmentMemberNote = (appointment) => {
+    // Try various possible property paths for member note
+    const possibleNotes = [
+      appointment.note,
+      appointment.appointmentNote,
+      appointment.memberNote,
+      appointment.member_note,
+      appointment.userNote,
+      appointment.user_note,
+      appointment.bookingNote,
+      appointment.booking_note,
+      appointment.description,
+      appointment.member?.note,
+      appointment.user?.note,
+      appointment.bookedBy?.note,
+    ];
+
+    // Find the first non-empty note
+    for (const note of possibleNotes) {
+      if (note && typeof note === "string" && note.trim() !== "") {
+        return note.trim();
+      }
+    }
+
+    return null; // Return null if no note found
+  };
+
+  // Helper: lấy thông tin video call đúng theo vai trò
+  const getAgoraInfo = (appointment, isConsultant = false) => {
+    const info = appointment.agoraInfo || {};
+    return {
+      appId: info.appId,
+      channelName: info.channelName,
+      token: isConsultant
+        ? info.consultant?.token
+        : info.member?.token,
+      userId: isConsultant
+        ? info.consultant?.userId
+        : info.member?.userId,
+    };
+  };
+
   const clearMessages = () => {
     setError("");
     setSuccess("");
@@ -256,6 +343,11 @@ const MyAppointments = () => {
                 appointment.status?.toLowerCase() === "confirmed";
               const canCancel = isPending || isConfirmed;
 
+              // Lấy đúng thông tin video call
+              const agora = getAgoraInfo(appointment);
+              const hasAgoraChannel = !!agora.channelName;
+              const hasAgoraToken = !!agora.token;
+
               return (
                 <div
                   key={appointment.id}
@@ -293,24 +385,44 @@ const MyAppointments = () => {
                     </div>
                   </div>
 
-                  {appointment.note && (
+                  {getAppointmentMemberNote(appointment) && (
                     <div className="appointment-note">
-                      <strong>Ghi chú:</strong> {appointment.note}
+                      <strong>Ghi chú:</strong>{" "}
+                      {getAppointmentMemberNote(appointment)}
                     </div>
                   )}
 
-                  {appointment.meetingLink && isConfirmed && (
-                    <div className="meeting-link">
-                      <strong>Link tham gia:</strong>
-                      <a
-                        href={appointment.meetingLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-small btn-primary">
-                        Tham gia cuộc họp
-                      </a>
+                  {/* Video Call and Notes for Confirmed Appointments */}
+                  {isConfirmed && (
+                    <div className="appointment-features">
+                      {hasAgoraChannel && hasAgoraToken && (
+                        <button
+                          onClick={() => {
+                            setShowVideoCall(appointment);
+                          }}
+                          className="btn btn-primary btn-small">
+                          <FontAwesomeIcon icon={faVideo} />
+                          Tham gia video call
+                        </button>
+                      )}
                     </div>
                   )}
+
+                  {/* Fallback meeting link if no Agora credentials */}
+                  {appointment.meetLink &&
+                    isConfirmed &&
+                    !appointment.agoraChannelName && (
+                      <div className="meeting-link">
+                        <strong>Link tham gia:</strong>
+                        <a
+                          href={appointment.meetLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-small btn-primary">
+                          Tham gia cuộc họp
+                        </a>
+                      </div>
+                    )}
 
                   {appointment.reason && (
                     <div className="rejection-reason">
@@ -318,8 +430,18 @@ const MyAppointments = () => {
                     </div>
                   )}
 
-                  {canCancel && (
-                    <div className="appointment-actions">
+                  {/* Combined Actions Row - Notes and Cancel buttons */}
+                  <div className="appointment-actions-row">
+                    {isConfirmed && (
+                      <button
+                        onClick={() => setShowNotes(appointment)}
+                        className="btn btn-secondary btn-small">
+                        <FontAwesomeIcon icon={faStickyNote} />
+                        Xem ghi chú
+                      </button>
+                    )}
+
+                    {canCancel && (
                       <button
                         onClick={() => {
                           const reason = prompt(
@@ -337,14 +459,96 @@ const MyAppointments = () => {
                         <FontAwesomeIcon icon={faTimes} />
                         Hủy lịch hẹn
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </div>
+
+      {/* Video Call Modal */}
+      {showVideoCall && (
+        <div
+          className="modal-overlay video-call-overlay"
+          onClick={(e) => {
+            // Only close if clicking directly on the overlay, not on modal content
+            if (e.target === e.currentTarget) {
+              console.log("Video call modal closed by overlay click");
+              setShowVideoCall(null);
+            }
+          }}>
+          <div
+            className="modal-content video-call-modal"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <FontAwesomeIcon icon={faVideo} />
+                Video Call - {getConsultantName(showVideoCall)}
+              </h3>
+              <button
+                className="modal-close"
+                onClick={() => {
+                  console.log(
+                    "Video call modal closed by close button"
+                  );
+                  setShowVideoCall(null);
+                }}>
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              {(() => {
+                const agora = getAgoraInfo(showVideoCall);
+                return (
+                  <AgoraVideoCall
+                    appointmentId={showVideoCall.id}
+                    agoraAppId={agora.appId}
+                    agoraChannelName={agora.channelName}
+                    agoraToken={agora.token}
+                    agoraUserId={agora.userId}
+                    onCallEnd={() => setShowVideoCall(null)}
+                    onError={(error) => {
+                      setError("Lỗi video call: " + error.message);
+                      setShowVideoCall(null);
+                    }}
+                  />
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notes Modal */}
+      {showNotes && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowNotes(null)}>
+          <div
+            className="modal-content notes-modal"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <FontAwesomeIcon icon={faStickyNote} />
+                Ghi chú tư vấn - {getConsultantName(showNotes)}
+              </h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowNotes(null)}>
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <ConsultationNotes
+                appointmentId={showNotes.id}
+                showTitle={false}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
