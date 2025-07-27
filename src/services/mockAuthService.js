@@ -7,9 +7,7 @@ const mockUsers = [];
 class MockAuthService {
   constructor() {
     this.baseURL = "http://localhost:5150";
-    console.log(
-      "Mock auth service DISABLED - using real backend only"
-    );
+    console.log("BE ok!");
   }
 
   async login(email, password) {
