@@ -2,11 +2,31 @@ import React, { useEffect, useState } from 'react';
 import surveyService from '../../services/surveyService';
 import { Link } from 'react-router-dom';
 import './styles/survey.css';
+import adminSurveyService from '../../services/adminSurveyService';
+import { useAuth } from '../../context/AuthContext';
 
 const SurveyEntryPage = () => {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const { isAdmin } = useAuth();
+
+  // State cho admin CRUD
+  const [surveys, setSurveys] = useState([]);
+  const [selectedSurvey, setSelectedSurvey] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [answers, setAnswers] = useState([]);
+  const [showSurveyModal, setShowSurveyModal] = useState(false);
+  const [editingSurvey, setEditingSurvey] = useState(null);
+  const [showQuestionModal, setShowQuestionModal] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState(null);
+  const [showAnswerModal, setShowAnswerModal] = useState(false);
+  const [editingAnswer, setEditingAnswer] = useState(null);
+  const [surveyForm, setSurveyForm] = useState({ name: '', description: '' });
+  const [questionForm, setQuestionForm] = useState({ content: '' });
+  const [answerForm, setAnswerForm] = useState({ content: '' });
 
   useEffect(() => {
     surveyService.checkSurveyStatus()
@@ -14,6 +34,123 @@ const SurveyEntryPage = () => {
       .catch(() => setError('Không thể tải trạng thái khảo sát'))
       .finally(() => setLoading(false));
   }, []);
+
+  // Lấy token từ localStorage
+  const getAuthConfig = () => {
+    const token = localStorage.getItem("accessToken");
+    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  };
+
+  // Lấy danh sách khảo sát cho admin
+  useEffect(() => {
+    if (isAdmin() && !loading) {
+      adminSurveyService.getAllSurveys(getAuthConfig()).then(res => {
+        setSurveys(res.data || res);
+      });
+    }
+  }, [isAdmin, loading]);
+
+  // Lấy câu hỏi khi chọn khảo sát
+  const handleSelectSurvey = async (survey) => {
+    setSelectedSurvey(survey);
+    setSelectedQuestion(null);
+    setAnswers([]);
+    const res = await adminSurveyService.getSurveyQuestions
+      ? await adminSurveyService.getSurveyQuestions(survey.id, getAuthConfig())
+      : { data: survey.questions || [] };
+    setQuestions(res.data || res);
+  };
+
+  // Lấy đáp án khi chọn câu hỏi
+  const handleSelectQuestion = async (question) => {
+    setSelectedQuestion(question);
+    const res = await adminSurveyService.getQuestionAnswers
+      ? await adminSurveyService.getQuestionAnswers(question.id, getAuthConfig())
+      : { data: question.answers || [] };
+    setAnswers(res.data || res);
+  };
+
+  // CRUD Survey
+  const handleOpenSurveyModal = (survey = null) => {
+    setEditingSurvey(survey);
+    setSurveyForm(survey ? { name: survey.name, description: survey.description } : { name: '', description: '' });
+    setShowSurveyModal(true);
+  };
+  const handleSaveSurvey = async () => {
+    if (editingSurvey) {
+      await adminSurveyService.updateSurvey(editingSurvey.id, surveyForm, getAuthConfig());
+    } else {
+      await adminSurveyService.createSurvey(surveyForm, getAuthConfig());
+    }
+    setShowSurveyModal(false);
+    const res = await adminSurveyService.getAllSurveys(getAuthConfig());
+    setSurveys(res.data || res);
+  };
+  const handleDeleteSurvey = async (surveyId) => {
+    await adminSurveyService.deleteSurvey(surveyId, getAuthConfig());
+    const res = await adminSurveyService.getAllSurveys(getAuthConfig());
+    setSurveys(res.data || res);
+    setSelectedSurvey(null);
+    setQuestions([]);
+    setAnswers([]);
+  };
+
+  // CRUD Question
+  const handleOpenQuestionModal = (question = null) => {
+    setEditingQuestion(question);
+    setQuestionForm(question ? { content: question.content } : { content: '' });
+    setShowQuestionModal(true);
+  };
+  const handleSaveQuestion = async () => {
+    if (!selectedSurvey) return;
+    if (editingQuestion) {
+      await adminSurveyService.updateQuestion(editingQuestion.id, { ...questionForm, surveyId: selectedSurvey.id }, getAuthConfig());
+    } else {
+      await adminSurveyService.createQuestion({ ...questionForm, surveyId: selectedSurvey.id }, getAuthConfig());
+    }
+    setShowQuestionModal(false);
+    const res = await adminSurveyService.getSurveyQuestions
+      ? await adminSurveyService.getSurveyQuestions(selectedSurvey.id, getAuthConfig())
+      : { data: selectedSurvey.questions || [] };
+    setQuestions(res.data || res);
+  };
+  const handleDeleteQuestion = async (questionId) => {
+    await adminSurveyService.deleteQuestion(questionId, getAuthConfig());
+    const res = await adminSurveyService.getSurveyQuestions
+      ? await adminSurveyService.getSurveyQuestions(selectedSurvey.id, getAuthConfig())
+      : { data: selectedSurvey.questions || [] };
+    setQuestions(res.data || res);
+    setSelectedQuestion(null);
+    setAnswers([]);
+  };
+
+  // CRUD Answer
+  const handleOpenAnswerModal = (answer = null) => {
+    setEditingAnswer(answer);
+    setAnswerForm(answer ? { content: answer.content } : { content: '' });
+    setShowAnswerModal(true);
+  };
+  const handleSaveAnswer = async () => {
+    if (!selectedQuestion) return;
+    if (editingAnswer) {
+      await adminSurveyService.updateAnswer(editingAnswer.id, { ...answerForm, questionId: selectedQuestion.id }, getAuthConfig());
+    } else {
+      await adminSurveyService.createAnswer({ ...answerForm, questionId: selectedQuestion.id }, getAuthConfig());
+    }
+    setShowAnswerModal(false);
+    const res = await adminSurveyService.getQuestionAnswers
+      ? await adminSurveyService.getQuestionAnswers(selectedQuestion.id, getAuthConfig())
+      : { data: selectedQuestion.answers || [] };
+    setAnswers(res.data || res);
+  };
+  const handleDeleteAnswer = async (answerId) => {
+    await adminSurveyService.deleteAnswer(answerId, getAuthConfig());
+    const res = await adminSurveyService.getQuestionAnswers
+      ? await adminSurveyService.getQuestionAnswers(selectedQuestion.id, getAuthConfig())
+      : { data: selectedQuestion.answers || [] };
+    setAnswers(res.data || res);
+  };
+
   if (loading) return (
     <div>
       <div className="survey-banner">
@@ -166,6 +303,79 @@ const SurveyEntryPage = () => {
 
         </div>
       </div>
+      {isAdmin() && (
+        <div style={{margin:'32px 0'}}>
+          <h2>Quản lý khảo sát</h2>
+          <button onClick={() => handleOpenSurveyModal()}>Thêm khảo sát</button>
+          <ul>
+            {surveys.map(survey => (
+              <li key={survey.id} style={{margin:'12px 0'}}>
+                <span style={{fontWeight:'bold',cursor:'pointer'}} onClick={() => handleSelectSurvey(survey)}>{survey.name || survey.title}</span>
+                <button onClick={() => handleOpenSurveyModal(survey)}>Sửa</button>
+                <button onClick={() => handleDeleteSurvey(survey.id)}>Xóa</button>
+                {selectedSurvey && selectedSurvey.id === survey.id && (
+                  <div style={{marginLeft:24}}>
+                    <h4>Câu hỏi</h4>
+                    <button onClick={() => handleOpenQuestionModal()}>Thêm câu hỏi</button>
+                    <ul>
+                      {questions.map(q => (
+                        <li key={q.id} style={{margin:'8px 0'}}>
+                          <span style={{cursor:'pointer'}} onClick={() => handleSelectQuestion(q)}>{q.content || q.questionText}</span>
+                          <button onClick={() => handleOpenQuestionModal(q)}>Sửa</button>
+                          <button onClick={() => handleDeleteQuestion(q.id)}>Xóa</button>
+                          {selectedQuestion && selectedQuestion.id === q.id && (
+                            <div style={{marginLeft:24}}>
+                              <h5>Đáp án</h5>
+                              <button onClick={() => handleOpenAnswerModal()}>Thêm đáp án</button>
+                              <ul>
+                                {answers.map(a => (
+                                  <li key={a.id}>
+                                    {a.content || a.answerText}
+                                    <button onClick={() => handleOpenAnswerModal(a)}>Sửa</button>
+                                    <button onClick={() => handleDeleteAnswer(a.id)}>Xóa</button>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+          {/* Modal khảo sát */}
+          {showSurveyModal && (
+            <div className="modal">
+              <h3>{editingSurvey ? 'Sửa khảo sát' : 'Thêm khảo sát'}</h3>
+              <input placeholder="Tên khảo sát" value={surveyForm.name} onChange={e => setSurveyForm(f => ({...f, name: e.target.value}))} />
+              <input placeholder="Mô tả" value={surveyForm.description} onChange={e => setSurveyForm(f => ({...f, description: e.target.value}))} />
+              <button onClick={handleSaveSurvey}>Lưu</button>
+              <button onClick={() => setShowSurveyModal(false)}>Hủy</button>
+            </div>
+          )}
+          {/* Modal câu hỏi */}
+          {showQuestionModal && (
+            <div className="modal">
+              <h3>{editingQuestion ? 'Sửa câu hỏi' : 'Thêm câu hỏi'}</h3>
+              <input placeholder="Nội dung câu hỏi" value={questionForm.content} onChange={e => setQuestionForm(f => ({...f, content: e.target.value}))} />
+              <button onClick={handleSaveQuestion}>Lưu</button>
+              <button onClick={() => setShowQuestionModal(false)}>Hủy</button>
+            </div>
+          )}
+          {/* Modal đáp án */}
+          {showAnswerModal && (
+            <div className="modal">
+              <h3>{editingAnswer ? 'Sửa đáp án' : 'Thêm đáp án'}</h3>
+              <input placeholder="Nội dung đáp án" value={answerForm.content} onChange={e => setAnswerForm(f => ({...f, content: e.target.value}))} />
+              <button onClick={handleSaveAnswer}>Lưu</button>
+              <button onClick={() => setShowAnswerModal(false)}>Hủy</button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

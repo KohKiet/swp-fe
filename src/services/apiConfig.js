@@ -136,8 +136,24 @@ export const API_CONFIG = {
     SUBSTANCE_BY_ID: "/api/substance/{id}",
 
     // Survey endpoints
-    SURVEY_ALL: "/api/surveys",
-    SURVEY_BY_ID: "/api/surveys/{id}",
+    ADMIN_SURVEY_LIST: "/api/Surveys", // GET all surveys (Admin)
+    ADMIN_SURVEY_CREATE: "/api/Surveys", // POST create survey (Admin)
+    ADMIN_SURVEY_UPDATE: "/api/Surveys/{id}", // PUT update survey (Admin)
+    ADMIN_SURVEY_DELETE: "/api/Surveys/{id}", // DELETE survey (Admin)
+
+    // SurveyQuestion endpoints
+    ADMIN_SURVEY_QUESTIONS: "/api/SurveyQuestion/{surveyId}", // GET questions for a survey
+    ADMIN_SURVEY_QUESTION_DETAIL: "/api/SurveyQuestion/detail/{id}", // GET question by ID
+    ADMIN_SURVEY_QUESTION_CREATE: "/api/SurveyQuestion", // POST create question (Admin)
+    ADMIN_SURVEY_QUESTION_UPDATE: "/api/SurveyQuestion/{id}", // PUT update question (Admin)
+    ADMIN_SURVEY_QUESTION_DELETE: "/api/SurveyQuestion/{id}", // DELETE question (Admin)
+
+    // SurveyAnswer endpoints
+    ADMIN_QUESTION_ANSWERS: "/api/SurveyAnswer/{questionId}", // GET answers for a question
+    ADMIN_ANSWER_DETAIL: "/api/SurveyAnswer/detail/{id}", // GET answer by ID
+    ADMIN_SURVEY_ANSWER_CREATE: "/api/SurveyAnswer", // POST create answer (Admin)
+    ADMIN_SURVEY_ANSWER_UPDATE: "/api/SurveyAnswer/{id}", // PUT update answer (Admin)
+    ADMIN_SURVEY_ANSWER_DELETE: "/api/SurveyAnswer/{id}", // DELETE answer (Admin)
 
     // Analytics endpoints
     ANALYTICS_ALL: "/api/analytics",
