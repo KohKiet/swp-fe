@@ -36,9 +36,9 @@ import {
   Stack,
   Divider,
   Paper,
-  LinearProgress,
   Breadcrumbs,
   Link as MuiLink,
+  alpha,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -62,32 +62,85 @@ import {
   School as SchoolIcon,
   CheckCircle as CheckCircle,
   Cancel as CancelIcon,
+  Publish as PublishIcon,
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 import adminService from "../../services/adminService";
+import courseService from "../../services/courseService";
 import {
   getCourseTypeLabel,
   getAgeGroupLabel,
 } from "../../models/courseModels";
 import QuizEditor from "../../components/admin/QuizEditor";
 
-const DragContainer = styled(Box)(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  gap: theme.spacing(1),
-  cursor: "grab",
-  "&:active": {
-    cursor: "grabbing",
+// Modern Styled Components
+const ModernCard = styled(Card)(({ theme }) => ({
+  borderRadius: 16,
+  overflow: "hidden",
+  background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+  position: "relative",
+  "&:hover": {
+    transform: "translateY(-2px)",
+    boxShadow: "0 12px 24px rgba(0,0,0,0.1)",
+    borderColor: theme.palette.primary.main,
+  },
+  "&::before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
   },
 }));
 
 const StyledAccordion = styled(Accordion)(({ theme }) => ({
-  marginBottom: theme.spacing(1),
+  marginBottom: theme.spacing(2),
+  borderRadius: 12,
+  overflow: "hidden",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
   "&:before": {
     display: "none",
   },
   "&.Mui-expanded": {
-    margin: `${theme.spacing(1)} 0`,
+    margin: `${theme.spacing(2)} 0`,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+  },
+}));
+
+const HeaderSection = styled(Box)(({ theme }) => ({
+  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 50%, ${theme.palette.secondary.main} 100%)`,
+  color: "white",
+  padding: theme.spacing(4, 0),
+  marginBottom: theme.spacing(4),
+  borderRadius: "0 0 24px 24px",
+  position: "relative",
+  "&::before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background:
+      'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="36" cy="24" r="5"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+    opacity: 0.3,
+  },
+}));
+
+const ActionButton = styled(Button)(({ theme }) => ({
+  borderRadius: 8,
+  textTransform: "none",
+  fontWeight: 600,
+  padding: theme.spacing(1, 2),
+  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+  "&:hover": {
+    transform: "translateY(-1px)",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
   },
 }));
 
@@ -185,27 +238,17 @@ const CourseContentManager = () => {
                   lesson.lessonId || lesson.id
                 );
                 let quizzes = quizRes.success ? quizRes.data : [];
-                // Fetch questions for each quiz if not present
-                quizzes = await Promise.all(
-                  quizzes.map(async (quiz) => {
-                    if (
-                      !quiz.questions ||
-                      !Array.isArray(quiz.questions) ||
-                      quiz.questions.length === 0
-                    ) {
-                      const qRes =
-                        await adminService.authenticatedRequest(
-                          `/api/Question/quiz/${
-                            quiz.quizId || quiz.id
-                          }`
-                        );
-                      if (qRes.success && Array.isArray(qRes.data)) {
-                        return { ...quiz, questions: qRes.data };
-                      }
-                    }
-                    return quiz;
-                  })
-                );
+
+                // Process quizzes - questions should already be included in API response
+                quizzes = quizzes.map((quiz) => {
+                  // Ensure quiz has proper ID and questions array
+                  return {
+                    ...quiz,
+                    id: quiz.id || quiz.quizId, // Standardize to 'id'
+                    questions: quiz.questions || [], // Use existing questions or empty array
+                  };
+                });
+
                 const lessonWithQuizzes = { ...lesson, quizzes };
                 console.log(
                   "DEBUG: lessonWithQuizzes for chapter",
@@ -331,20 +374,33 @@ const CourseContentManager = () => {
 
   const handleDeleteChapter = async (chapter) => {
     if (
-      !window.confirm(
-        `Are you sure you want to delete "${chapter.title}"?`
-      )
+      !window.confirm(`Bạn có chắc chắn muốn xóa "${chapter.title}"?`)
     )
       return;
 
     try {
       setSubmitting(true);
+      console.log("Deleting chapter:", chapter);
+      console.log("Chapter ID candidates:", {
+        chapterId: chapter.chapterId,
+        id: chapter.id,
+        using: chapter.chapterId || chapter.id,
+      });
+
+      const chapterIdToDelete = chapter.chapterId || chapter.id;
+      if (!chapterIdToDelete) {
+        setError("Không tìm thấy ID của chương để xóa");
+        setSubmitting(false);
+        return;
+      }
+
       const response = await adminService.deleteChapter(
-        chapter.chapterId
+        chapterIdToDelete
       );
 
       if (response.success) {
         loadCourseData(); // Refresh data
+        alert("✅ Chương đã được xóa thành công!");
       } else {
         setError(response.error || "Failed to delete chapter");
       }
@@ -356,16 +412,55 @@ const CourseContentManager = () => {
     }
   };
 
+  // Helper function to check if chapter already has a lesson
+  const hasLesson = (chapterId) => {
+    const lessons = chapterLessons[chapterId] || [];
+    return lessons.length > 0;
+  };
+
+  // Helper function to check if lesson already has a quiz
+  const hasQuiz = (lesson) => {
+    return lesson.quizzes && lesson.quizzes.length > 0;
+  };
+
+  // Publish course function
+  const handlePublishCourse = async () => {
+    try {
+      setSubmitting(true);
+      const response = await courseService.publishCourse(courseId);
+      if (response.success) {
+        setCourse((prev) => ({ ...prev, isPublished: true }));
+        alert("Khóa học đã được xuất bản thành công!");
+      } else {
+        alert(response.error || "Không thể xuất bản khóa học");
+      }
+    } catch (error) {
+      console.error("Error publishing course:", error);
+      alert("Đã xảy ra lỗi khi xuất bản khóa học");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // Lesson management
   const handleCreateLesson = (chapterId) => {
     if (!chapterId) {
-      alert("No chapter selected or chapters not loaded.");
+      alert(
+        "Không có chương nào được chọn hoặc chương chưa được tải."
+      );
       return;
     }
-    setEditingItem(null);
+
+    // Check if chapter already has a lesson
+    if (hasLesson(chapterId)) {
+      alert(
+        "Chương này đã có một bài học. Mỗi chương chỉ được phép có một bài học."
+      );
+      return;
+    }
+
     setSelectedChapter(chapterId);
-    setLessonForm((prev) => ({
-      ...prev,
+    setLessonForm({
       title: "",
       description: "",
       content: "",
@@ -376,7 +471,8 @@ const CourseContentManager = () => {
       lessonType: "Text",
       additionalResources: "",
       passingScore: 100,
-    }));
+    });
+    setEditingItem(null);
     setShowLessonDialog(true);
   };
 
@@ -412,7 +508,7 @@ const CourseContentManager = () => {
         chapterId.length < 8
       ) {
         setError(
-          "No valid chapter selected. Please select a chapter."
+          "Không có chương hợp lệ nào được chọn. Vui lòng chọn một chương."
         );
         setSubmitting(false);
         return;
@@ -424,7 +520,7 @@ const CourseContentManager = () => {
         !lessonForm.description ||
         !lessonForm.content
       ) {
-        setError("Title, description, and content are required.");
+        setError("Tiêu đề, mô tả và nội dung là bắt buộc.");
         setSubmitting(false);
         return;
       }
@@ -477,6 +573,71 @@ const CourseContentManager = () => {
     } catch (err) {
       console.error("Error saving lesson:", err);
       setError("Failed to save lesson. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Delete lesson function
+  const handleDeleteLesson = async (lesson) => {
+    // Check if lesson has quiz first
+    if (hasQuiz(lesson)) {
+      if (
+        !window.confirm(
+          `⚠️ CẢNH BÁO: Bài học "${lesson.title}" có chứa quiz. 
+        
+Việc xóa bài học sẽ xóa luôn quiz và tất cả câu hỏi bên trong.
+        
+Bạn có chắc chắn muốn xóa bài học này và tất cả nội dung liên quan?`
+        )
+      ) {
+        return;
+      }
+    } else {
+      if (
+        !window.confirm(
+          `Bạn có chắc chắn muốn xóa bài học "${lesson.title}"?`
+        )
+      ) {
+        return;
+      }
+    }
+
+    try {
+      setSubmitting(true);
+      console.log("Deleting lesson:", lesson.lessonId || lesson.id);
+
+      const response = await adminService.deleteLesson(
+        lesson.lessonId || lesson.id
+      );
+
+      if (response.success || response.isSuccess) {
+        loadCourseData(); // Refresh data
+        alert("✅ Bài học đã được xóa thành công!");
+      } else {
+        const errorMessage =
+          response.error ||
+          response.message ||
+          "Failed to delete lesson";
+        console.error("Delete lesson failed:", response);
+        setError(`Không thể xóa bài học: ${errorMessage}`);
+      }
+    } catch (err) {
+      console.error("Error deleting lesson:", err);
+
+      // Special handling for common errors
+      if (
+        err.message.includes("401") ||
+        err.message.includes("Unauthorized")
+      ) {
+        setError(
+          "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+        );
+      } else if (err.message.includes("404")) {
+        setError("Bài học không tồn tại hoặc đã được xóa.");
+      } else {
+        setError(`Không thể xóa bài học: ${err.message}`);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -567,31 +728,19 @@ const CourseContentManager = () => {
       }
     }
     if (!chapterIdWithLesson || lessonIndex === null) return;
+
     const quizRes = await adminService.getQuizzesByLesson(lessonId);
     let quizzes = quizRes.success ? quizRes.data : [];
-    // Fetch questions for each quiz if not present
-    quizzes = await Promise.all(
-      quizzes.map(async (quiz) => {
-        if (
-          !quiz.questions ||
-          !Array.isArray(quiz.questions) ||
-          quiz.questions.length === 0
-        ) {
-          const qRes = await adminService.authenticatedRequest(
-            `/api/Question/quiz/${quiz.quizId || quiz.id}`
-          );
-          if (qRes.success && Array.isArray(qRes.data)) {
-            console.log(
-              "Questions for quiz",
-              quiz.quizId || quiz.id,
-              qRes.data
-            );
-            return { ...quiz, questions: qRes.data };
-          }
-        }
-        return quiz;
-      })
-    );
+
+    // Process quizzes - questions should already be included in API response
+    quizzes = quizzes.map((quiz) => {
+      return {
+        ...quiz,
+        id: quiz.id || quiz.quizId, // Standardize to 'id'
+        questions: quiz.questions || [], // Use existing questions or empty array
+      };
+    });
+
     lessonsCopy[lessonIndex] = {
       ...lessonsCopy[lessonIndex],
       quizzes,
@@ -618,22 +767,23 @@ const CourseContentManager = () => {
   };
 
   const renderChapterAccordion = (chapter) => {
-    const lessons =
-      chapterLessons[chapter.chapterId || chapter.id] || [];
+    const chapterId = chapter.chapterId || chapter.id;
+    const lessons = chapterLessons[chapterId] || [];
+
     console.log(
-      "DEBUG: UI lessons for chapter",
-      chapter.chapterId || chapter.id,
-      lessons
+      "DEBUG: Chapter object in renderChapterAccordion:",
+      chapter
     );
+    console.log("DEBUG: Chapter properties:", Object.keys(chapter));
+    console.log("DEBUG: Using chapterId:", chapterId);
+    console.log("DEBUG: UI lessons for chapter", chapterId, lessons);
     return (
       <StyledAccordion
-        key={chapter.chapterId}
-        expanded={expandedChapter === chapter.chapterId}
+        key={chapterId}
+        expanded={expandedChapter === chapterId}
         onChange={() =>
           setExpandedChapter(
-            expandedChapter === chapter.chapterId
-              ? null
-              : chapter.chapterId
+            expandedChapter === chapterId ? null : chapterId
           )
         }>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -644,53 +794,68 @@ const CourseContentManager = () => {
               width: "100%",
               gap: 2,
             }}>
-            <DragContainer>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                cursor: "grab",
+                "&:active": {
+                  cursor: "grabbing",
+                },
+              }}>
               <DragHandleIcon color="action" />
               <ChapterIcon color="primary" />
-            </DragContainer>
+            </Box>
             <Box sx={{ flex: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Chapter {chapter.orderIndex}: {chapter.title}
+                Chương {chapter.orderIndex}: {chapter.title}
                 <Typography
                   variant="caption"
                   color="text.secondary"
                   sx={{ ml: 2 }}
-                  component="span">
-                  (ID: {chapter.chapterId || chapter.id || "N/A"})
-                </Typography>
+                  component="span"></Typography>
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {lessons.length || 0} lessons •
+                {lessons.length || 0} bài học •
                 {lessons.reduce(
                   (sum, l) => sum + (l.quizzes?.length || 0),
                   0
                 )}{" "}
-                quizzes •{chapter.media?.length || 0} media files
+                bài kiểm tra •{chapter.media?.length || 0} tài liệu
               </Typography>
-            </Box>
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleEditChapter(chapter);
-                }}>
-                <EditIcon />
-              </IconButton>
-              <IconButton
-                size="small"
-                color="error"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteChapter(chapter);
-                }}>
-                <DeleteIcon />
-              </IconButton>
             </Box>
           </Box>
         </AccordionSummary>
 
         <AccordionDetails>
+          {/* Action Buttons - Moved here to avoid nested button issue */}
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1,
+              mb: 2,
+              justifyContent: "flex-end",
+            }}>
+            <ActionButton
+              size="small"
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={() => handleEditChapter(chapter)}
+              sx={{ minWidth: "auto", px: 1 }}>
+              Sửa
+            </ActionButton>
+            <ActionButton
+              size="small"
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={() => handleDeleteChapter(chapter)}
+              sx={{ minWidth: "auto", px: 1 }}>
+              Xóa
+            </ActionButton>
+          </Box>
+
           <Grid container spacing={3}>
             {/* Lessons Section */}
             <Grid size={{ xs: 12, md: 6 }}>
@@ -711,18 +876,24 @@ const CourseContentManager = () => {
                         gap: 1,
                       }}>
                       <LessonIcon />
-                      Lessons
+                      Bài học
                     </Typography>
-                    <Button
+                    <ActionButton
                       size="small"
+                      variant="contained"
                       startIcon={<AddIcon />}
-                      onClick={() =>
-                        handleCreateLesson(
-                          chapter.chapterId || chapter.id
-                        )
-                      }>
-                      Add Lesson
-                    </Button>
+                      onClick={() => handleCreateLesson(chapterId)}
+                      disabled={hasLesson(chapterId)}
+                      sx={{
+                        background: hasLesson(chapterId)
+                          ? "grey.300"
+                          : "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)",
+                        color: "white",
+                      }}>
+                      {hasLesson(chapterId)
+                        ? "Đã có bài học"
+                        : "Thêm bài học"}
+                    </ActionButton>
                   </Box>
 
                   {lessons.length > 0 ? (
@@ -732,363 +903,199 @@ const CourseContentManager = () => {
                         .map((lesson) => {
                           console.log("Lesson object:", lesson);
                           return (
-                            <Box key={lesson.lessonId || lesson.id}>
-                              <ListItem
-                                secondaryAction={
-                                  <Box>
-                                    <IconButton
+                            <ModernCard
+                              key={lesson.lessonId || lesson.id}
+                              sx={{ mb: 2 }}>
+                              <CardContent>
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "flex-start",
+                                    mb: 2,
+                                  }}>
+                                  <Box sx={{ flex: 1 }}>
+                                    <Typography
+                                      variant="subtitle1"
+                                      sx={{ fontWeight: 600, mb: 1 }}>
+                                      {lesson.title}
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                      sx={{ mb: 1 }}>
+                                      {lesson.description}
+                                    </Typography>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary">
+                                      {lesson.estimatedDuration || 10}{" "}
+                                      phút •{" "}
+                                      {lesson.lessonType || "Text"}
+                                    </Typography>
+                                  </Box>
+
+                                  <Stack direction="row" spacing={1}>
+                                    <ActionButton
                                       size="small"
+                                      variant="outlined"
+                                      startIcon={<EditIcon />}
                                       onClick={() =>
                                         handleEditLesson(lesson)
-                                      }>
-                                      <EditIcon />
-                                    </IconButton>
-                                    <IconButton
+                                      }
+                                      sx={{ minWidth: "auto" }}>
+                                      Sửa
+                                    </ActionButton>
+
+                                    <ActionButton
                                       size="small"
+                                      variant="outlined"
+                                      color="error"
+                                      startIcon={<DeleteIcon />}
                                       onClick={() =>
-                                        handleOpenQuizEditor(
-                                          lesson.lessonId || lesson.id
-                                        )
-                                      }>
-                                      <QuizIcon />
-                                    </IconButton>
-                                    <IconButton
-                                      size="small"
-                                      onClick={() =>
-                                        handleUploadMedia(
-                                          chapter.chapterId,
-                                          lesson.lessonId || lesson.id
-                                        )
-                                      }>
-                                      <UploadIcon />
-                                    </IconButton>
-                                  </Box>
-                                }>
-                                <ListItemIcon>
-                                  <LessonIcon />
-                                </ListItemIcon>
-                                <ListItemText
-                                  primary={`${lesson.orderIndex}. ${lesson.title}`}
-                                  secondary={`${
-                                    lesson.estimatedDuration || 10
-                                  } min`}
-                                />
-                              </ListItem>
-                              {/* Tất cả câu hỏi button and expandable section */}
-                              <Box sx={{ pl: 7, pb: 1 }}>
-                                <Button
-                                  variant="outlined"
-                                  size="small"
-                                  onClick={() =>
-                                    setExpandedLessonQuestions(
-                                      (prev) => ({
-                                        ...prev,
-                                        [lesson.lessonId ||
-                                        lesson.id]:
-                                          !prev[
+                                        handleDeleteLesson(lesson)
+                                      }
+                                      disabled={submitting}
+                                      sx={{
+                                        minWidth: "auto",
+                                        borderColor: "error.main",
+                                        "&:hover": {
+                                          backgroundColor:
+                                            "error.main",
+                                          color: "white",
+                                        },
+                                      }}>
+                                      Xóa
+                                    </ActionButton>
+
+                                    {hasQuiz(lesson) ? (
+                                      <ActionButton
+                                        size="small"
+                                        variant="contained"
+                                        startIcon={<QuizIcon />}
+                                        onClick={() => {
+                                          const existingQuiz =
+                                            lesson.quizzes[0]; // Get first quiz
+                                          setQuizEditorLessonId(
                                             lesson.lessonId ||
                                               lesson.id
-                                          ],
-                                      })
-                                    )
-                                  }>
-                                  Tất cả câu hỏi
-                                </Button>
-                                {expandedLessonQuestions[
-                                  lesson.lessonId || lesson.id
-                                ] && (
-                                  <Box sx={{ mt: 2, mb: 2 }}>
-                                    {lesson.quizzes &&
-                                    lesson.quizzes.length > 0 ? (
-                                      lesson.quizzes.map((quiz) => (
-                                        <Box
-                                          key={quiz.quizId || quiz.id}
-                                          sx={{ mb: 2 }}>
-                                          <Typography
-                                            variant="subtitle2"
-                                            sx={{ mb: 1 }}>
-                                            {quiz.title || `Quiz`}
-                                          </Typography>
-                                          {quiz.questions &&
-                                          quiz.questions.length >
-                                            0 ? (
-                                            <List dense>
-                                              {quiz.questions.map(
-                                                (q, idx) => (
-                                                  <Box
-                                                    key={q.id || idx}
-                                                    sx={{
-                                                      width: "100%",
-                                                    }}>
-                                                    <Box
-                                                      sx={{
-                                                        display:
-                                                          "flex",
-                                                        alignItems:
-                                                          "flex-start",
-                                                        width: "100%",
-                                                      }}>
-                                                      <ListItem
-                                                        sx={{
-                                                          flex: 1,
-                                                        }}>
-                                                        <ListItemIcon>
-                                                          <QuizIcon
-                                                            fontSize="small"
-                                                            color="action"
-                                                          />
-                                                        </ListItemIcon>
-                                                        <ListItemText
-                                                          primary={
-                                                            q.content ||
-                                                            q.questionText ||
-                                                            q.title ||
-                                                            q.text ||
-                                                            `Question ${
-                                                              idx + 1
-                                                            }`
-                                                          }
-                                                          secondary={
-                                                            q.questionType
-                                                              ? q.questionType
-                                                                  .replace(
-                                                                    "_",
-                                                                    " "
-                                                                  )
-                                                                  .toUpperCase()
-                                                              : ""
-                                                          }
-                                                        />
-                                                      </ListItem>
-                                                      <Box
-                                                        sx={{
-                                                          display:
-                                                            "flex",
-                                                          alignItems:
-                                                            "center",
-                                                          pr: 2,
-                                                        }}>
-                                                        <IconButton
-                                                          size="small"
-                                                          onClick={() =>
-                                                            handleOpenQuizEditor(
-                                                              lesson.lessonId ||
-                                                                lesson.id,
-                                                              {
-                                                                ...quiz,
-                                                                editingQuestion:
-                                                                  q,
-                                                              }
-                                                            )
-                                                          }
-                                                          title="Edit Question">
-                                                          <EditIcon fontSize="small" />
-                                                        </IconButton>
-                                                        <IconButton
-                                                          size="small"
-                                                          color="error"
-                                                          onClick={async () => {
-                                                            if (
-                                                              window.confirm(
-                                                                "Are you sure you want to delete this question?"
-                                                              )
-                                                            ) {
-                                                              if (
-                                                                q.id
-                                                              ) {
-                                                                const res =
-                                                                  await adminService.deleteQuestion(
-                                                                    q.id
-                                                                  );
-                                                                if (
-                                                                  !res.success
-                                                                ) {
-                                                                  alert(
-                                                                    res.error ||
-                                                                      "Failed to delete question from backend"
-                                                                  );
-                                                                  return;
-                                                                }
-                                                              }
-                                                              // Remove from local quiz.questions
-                                                              const updatedQuizzes =
-                                                                lesson.quizzes.map(
-                                                                  (
-                                                                    quizItem
-                                                                  ) =>
-                                                                    quizItem ===
-                                                                    quiz
-                                                                      ? {
-                                                                          ...quizItem,
-                                                                          questions:
-                                                                            quizItem.questions.filter(
-                                                                              (
-                                                                                qq
-                                                                              ) =>
-                                                                                qq !==
-                                                                                q
-                                                                            ),
-                                                                        }
-                                                                      : quizItem
-                                                                );
-                                                              // Update lesson in chapterLessons
-                                                              let chapterIdWithLesson =
-                                                                null;
-                                                              let lessonIndex =
-                                                                null;
-                                                              let lessonsCopy =
-                                                                null;
-                                                              for (const [
-                                                                chapterId,
-                                                                lessons,
-                                                              ] of Object.entries(
-                                                                chapterLessons
-                                                              )) {
-                                                                const idx =
-                                                                  lessons.findIndex(
-                                                                    (
-                                                                      lessonObj
-                                                                    ) =>
-                                                                      lessonObj.lessonId ===
-                                                                      (lesson.lessonId ||
-                                                                        lesson.id)
-                                                                  );
-                                                                if (
-                                                                  idx !==
-                                                                  -1
-                                                                ) {
-                                                                  chapterIdWithLesson =
-                                                                    chapterId;
-                                                                  lessonIndex =
-                                                                    idx;
-                                                                  lessonsCopy =
-                                                                    [
-                                                                      ...lessons,
-                                                                    ];
-                                                                  break;
-                                                                }
-                                                              }
-                                                              if (
-                                                                chapterIdWithLesson &&
-                                                                lessonIndex !==
-                                                                  null
-                                                              ) {
-                                                                lessonsCopy[
-                                                                  lessonIndex
-                                                                ] = {
-                                                                  ...lessonsCopy[
-                                                                    lessonIndex
-                                                                  ],
-                                                                  quizzes:
-                                                                    updatedQuizzes,
-                                                                };
-                                                                setChapterLessons(
-                                                                  (
-                                                                    prev
-                                                                  ) => ({
-                                                                    ...prev,
-                                                                    [chapterIdWithLesson]:
-                                                                      lessonsCopy,
-                                                                  })
-                                                                );
-                                                              }
-                                                            }
-                                                          }}
-                                                          title="Delete Question">
-                                                          <DeleteIcon fontSize="small" />
-                                                        </IconButton>
-                                                      </Box>
-                                                      {/* Answers for this question */}
-                                                      <Box
-                                                        sx={{
-                                                          flex: 1,
-                                                          pl: 7,
-                                                          pb: 1,
-                                                        }}>
-                                                        {q.answers &&
-                                                        q.answers
-                                                          .length >
-                                                          0 ? (
-                                                          <List dense>
-                                                            {q.answers.map(
-                                                              (
-                                                                a,
-                                                                aidx
-                                                              ) => (
-                                                                <ListItem
-                                                                  key={
-                                                                    a.id ||
-                                                                    aidx
-                                                                  }
-                                                                  sx={{
-                                                                    pl: 0,
-                                                                  }}>
-                                                                  <ListItemIcon>
-                                                                    {a.isCorrect ? (
-                                                                      <CheckCircle
-                                                                        color="success"
-                                                                        fontSize="small"
-                                                                      />
-                                                                    ) : (
-                                                                      <CancelIcon
-                                                                        color="disabled"
-                                                                        fontSize="small"
-                                                                      />
-                                                                    )}
-                                                                  </ListItemIcon>
-                                                                  <ListItemText
-                                                                    primary={
-                                                                      a.answerText
-                                                                    }
-                                                                    secondary={
-                                                                      a.isCorrect
-                                                                        ? "Correct"
-                                                                        : ""
-                                                                    }
-                                                                  />
-                                                                </ListItem>
-                                                              )
-                                                            )}
-                                                          </List>
-                                                        ) : (
-                                                          <Typography
-                                                            variant="body2"
-                                                            color="text.secondary"
-                                                            sx={{
-                                                              pl: 2,
-                                                            }}>
-                                                            No
-                                                            answers.
-                                                          </Typography>
-                                                        )}
-                                                      </Box>
-                                                    </Box>
-                                                  </Box>
-                                                )
-                                              )}
-                                            </List>
-                                          ) : (
-                                            <Typography
-                                              variant="body2"
-                                              color="text.secondary"
-                                              sx={{ pl: 2 }}>
-                                              No questions yet.
-                                            </Typography>
-                                          )}
-                                        </Box>
-                                      ))
+                                          );
+                                          setQuizEditorQuiz(
+                                            existingQuiz
+                                          );
+                                          setShowQuizEditor(true);
+                                        }}
+                                        sx={{
+                                          background:
+                                            "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)",
+                                          color: "white",
+                                        }}>
+                                        Xem Quiz
+                                      </ActionButton>
                                     ) : (
-                                      <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                        sx={{ pl: 2 }}>
-                                        No quizzes in this lesson.
-                                      </Typography>
+                                      <ActionButton
+                                        size="small"
+                                        variant="contained"
+                                        startIcon={<QuizIcon />}
+                                        onClick={() => {
+                                          setQuizEditorLessonId(
+                                            lesson.lessonId ||
+                                              lesson.id
+                                          );
+                                          setQuizEditorQuiz(null);
+                                          setShowQuizEditor(true);
+                                        }}
+                                        sx={{
+                                          background:
+                                            "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
+                                          color: "white",
+                                        }}>
+                                        Tạo Quiz
+                                      </ActionButton>
                                     )}
+                                  </Stack>
+                                </Box>
+
+                                {/* Show Quiz Details if exists */}
+                                {hasQuiz(lesson) && (
+                                  <Box
+                                    sx={{
+                                      mt: 2,
+                                      p: 2,
+                                      bgcolor: "grey.50",
+                                      borderRadius: 1,
+                                      border: "1px solid",
+                                      borderColor: "grey.200",
+                                    }}>
+                                    <Typography
+                                      variant="subtitle2"
+                                      sx={{
+                                        fontWeight: 600,
+                                        mb: 1,
+                                        color: "primary.main",
+                                      }}>
+                                      📝 Quiz:{" "}
+                                      {lesson.quizzes[0]?.title}
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                      sx={{ mb: 1 }}>
+                                      {lesson.quizzes[0]?.description}
+                                    </Typography>
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        gap: 2,
+                                        flexWrap: "wrap",
+                                      }}>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          bgcolor: "primary.main",
+                                          color: "white",
+                                          px: 1,
+                                          py: 0.5,
+                                          borderRadius: 1,
+                                        }}>
+                                        {lesson.quizzes[0]?.questions
+                                          ?.length || 0}{" "}
+                                        câu hỏi
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          bgcolor: "success.main",
+                                          color: "white",
+                                          px: 1,
+                                          py: 0.5,
+                                          borderRadius: 1,
+                                        }}>
+                                        Điểm đạt:{" "}
+                                        {lesson.quizzes[0]
+                                          ?.passingScore || 0}
+                                        %
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          bgcolor: "warning.main",
+                                          color: "white",
+                                          px: 1,
+                                          py: 0.5,
+                                          borderRadius: 1,
+                                        }}>
+                                        Thời gian:{" "}
+                                        {lesson.quizzes[0]
+                                          ?.timeLimitMinutes ||
+                                          0}{" "}
+                                        phút
+                                      </Typography>
+                                    </Box>
                                   </Box>
                                 )}
-                              </Box>
-                            </Box>
+                              </CardContent>
+                            </ModernCard>
                           );
                         })}
                     </List>
@@ -1098,8 +1105,8 @@ const CourseContentManager = () => {
                       color="text.secondary"
                       textAlign="center"
                       py={2}>
-                      No lessons yet. Click "Add Lesson" to get
-                      started.
+                      Chưa có bài học nào. Hãy bắt đầu bằng cách thêm
+                      một bài học.
                     </Typography>
                   )}
                 </CardContent>
@@ -1126,602 +1133,695 @@ const CourseContentManager = () => {
   if (!course) {
     return (
       <Container>
-        <Alert severity="error">Course not found</Alert>
+        <Alert severity="error">Không tìm thấy khóa học</Alert>
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Breadcrumbs sx={{ mb: 2 }}>
-          <MuiLink
-            component="button"
-            variant="body1"
-            onClick={() => navigate("/admin/courses")}
-            sx={{ textDecoration: "none" }}>
-            Course Management
-          </MuiLink>
-          <Typography color="text.primary">
-            Content Manager
-          </Typography>
-        </Breadcrumbs>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#f8fafc" }}>
+      {/* Modern Header */}
+      <HeaderSection>
+        <Container>
+          <Grid container spacing={4} alignItems="center">
+            <Grid item xs={12} md={8}>
+              <Breadcrumbs
+                separator="/"
+                sx={{
+                  mb: 2,
+                  "& .MuiBreadcrumbs-separator": {
+                    color: "rgba(255,255,255,0.7)",
+                  },
+                  "& .MuiLink-root": {
+                    color: "rgba(255,255,255,0.9)",
+                  },
+                  "& .MuiTypography-root": { color: "white" },
+                }}>
+                <MuiLink
+                  component="button"
+                  variant="body1"
+                  onClick={() => navigate("/admin/courses")}
+                  sx={{
+                    textDecoration: "none",
+                    color: "rgba(255,255,255,0.9)",
+                    "&:hover": { color: "white" },
+                  }}>
+                  Quản lý khóa học
+                </MuiLink>
+                <Typography color="white" sx={{ fontWeight: 500 }}>
+                  Quản lý nội dung
+                </Typography>
+              </Breadcrumbs>
 
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: 2,
-          }}>
-          <Box>
-            <Typography
-              variant="h4"
-              component="h1"
-              gutterBottom
-              sx={{ fontWeight: 600 }}>
-              {course.title}
-            </Typography>
-            <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-              <Chip label={getCourseTypeLabel(course.courseType)} />
-              <Chip
-                label={getAgeGroupLabel(course.ageGroup)}
-                variant="outlined"
-              />
-              <Chip
-                label={course.isPublished ? "Published" : "Draft"}
-                color={course.isPublished ? "success" : "default"}
-              />
-            </Stack>
-            <Typography variant="body1" color="text.secondary">
-              {course.description}
-            </Typography>
-          </Box>
+              <Typography
+                variant="h3"
+                component="h1"
+                sx={{
+                  fontWeight: 700,
+                  mb: 1,
+                  color: "white",
+                  textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                }}>
+                {course.title}
+              </Typography>
 
-          <Stack direction="row" spacing={1}>
-            <Button
-              startIcon={<BackIcon />}
-              onClick={() => navigate("/admin/courses")}>
-              Back to Courses
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<PreviewIcon />}
-              onClick={() =>
-                navigate(`/education/courses/${courseId}`)
-              }>
-              Preview Course
-            </Button>
-          </Stack>
-        </Box>
-
-        {/* Course Progress */}
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Course Progress
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <LinearProgress
-              variant="determinate"
-              value={
-                chapters.length > 0
-                  ? (chapters.filter(
-                      (ch) =>
-                        (chapterLessons[ch.chapterId || ch.id]
-                          ?.length || 0) > 0
-                    ).length /
-                      chapters.length) *
-                    100
-                  : 0
-              }
-              sx={{ flex: 1, height: 8, borderRadius: 1 }}
-            />
-            <Typography variant="body2" color="text.secondary">
-              {chapters.length} chapters •{" "}
-              {Object.values(chapterLessons).reduce(
-                (total, lessons) => total + lessons.length,
-                0
-              )}{" "}
-              lessons
-            </Typography>
-          </Box>
-        </Paper>
-      </Box>
-
-      {error && (
-        <Alert
-          severity="error"
-          sx={{ mb: 3 }}
-          onClose={() => setError("")}>
-          {error}
-        </Alert>
-      )}
-
-      {/* Content Management */}
-      <Box>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}>
-          <Typography variant="h5" sx={{ fontWeight: 600 }}>
-            Course Content
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreateChapter}>
-            Add Chapter
-          </Button>
-        </Box>
-
-        {chapters.length === 0 ? (
-          <Paper sx={{ p: 4, textAlign: "center" }}>
-            <ChapterIcon
-              sx={{ fontSize: 64, color: "grey.400", mb: 2 }}
-            />
-            <Typography
-              variant="h6"
-              color="text.secondary"
-              gutterBottom>
-              No chapters found
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mb: 3 }}>
-              Start building your course by adding the first chapter
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleCreateChapter}>
-              Add Chapter
-            </Button>
-          </Paper>
-        ) : (
-          <Box>{chapters.map(renderChapterAccordion)}</Box>
-        )}
-      </Box>
-
-      {/* Chapter Dialog */}
-      <Dialog
-        open={showChapterDialog}
-        onClose={() => setShowChapterDialog(false)}
-        maxWidth="md"
-        fullWidth>
-        <DialogTitle>
-          {editingItem ? "Edit Chapter" : "Create New Chapter"}
-        </DialogTitle>
-        <DialogContent>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 3,
-              mt: 2,
-            }}>
-            <TextField
-              label="Chapter Title"
-              fullWidth
-              value={chapterForm.title}
-              onChange={(e) =>
-                setChapterForm({
-                  ...chapterForm,
-                  title: e.target.value,
-                })
-              }
-            />
-
-            <TextField
-              label="Description"
-              fullWidth
-              multiline
-              rows={3}
-              value={chapterForm.description}
-              onChange={(e) =>
-                setChapterForm({
-                  ...chapterForm,
-                  description: e.target.value,
-                })
-              }
-            />
-
-            <TextField
-              label="Order Index"
-              type="number"
-              value={chapterForm.orderIndex}
-              onChange={(e) =>
-                setChapterForm({
-                  ...chapterForm,
-                  orderIndex: parseInt(e.target.value),
-                })
-              }
-              inputProps={{ min: 1 }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowChapterDialog(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmitChapter}
-            variant="contained"
-            disabled={submitting}
-            startIcon={
-              submitting ? (
-                <CircularProgress size={16} />
-              ) : (
-                <SaveIcon />
-              )
-            }>
-            {editingItem ? "Update" : "Create"} Chapter
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Lesson Dialog */}
-      <Dialog
-        open={showLessonDialog}
-        onClose={() => setShowLessonDialog(false)}
-        maxWidth="lg"
-        fullWidth>
-        <DialogTitle>
-          {editingItem ? "Edit Lesson" : "Create New Lesson"}
-        </DialogTitle>
-        <DialogContent>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 3,
-              mt: 2,
-            }}>
-            <TextField
-              label="Lesson Title"
-              fullWidth
-              value={lessonForm.title}
-              onChange={(e) =>
-                setLessonForm({
-                  ...lessonForm,
-                  title: e.target.value,
-                })
-              }
-            />
-            <TextField
-              label="Description"
-              fullWidth
-              multiline
-              rows={2}
-              value={lessonForm.description}
-              onChange={(e) =>
-                setLessonForm({
-                  ...lessonForm,
-                  description: e.target.value,
-                })
-              }
-            />
-            <TextField
-              label="Content"
-              fullWidth
-              multiline
-              rows={8}
-              value={lessonForm.content}
-              onChange={(e) =>
-                setLessonForm({
-                  ...lessonForm,
-                  content: e.target.value,
-                })
-              }
-              placeholder="Enter lesson content, instructions, or embedded media..."
-            />
-            <TextField
-              label="Video URL"
-              fullWidth
-              value={lessonForm.videoUrl}
-              onChange={(e) =>
-                setLessonForm({
-                  ...lessonForm,
-                  videoUrl: e.target.value,
-                })
-              }
-            />
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Order Index"
-                  type="number"
-                  fullWidth
-                  value={lessonForm.orderIndex}
-                  onChange={(e) =>
-                    setLessonForm({
-                      ...lessonForm,
-                      orderIndex: parseInt(e.target.value),
-                    })
-                  }
-                  inputProps={{ min: 1 }}
+              <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+                <Chip
+                  label={getCourseTypeLabel(course.courseType)}
+                  sx={{
+                    bgcolor: "rgba(255,255,255,0.2)",
+                    color: "white",
+                    fontWeight: 500,
+                  }}
                 />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Estimated Duration (minutes)"
-                  type="number"
-                  fullWidth
-                  value={lessonForm.estimatedDuration}
-                  onChange={(e) =>
-                    setLessonForm({
-                      ...lessonForm,
-                      estimatedDuration: parseInt(e.target.value),
-                    })
-                  }
-                  inputProps={{ min: 1 }}
+                <Chip
+                  label={getAgeGroupLabel(course.ageGroup)}
+                  sx={{
+                    bgcolor: "rgba(255,255,255,0.2)",
+                    color: "white",
+                    fontWeight: 500,
+                  }}
                 />
-              </Grid>
+                <Chip
+                  label={
+                    course.isPublished ? "Đã xuất bản" : "Bản nháp"
+                  }
+                  sx={{
+                    bgcolor: course.isPublished
+                      ? "rgba(76,175,80,0.8)"
+                      : "rgba(255,193,7,0.8)",
+                    color: "white",
+                    fontWeight: 500,
+                  }}
+                />
+              </Stack>
+
+              <Typography
+                variant="h6"
+                sx={{
+                  opacity: 0.9,
+                  color: "white",
+                  maxWidth: 600,
+                  lineHeight: 1.5,
+                }}>
+                {course.description}
+              </Typography>
             </Grid>
-            <TextField
-              label="Lesson Type"
-              fullWidth
-              value={lessonForm.lessonType}
-              onChange={(e) =>
-                setLessonForm({
-                  ...lessonForm,
-                  lessonType: e.target.value,
-                })
-              }
-            />
-            <TextField
-              label="Additional Resources"
-              fullWidth
-              value={lessonForm.additionalResources}
-              onChange={(e) =>
-                setLessonForm({
-                  ...lessonForm,
-                  additionalResources: e.target.value,
-                })
-              }
-            />
-            <TextField
-              label="Passing Score"
-              type="number"
-              fullWidth
-              value={lessonForm.passingScore}
-              onChange={(e) =>
-                setLessonForm({
-                  ...lessonForm,
-                  passingScore: parseInt(e.target.value),
-                })
-              }
-              inputProps={{ min: 0, max: 100 }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowLessonDialog(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmitLesson}
-            variant="contained"
-            disabled={submitting}
-            startIcon={
-              submitting ? (
-                <CircularProgress size={16} />
-              ) : (
-                <SaveIcon />
-              )
-            }>
-            {editingItem ? "Update" : "Create"} Lesson
-          </Button>
-        </DialogActions>
-      </Dialog>
 
-      {/* Quiz Dialog */}
-      <Dialog
-        open={showQuizDialog}
-        onClose={() => setShowQuizDialog(false)}
-        maxWidth="md"
-        fullWidth>
-        <DialogTitle>
-          {editingItem ? "Edit Quiz" : "Create New Quiz"}
-        </DialogTitle>
-        <DialogContent>
-          <Box
+            <Grid item xs={12} md={4}>
+              <Box sx={{ textAlign: { xs: "left", md: "right" } }}>
+                <Stack
+                  direction={{ xs: "row", md: "column" }}
+                  spacing={2}>
+                  <ActionButton
+                    variant="outlined"
+                    startIcon={<BackIcon />}
+                    onClick={() => navigate("/admin/courses")}
+                    sx={{
+                      borderColor: "rgba(255,255,255,0.5)",
+                      color: "white",
+                      "&:hover": {
+                        borderColor: "white",
+                        bgcolor: "rgba(255,255,255,0.1)",
+                      },
+                    }}>
+                    Quay lại khóa học
+                  </ActionButton>
+                  <ActionButton
+                    variant="contained"
+                    startIcon={<PreviewIcon />}
+                    onClick={() =>
+                      navigate(`/education/courses/${courseId}`)
+                    }
+                    sx={{
+                      bgcolor: "rgba(255,255,255,0.2)",
+                      color: "white",
+                      "&:hover": {
+                        bgcolor: "rgba(255,255,255,0.3)",
+                      },
+                    }}>
+                    Xem khóa học
+                  </ActionButton>
+                  {!course.isPublished && (
+                    <ActionButton
+                      variant="contained"
+                      startIcon={<PublishIcon />}
+                      onClick={handlePublishCourse}
+                      sx={{
+                        bgcolor: "success.main",
+                        color: "white",
+                        "&:hover": {
+                          bgcolor: "success.dark",
+                        },
+                      }}>
+                      Xuất bản khóa học
+                    </ActionButton>
+                  )}
+                </Stack>
+              </Box>
+            </Grid>
+          </Grid>
+        </Container>
+      </HeaderSection>
+
+      <Container maxWidth="xl" sx={{ pb: 4 }}>
+        {error && (
+          <Alert
+            severity="error"
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 3,
-              mt: 2,
-            }}>
-            <TextField
-              label="Quiz Title"
-              fullWidth
-              value={quizForm.title}
-              onChange={(e) =>
-                setQuizForm({ ...quizForm, title: e.target.value })
-              }
-            />
+              mb: 3,
+              borderRadius: 2,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            }}
+            onClose={() => setError("")}>
+            {error}
+          </Alert>
+        )}
 
-            <TextField
-              label="Description"
-              fullWidth
-              multiline
-              rows={3}
-              value={quizForm.description}
-              onChange={(e) =>
-                setQuizForm({
-                  ...quizForm,
-                  description: e.target.value,
-                })
-              }
-            />
-
-            <TextField
-              label="Passing Score (%)"
-              type="number"
-              value={quizForm.passingScore}
-              onChange={(e) =>
-                setQuizForm({
-                  ...quizForm,
-                  passingScore: parseInt(e.target.value),
-                })
-              }
-              inputProps={{ min: 0, max: 100 }}
-            />
-
-            <Alert severity="info">
-              After creating the quiz, you'll be able to add questions
-              in the quiz editor.
-            </Alert>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowQuizDialog(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmitQuiz}
-            variant="contained"
-            disabled={submitting}
-            startIcon={
-              submitting ? (
-                <CircularProgress size={16} />
-              ) : (
-                <SaveIcon />
-              )
-            }>
-            {editingItem ? "Update" : "Create"} Quiz
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Media Upload Dialog */}
-      <Dialog
-        open={showMediaDialog}
-        onClose={() => setShowMediaDialog(false)}
-        maxWidth="md"
-        fullWidth>
-        <DialogTitle>Upload Media</DialogTitle>
-        <DialogContent>
-          <Box
+        {/* Content Management */}
+        <Box>
+          <Paper
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 3,
-              mt: 2,
+              p: 3,
+              mb: 4,
+              borderRadius: 3,
+              background: "white",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              border: `1px solid ${alpha("#1976d2", 0.1)}`,
             }}>
-            <TextField
-              label="Media Title"
-              fullWidth
-              value={mediaForm.title}
-              onChange={(e) =>
-                setMediaForm({ ...mediaForm, title: e.target.value })
-              }
-            />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}>
+              <Box>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, mb: 0.5 }}>
+                  Nội dung khóa học
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {chapters.length} chương •{" "}
+                  {Object.values(chapterLessons).reduce(
+                    (total, lessons) => total + lessons.length,
+                    0
+                  )}{" "}
+                  bài học
+                </Typography>
+              </Box>
+              <ActionButton
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleCreateChapter}
+                sx={{
+                  background:
+                    "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)",
+                  color: "white",
+                }}>
+                Thêm chương
+              </ActionButton>
+            </Box>
+          </Paper>
 
-            <FormControl fullWidth>
-              <InputLabel>Media Type</InputLabel>
-              <Select
-                value={mediaForm.type}
-                label="Media Type"
-                onChange={(e) =>
-                  setMediaForm({ ...mediaForm, type: e.target.value })
-                }>
-                <MenuItem value="image">Image</MenuItem>
-                <MenuItem value="video">Video</MenuItem>
-                <MenuItem value="audio">Audio</MenuItem>
-                <MenuItem value="document">Document</MenuItem>
-              </Select>
-            </FormControl>
-
-            <Box>
+          {chapters.length === 0 ? (
+            <Paper sx={{ p: 4, textAlign: "center" }}>
+              <ChapterIcon
+                sx={{ fontSize: 64, color: "grey.400", mb: 2 }}
+              />
+              <Typography
+                variant="h6"
+                color="text.secondary"
+                gutterBottom>
+                Chưa tìm thấy chương nào
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mb: 3 }}>
+                Hãy bắt đầu xây dựng khóa học của bạn bằng cách thêm
+                chương đầu tiên
+              </Typography>
               <Button
-                variant="outlined"
-                component="label"
-                startIcon={<UploadIcon />}
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleCreateChapter}>
+                Thêm chương
+              </Button>
+            </Paper>
+          ) : (
+            <Box>{chapters.map(renderChapterAccordion)}</Box>
+          )}
+        </Box>
+
+        {/* Chapter Dialog */}
+        <Dialog
+          open={showChapterDialog}
+          onClose={() => setShowChapterDialog(false)}
+          maxWidth="md"
+          fullWidth>
+          <DialogTitle>
+            {editingItem ? "Chỉnh sửa chương" : "Tạo chương mới"}
+          </DialogTitle>
+          <DialogContent>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 3,
+                mt: 2,
+              }}>
+              <TextField
+                label="Tiêu đề chương"
                 fullWidth
-                sx={{ mb: 1 }}>
-                Choose File
-                <input
-                  type="file"
-                  hidden
+                value={chapterForm.title}
+                onChange={(e) =>
+                  setChapterForm({
+                    ...chapterForm,
+                    title: e.target.value,
+                  })
+                }
+              />
+
+              <TextField
+                label="Mô tả"
+                fullWidth
+                multiline
+                rows={3}
+                value={chapterForm.description}
+                onChange={(e) =>
+                  setChapterForm({
+                    ...chapterForm,
+                    description: e.target.value,
+                  })
+                }
+              />
+
+              <TextField
+                label="Thứ tự"
+                type="number"
+                value={chapterForm.orderIndex}
+                onChange={(e) =>
+                  setChapterForm({
+                    ...chapterForm,
+                    orderIndex: parseInt(e.target.value),
+                  })
+                }
+                inputProps={{ min: 1 }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowChapterDialog(false)}>
+              Hủy
+            </Button>
+            <Button
+              onClick={handleSubmitChapter}
+              variant="contained"
+              disabled={submitting}
+              startIcon={
+                submitting ? (
+                  <CircularProgress size={16} />
+                ) : (
+                  <SaveIcon />
+                )
+              }>
+              {editingItem ? "Cập nhật" : "Tạo"} chương
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Lesson Dialog */}
+        <Dialog
+          open={showLessonDialog}
+          onClose={() => setShowLessonDialog(false)}
+          maxWidth="lg"
+          fullWidth>
+          <DialogTitle>
+            {editingItem ? "Chỉnh sửa bài học" : "Tạo bài học mới"}
+          </DialogTitle>
+          <DialogContent>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 3,
+                mt: 2,
+              }}>
+              <TextField
+                label="Tiêu đề bài học"
+                fullWidth
+                value={lessonForm.title}
+                onChange={(e) =>
+                  setLessonForm({
+                    ...lessonForm,
+                    title: e.target.value,
+                  })
+                }
+              />
+              <TextField
+                label="Mô tả"
+                fullWidth
+                multiline
+                rows={2}
+                value={lessonForm.description}
+                onChange={(e) =>
+                  setLessonForm({
+                    ...lessonForm,
+                    description: e.target.value,
+                  })
+                }
+              />
+              <TextField
+                label="Nội dung"
+                fullWidth
+                multiline
+                rows={8}
+                value={lessonForm.content}
+                onChange={(e) =>
+                  setLessonForm({
+                    ...lessonForm,
+                    content: e.target.value,
+                  })
+                }
+                placeholder="Nhập nội dung bài học, hướng dẫn hoặc phương tiện đã lưu trữ..."
+              />
+              <TextField
+                label="URL video"
+                fullWidth
+                value={lessonForm.videoUrl}
+                onChange={(e) =>
+                  setLessonForm({
+                    ...lessonForm,
+                    videoUrl: e.target.value,
+                  })
+                }
+              />
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 6 }}>
+                  <TextField
+                    label="Thứ tự"
+                    type="number"
+                    fullWidth
+                    value={lessonForm.orderIndex}
+                    onChange={(e) =>
+                      setLessonForm({
+                        ...lessonForm,
+                        orderIndex: parseInt(e.target.value),
+                      })
+                    }
+                    inputProps={{ min: 1 }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <TextField
+                    label="Thời gian ước tính (phút)"
+                    type="number"
+                    fullWidth
+                    value={lessonForm.estimatedDuration}
+                    onChange={(e) =>
+                      setLessonForm({
+                        ...lessonForm,
+                        estimatedDuration: parseInt(e.target.value),
+                      })
+                    }
+                    inputProps={{ min: 1 }}
+                  />
+                </Grid>
+              </Grid>
+              <TextField
+                label="Loại bài học"
+                fullWidth
+                value={lessonForm.lessonType}
+                onChange={(e) =>
+                  setLessonForm({
+                    ...lessonForm,
+                    lessonType: e.target.value,
+                  })
+                }
+              />
+              <TextField
+                label="Tài liệu thêm"
+                fullWidth
+                value={lessonForm.additionalResources}
+                onChange={(e) =>
+                  setLessonForm({
+                    ...lessonForm,
+                    additionalResources: e.target.value,
+                  })
+                }
+              />
+              <TextField
+                label="Điểm số đạt được"
+                type="number"
+                fullWidth
+                value={lessonForm.passingScore}
+                onChange={(e) =>
+                  setLessonForm({
+                    ...lessonForm,
+                    passingScore: parseInt(e.target.value),
+                  })
+                }
+                inputProps={{ min: 0, max: 100 }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowLessonDialog(false)}>
+              Hủy
+            </Button>
+            <Button
+              onClick={handleSubmitLesson}
+              variant="contained"
+              disabled={submitting}
+              startIcon={
+                submitting ? (
+                  <CircularProgress size={16} />
+                ) : (
+                  <SaveIcon />
+                )
+              }>
+              {editingItem ? "Cập nhật" : "Tạo"} bài học
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Quiz Dialog */}
+        <Dialog
+          open={showQuizDialog}
+          onClose={() => setShowQuizDialog(false)}
+          maxWidth="md"
+          fullWidth>
+          <DialogTitle>
+            {editingItem
+              ? "Chỉnh sửa bài kiểm tra"
+              : "Tạo bài kiểm tra mới"}
+          </DialogTitle>
+          <DialogContent>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 3,
+                mt: 2,
+              }}>
+              <TextField
+                label="Tiêu đề bài kiểm tra"
+                fullWidth
+                value={quizForm.title}
+                onChange={(e) =>
+                  setQuizForm({ ...quizForm, title: e.target.value })
+                }
+              />
+
+              <TextField
+                label="Mô tả"
+                fullWidth
+                multiline
+                rows={3}
+                value={quizForm.description}
+                onChange={(e) =>
+                  setQuizForm({
+                    ...quizForm,
+                    description: e.target.value,
+                  })
+                }
+              />
+
+              <TextField
+                label="Điểm số đạt được (%)"
+                type="number"
+                value={quizForm.passingScore}
+                onChange={(e) =>
+                  setQuizForm({
+                    ...quizForm,
+                    passingScore: parseInt(e.target.value),
+                  })
+                }
+                inputProps={{ min: 0, max: 100 }}
+              />
+
+              <Alert severity="info">
+                Sau khi tạo bài kiểm tra, bạn sẽ có thể thêm câu hỏi
+                trong trình chỉnh sửa bài kiểm tra.
+              </Alert>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowQuizDialog(false)}>
+              Hủy
+            </Button>
+            <Button
+              onClick={handleSubmitQuiz}
+              variant="contained"
+              disabled={submitting}
+              startIcon={
+                submitting ? (
+                  <CircularProgress size={16} />
+                ) : (
+                  <SaveIcon />
+                )
+              }>
+              {editingItem ? "Cập nhật" : "Tạo"} bài kiểm tra
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Media Upload Dialog */}
+        <Dialog
+          open={showMediaDialog}
+          onClose={() => setShowMediaDialog(false)}
+          maxWidth="md"
+          fullWidth>
+          <DialogTitle>Tải lên tài liệu</DialogTitle>
+          <DialogContent>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 3,
+                mt: 2,
+              }}>
+              <TextField
+                label="Tiêu đề tài liệu"
+                fullWidth
+                value={mediaForm.title}
+                onChange={(e) =>
+                  setMediaForm({
+                    ...mediaForm,
+                    title: e.target.value,
+                  })
+                }
+              />
+
+              <FormControl fullWidth>
+                <InputLabel>Loại tài liệu</InputLabel>
+                <Select
+                  value={mediaForm.type}
+                  label="Loại tài liệu"
                   onChange={(e) =>
                     setMediaForm({
                       ...mediaForm,
-                      file: e.target.files[0],
+                      type: e.target.value,
                     })
-                  }
-                />
-              </Button>
-              {mediaForm.file && (
-                <Typography variant="body2" color="text.secondary">
-                  Selected: {mediaForm.file.name}
-                </Typography>
-              )}
+                  }>
+                  <MenuItem value="image">Hình ảnh</MenuItem>
+                  <MenuItem value="video">Video</MenuItem>
+                  <MenuItem value="audio">Âm thanh</MenuItem>
+                  <MenuItem value="document">Tài liệu</MenuItem>
+                </Select>
+              </FormControl>
+
+              <Box>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={<UploadIcon />}
+                  fullWidth
+                  sx={{ mb: 1 }}>
+                  Chọn tệp
+                  <input
+                    type="file"
+                    hidden
+                    onChange={(e) =>
+                      setMediaForm({
+                        ...mediaForm,
+                        file: e.target.files[0],
+                      })
+                    }
+                  />
+                </Button>
+                {mediaForm.file && (
+                  <Typography variant="body2" color="text.secondary">
+                    Đã chọn: {mediaForm.file.name}
+                  </Typography>
+                )}
+              </Box>
+
+              <TextField
+                label="Mô tả"
+                fullWidth
+                multiline
+                rows={3}
+                value={mediaForm.description}
+                onChange={(e) =>
+                  setMediaForm({
+                    ...mediaForm,
+                    description: e.target.value,
+                  })
+                }
+              />
             </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowMediaDialog(false)}>
+              Hủy
+            </Button>
+            <Button
+              variant="contained"
+              disabled={!mediaForm.file || submitting}
+              startIcon={
+                submitting ? (
+                  <CircularProgress size={16} />
+                ) : (
+                  <UploadIcon />
+                )
+              }>
+              Tải lên tài liệu
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-            <TextField
-              label="Description"
-              fullWidth
-              multiline
-              rows={3}
-              value={mediaForm.description}
-              onChange={(e) =>
-                setMediaForm({
-                  ...mediaForm,
-                  description: e.target.value,
-                })
+        {/* Quiz Editor Dialog */}
+        <Dialog
+          open={showQuizEditor}
+          onClose={() => setShowQuizEditor(false)}
+          maxWidth="md"
+          fullWidth>
+          <DialogTitle>
+            {quizEditorQuiz ? "Chỉnh Sửa Quiz" : "Tạo Quiz Mới"}
+          </DialogTitle>
+          <DialogContent>
+            <QuizEditor
+              quiz={
+                quizEditorQuiz
+                  ? {
+                      ...quizEditorQuiz,
+                      lessonId: quizEditorLessonId,
+                    }
+                  : { lessonId: quizEditorLessonId }
               }
+              onSave={async () => {
+                setShowQuizEditor(false);
+                await refreshLessonQuizzes(quizEditorLessonId);
+              }}
+              onCancel={() => setShowQuizEditor(false)}
             />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowMediaDialog(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            disabled={!mediaForm.file || submitting}
-            startIcon={
-              submitting ? (
-                <CircularProgress size={16} />
-              ) : (
-                <UploadIcon />
-              )
-            }>
-            Upload Media
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Quiz Editor Dialog */}
-      <Dialog
-        open={showQuizEditor}
-        onClose={() => setShowQuizEditor(false)}
-        maxWidth="md"
-        fullWidth>
-        <DialogTitle>
-          {quizEditorQuiz ? "Edit Quiz" : "Create Quiz"}
-        </DialogTitle>
-        <DialogContent>
-          <QuizEditor
-            quiz={
-              quizEditorQuiz
-                ? { ...quizEditorQuiz, lessonId: quizEditorLessonId }
-                : { lessonId: quizEditorLessonId }
-            }
-            onSave={async () => {
-              setShowQuizEditor(false);
-              await refreshLessonQuizzes(quizEditorLessonId);
-            }}
-            onCancel={() => setShowQuizEditor(false)}
-          />
-        </DialogContent>
-      </Dialog>
-    </Container>
+          </DialogContent>
+        </Dialog>
+      </Container>
+    </Box>
   );
 };
 

@@ -11,6 +11,7 @@ import {
   faTimesCircle,
   faUser,
   faInfoCircle,
+  faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../context/AuthContext";
 import { consultationService } from "../services/consultationService";
@@ -65,6 +66,13 @@ const Counseling = () => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null); // New: stores the time slot info before consultant selection
+  const [
+    availableConsultantsForTimeSlot,
+    setAvailableConsultantsForTimeSlot,
+  ] = useState([]); // New: consultants available for selected time slot
+  const [showConsultantSelection, setShowConsultantSelection] =
+    useState(false); // New: toggle consultant selection UI
   const [bookingForm, setBookingForm] = useState({
     note: "",
     attachments: [],
@@ -85,6 +93,7 @@ const Counseling = () => {
   useEffect(() => {
     if (isAuthenticated) {
       loadAvailableSlots();
+      loadAllConsultants(); // New: load consultant data
       // Only load appointments for regular users, not consultants
       if (!isConsultant()) {
         loadMyAppointments();
@@ -99,6 +108,21 @@ const Counseling = () => {
 
     return () => clearInterval(timeInterval);
   }, [isAuthenticated, isConsultant]);
+
+  // New: Load all consultants data
+  const loadAllConsultants = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5150/api/User/consultants"
+      );
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data)) {
+        setConsultants(data.data);
+      }
+    } catch (err) {
+      console.error("Error loading consultants:", err);
+    }
+  };
 
   const generateWeeks = () => {
     const today = new Date();
@@ -346,6 +370,57 @@ const Counseling = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return date < today;
+  };
+
+  const formatTime = (timeString) => {
+    if (!timeString) return "Unknown time";
+
+    try {
+      // Handle different time formats
+
+      // Format 1: Full datetime format like "2025-06-25T19:00:00" or "2025-06-25T19:00:00.000Z"
+      if (timeString.includes("T")) {
+        const date = new Date(timeString);
+        if (date instanceof Date && !isNaN(date)) {
+          return date.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+      }
+
+      // Format 2: Time only like "19:00:00" or "19:00"
+      if (timeString.includes(":")) {
+        const timeParts = timeString.split(":");
+        if (timeParts.length >= 2) {
+          const hours = parseInt(timeParts[0]);
+          const minutes = parseInt(timeParts[1]);
+          if (!isNaN(hours) && !isNaN(minutes)) {
+            const date = new Date();
+            date.setHours(hours, minutes, 0, 0);
+            return date.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          }
+        }
+      }
+
+      // Format 3: Try to parse as a regular date string
+      const date = new Date(timeString);
+      if (date instanceof Date && !isNaN(date)) {
+        return date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      // If all parsing fails, return the original string
+      return timeString;
+    } catch (error) {
+      console.warn("Error formatting time:", timeString, error);
+      return timeString || "Unknown time";
+    }
   };
 
   const formatCurrentTime = () => {
@@ -620,6 +695,10 @@ const Counseling = () => {
     setSelectedDate(dateObj.dateString);
     setSelectedTime("");
     setSelectedSlot(null);
+    setSelectedTimeSlot(null); // Clear selected time slot
+    setSelectedConsultant(null); // Clear selected consultant
+    setShowConsultantSelection(false); // Hide consultant selection UI
+    setAvailableConsultantsForTimeSlot([]); // Clear consultant list
     setErrorMessage("");
 
     // Ensure availableSlots is an array
@@ -659,10 +738,6 @@ const Counseling = () => {
       return dateMatches && isAvailable && canBook;
     });
 
-    if (slotsForDate.length === 0) {
-      setErrorMessage("No available slots for the selected date");
-    }
-
     // Scroll to time selection
     setTimeout(() => {
       timeSelectRef.current?.scrollIntoView({
@@ -672,70 +747,155 @@ const Counseling = () => {
     }, 100);
   };
 
-  const handleTimeSelection = (slot) => {
-    setSelectedSlot(slot);
-    setSelectedTime(
-      `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`
-    );
+  const handleTimeSelection = (timeSlotGroup) => {
+    // Reset all consultant-related states first
+    setSelectedSlot(null);
+    setSelectedConsultant(null);
+    setShowConsultantSelection(false);
+    setAvailableConsultantsForTimeSlot([]);
+    setErrorMessage("");
 
-    // Find consultant info (we might need to enhance the API to include consultant details)
-    setSelectedConsultant({
-      id: slot.consultantId,
-      name: slot.consultantName || "Consultant",
+    // New logic: when clicking on a time slot, show consultant selection if multiple consultants available
+    setSelectedTimeSlot(timeSlotGroup);
+    setSelectedTime(timeSlotGroup.display);
+
+    // Get all consultants available for this time slot
+    const consultantsForTimeSlot = timeSlotGroup.slots.map((slot) => {
+      const consultantData = consultants.find(
+        (c) => c.userId === slot.consultantId
+      );
+      return {
+        slot: slot,
+        consultant: consultantData || {
+          userId: slot.consultantId,
+          fullname: slot.consultantName || "Unknown Consultant",
+          specialization: "Chưa cập nhật",
+          profilePicture: null,
+        },
+      };
     });
 
+    setAvailableConsultantsForTimeSlot(consultantsForTimeSlot);
+
+    // Always show consultant selection UI (even for 1 consultant) so user can see who they're booking with
+    setShowConsultantSelection(true);
+
+    // If only one consultant, auto-select them but still show the selection UI
+    if (consultantsForTimeSlot.length === 1) {
+      const consultantSlot = consultantsForTimeSlot[0];
+      setSelectedSlot(consultantSlot.slot);
+      setSelectedConsultant({
+        id: consultantSlot.consultant.userId,
+        name: consultantSlot.consultant.fullname,
+        specialization: consultantSlot.consultant.specialization,
+      });
+    }
+
+    // Scroll to consultant selection
+    setTimeout(() => {
+      consultantsRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }, 100);
+  };
+
+  // New: Handle consultant selection from the selection UI
+  const handleConsultantSelection = (consultantSlotData) => {
+    setSelectedSlot(consultantSlotData.slot);
+    setSelectedConsultant({
+      id: consultantSlotData.consultant.userId,
+      name: consultantSlotData.consultant.fullname,
+      specialization: consultantSlotData.consultant.specialization,
+    });
+    // Keep consultant selection visible so user can change their choice
+    // setShowConsultantSelection(false); // Remove this line
     setErrorMessage("");
   };
 
-  const formatTime = (timeString) => {
-    if (!timeString) return "Unknown time";
+  // New: Go back from consultant selection to time selection
+  const handleBackToTimeSelection = () => {
+    setShowConsultantSelection(false);
+    setSelectedTimeSlot(null);
+    setSelectedTime("");
+    setAvailableConsultantsForTimeSlot([]);
+    setSelectedSlot(null);
+    setSelectedConsultant(null);
+    setErrorMessage(""); // Also clear any error messages
+  };
 
-    try {
-      // Handle different time formats
+  // Modified: Group time slots by time range instead of showing individual slots
+  const getAvailableTimeSlotsForDate = (dateString) => {
+    // Ensure availableSlots is an array
+    const slotsArray = Array.isArray(availableSlots)
+      ? availableSlots
+      : [];
 
-      // Format 1: Full datetime format like "2025-06-25T19:00:00" or "2025-06-25T19:00:00.000Z"
-      if (timeString.includes("T")) {
-        const date = new Date(timeString);
-        if (date instanceof Date && !isNaN(date)) {
-          return date.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        }
+    const filteredSlots = slotsArray.filter((slot) => {
+      // Check both date and workDate fields since consultant creates with workDate
+      const slotDate = slot.workDate || slot.date;
+
+      // Extract date part from datetime format (2025-06-25T00:00:00 -> 2025-06-25)
+      const normalizedSlotDate = slotDate
+        ? slotDate.split("T")[0]
+        : null;
+
+      // Handle different status formats - numeric 0 probably means "available"
+      const isAvailable =
+        slot.status === 0 ||
+        slot.status === "available" ||
+        getStatusLower(slot.status) === "available";
+
+      // Check if slot date matches selected date
+      const dateMatches = normalizedSlotDate === dateString;
+
+      // Check if slot can be booked (must be at least 3 hours from now)
+      let canBook = true;
+      if (slot.startTime) {
+        const now = new Date();
+        const slotStartTime = new Date(slot.startTime);
+        const threeHoursFromNow = new Date(
+          now.getTime() + 3 * 60 * 60 * 1000
+        ); // Add 3 hours
+        canBook = slotStartTime >= threeHoursFromNow;
       }
 
-      // Format 2: Time only like "19:00:00" or "19:00"
-      if (timeString.includes(":")) {
-        const timeParts = timeString.split(":");
-        if (timeParts.length >= 2) {
-          const hours = parseInt(timeParts[0]);
-          const minutes = parseInt(timeParts[1]);
-          if (!isNaN(hours) && !isNaN(minutes)) {
-            const date = new Date();
-            date.setHours(hours, minutes, 0, 0);
-            return date.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-          }
-        }
-      }
+      return dateMatches && isAvailable && canBook;
+    });
 
-      // Format 3: Try to parse as a regular date string
-      const date = new Date(timeString);
-      if (date instanceof Date && !isNaN(date)) {
-        return date.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+    // Group slots by time range (startTime-endTime)
+    const groupedSlots = {};
+    filteredSlots.forEach((slot) => {
+      const timeKey = `${formatTime(slot.startTime)}-${formatTime(
+        slot.endTime
+      )}`;
+      if (!groupedSlots[timeKey]) {
+        groupedSlots[timeKey] = {
+          display: `${formatTime(slot.startTime)} - ${formatTime(
+            slot.endTime
+          )}`,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          slots: [],
+          consultantCount: 0,
+        };
       }
+      groupedSlots[timeKey].slots.push(slot);
+      groupedSlots[timeKey].consultantCount =
+        groupedSlots[timeKey].slots.length;
+    });
 
-      // If all parsing fails, return the original string
-      return timeString;
-    } catch (error) {
-      console.warn("Error formatting time:", timeString, error);
-      return timeString || "Unknown time";
-    }
+    // Convert to array and sort by time
+    const timeSlotGroups = Object.values(groupedSlots).sort(
+      (a, b) => {
+        return (
+          new Date(a.startTime).getTime() -
+          new Date(b.startTime).getTime()
+        );
+      }
+    );
+
+    return timeSlotGroups;
   };
 
   const canProceedToBooking = () => {
@@ -764,62 +924,6 @@ const Counseling = () => {
     }, 100);
   };
 
-  const getAvailableTimeSlotsForDate = (dateString) => {
-    // Ensure availableSlots is an array
-    const slotsArray = Array.isArray(availableSlots)
-      ? availableSlots
-      : [];
-
-    const filteredSlots = slotsArray
-      .filter((slot) => {
-        // Check both date and workDate fields since consultant creates with workDate
-        const slotDate = slot.workDate || slot.date;
-
-        // Extract date part from datetime format (2025-06-25T00:00:00 -> 2025-06-25)
-        const normalizedSlotDate = slotDate
-          ? slotDate.split("T")[0]
-          : null;
-
-        // Handle different status formats - numeric 0 probably means "available"
-        const isAvailable =
-          slot.status === 0 ||
-          slot.status === "available" ||
-          getStatusLower(slot.status) === "available";
-
-        // Check if slot date matches selected date
-        const dateMatches = normalizedSlotDate === dateString;
-
-        // Check if slot can be booked (must be at least 3 hours from now)
-        let canBook = true;
-        if (slot.startTime) {
-          const now = new Date();
-          const slotStartTime = new Date(slot.startTime);
-          const threeHoursFromNow = new Date(
-            now.getTime() + 3 * 60 * 60 * 1000
-          ); // Add 3 hours
-          canBook = slotStartTime >= threeHoursFromNow;
-        }
-
-        return dateMatches && isAvailable && canBook;
-      })
-      .map((slot) => ({
-        ...slot,
-        display: `${formatTime(slot.startTime)} - ${formatTime(
-          slot.endTime
-        )}`,
-        sortTime: slot.startTime, // Add sort key
-      }))
-      .sort((a, b) => {
-        // Sort by start time chronologically
-        return (
-          new Date(a.startTime).getTime() -
-          new Date(b.startTime).getTime()
-        );
-      });
-
-    return filteredSlots;
-  };
-
   const clearMessages = () => {
     setErrorMessage("");
     setSuccessMessage("");
@@ -829,7 +933,10 @@ const Counseling = () => {
     setSelectedSlot(null);
     setSelectedDate("");
     setSelectedTime("");
+    setSelectedTimeSlot(null);
     setSelectedConsultant(null);
+    setShowConsultantSelection(false);
+    setAvailableConsultantsForTimeSlot([]);
     setBookingForm({ note: "", attachments: [] });
     setFormErrors({});
     clearMessages();
@@ -895,12 +1002,11 @@ const Counseling = () => {
         {!isAuthenticated && (
           <div className="alert alert-info">
             <FontAwesomeIcon icon={faInfoCircle} />
-            Please log in to book appointments or view your booking
-            history.
+            Login mới đặt được lịch.
             <button
               onClick={() => (window.location.href = "/login")}
               className="btn-link">
-              Go to Login
+              Tới Login.
             </button>
           </div>
         )}
@@ -992,25 +1098,27 @@ const Counseling = () => {
                       <div className="times-grid">
                         {getAvailableTimeSlotsForDate(
                           selectedDate
-                        ).map((slot, index) => (
-                          <button
-                            key={index}
-                            className={`time-btn ${
-                              selectedSlot?.id === slot.id
-                                ? "selected"
-                                : ""
-                            } ${slot.isPast ? "past" : ""} ${
-                              isConsultant() ? "consultant-view" : ""
-                            }`}
-                            onClick={() =>
-                              !slot.isPast &&
-                              !isConsultant() &&
-                              handleTimeSelection(slot)
-                            }
-                            disabled={slot.isPast || isConsultant()}>
-                            {slot.display}
-                            <small>{slot.consultantName}</small>
-                          </button>
+                        ).map((timeSlotGroup, index) => (
+                          <div key={index} className="time-group">
+                            <button
+                              className={`time-btn ${
+                                selectedTimeSlot?.display ===
+                                timeSlotGroup.display
+                                  ? "selected"
+                                  : ""
+                              } ${
+                                timeSlotGroup.consultantCount > 1
+                                  ? "multiple-consultants"
+                                  : ""
+                              }`}
+                              onClick={() =>
+                                !isConsultant() &&
+                                handleTimeSelection(timeSlotGroup)
+                              }
+                              disabled={isConsultant()}>
+                              {timeSlotGroup.display}
+                            </button>
+                          </div>
                         ))}
                       </div>
                       {getAvailableTimeSlotsForDate(selectedDate)
@@ -1024,6 +1132,117 @@ const Counseling = () => {
                           {formErrors.slot}
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* NEW: Consultant Selection UI */}
+                  {showConsultantSelection && selectedTimeSlot && (
+                    <div
+                      className="consultant-selection fade-in"
+                      ref={consultantsRef}>
+                      <div className="consultant-selection-header">
+                        <button
+                          className="back-btn"
+                          onClick={handleBackToTimeSelection}>
+                          <FontAwesomeIcon icon={faArrowLeft} />
+                          Quay lại chọn giờ
+                        </button>
+                        <h4>
+                          <FontAwesomeIcon icon={faUser} />
+                          {selectedConsultant
+                            ? "Đã chọn tư vấn viên"
+                            : "Chọn tư vấn viên"}
+                        </h4>
+                        <p className="time-slot-info">
+                          Khung giờ: {selectedTimeSlot.display} -
+                          {availableConsultantsForTimeSlot.length ===
+                          1
+                            ? ` ${availableConsultantsForTimeSlot[0].consultant.fullname}`
+                            : availableConsultantsForTimeSlot.length <=
+                              2
+                            ? ` ${availableConsultantsForTimeSlot
+                                .map((c) => c.consultant.fullname)
+                                .join(", ")}`
+                            : ` ${
+                                availableConsultantsForTimeSlot[0]
+                                  .consultant.fullname
+                              } và ${
+                                availableConsultantsForTimeSlot.length -
+                                1
+                              } tư vấn viên khác`}
+                        </p>
+                      </div>
+
+                      <div className="consultants-grid">
+                        {availableConsultantsForTimeSlot.map(
+                          (consultantSlotData, index) => (
+                            <div
+                              key={index}
+                              className={`consultant-selection-card ${
+                                selectedConsultant?.id ===
+                                consultantSlotData.consultant.userId
+                                  ? "selected"
+                                  : ""
+                              }`}
+                              onClick={() =>
+                                handleConsultantSelection(
+                                  consultantSlotData
+                                )
+                              }>
+                              <div className="consultant-avatar">
+                                <img
+                                  src={
+                                    consultantSlotData.consultant
+                                      .profilePicture ||
+                                    "/default-avatar.png"
+                                  }
+                                  alt={
+                                    consultantSlotData.consultant
+                                      .fullname
+                                  }
+                                  onError={(e) => {
+                                    e.target.src =
+                                      "/default-avatar.png";
+                                  }}
+                                />
+                              </div>
+                              <div className="consultant-details">
+                                <h5 className="consultant-name">
+                                  {
+                                    consultantSlotData.consultant
+                                      .fullname
+                                  }
+                                </h5>
+                                <p className="consultant-specialty">
+                                  <strong>Chuyên môn:</strong>{" "}
+                                  {consultantSlotData.consultant
+                                    .specialization ||
+                                    "Chưa cập nhật"}
+                                </p>
+                                {consultantSlotData.consultant
+                                  .degree && (
+                                  <p className="consultant-degree">
+                                    <strong>Bằng cấp:</strong>{" "}
+                                    {
+                                      consultantSlotData.consultant
+                                        .degree
+                                    }
+                                  </p>
+                                )}
+                              </div>
+                              <div
+                                className={`selection-indicator ${
+                                  selectedConsultant?.id ===
+                                  consultantSlotData.consultant.userId
+                                    ? "selected"
+                                    : ""
+                                }`}>
+                                <FontAwesomeIcon icon={faCheck} />
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1068,6 +1287,29 @@ const Counseling = () => {
                         <FontAwesomeIcon icon={faUser} />
                         <span>Tư vấn viên:</span>{" "}
                         {selectedConsultant.name}
+                        {selectedConsultant.specialization && (
+                          <small className="consultant-specialty-display">
+                            ({selectedConsultant.specialization})
+                          </small>
+                        )}
+                      </div>
+                    ) : showConsultantSelection ? (
+                      <div className="selection-item in-progress">
+                        <FontAwesomeIcon icon={faUser} />
+                        <span>Tư vấn viên:</span> Đang chọn...
+                        <small>
+                          {availableConsultantsForTimeSlot.length <= 2
+                            ? availableConsultantsForTimeSlot
+                                .map((c) => c.consultant.fullname)
+                                .join(", ")
+                            : `${
+                                availableConsultantsForTimeSlot[0]
+                                  ?.consultant.fullname
+                              } và ${
+                                availableConsultantsForTimeSlot.length -
+                                1
+                              } khác`}
+                        </small>
                       </div>
                     ) : (
                       <div className="selection-item">
@@ -1092,6 +1334,11 @@ const Counseling = () => {
                       <>
                         <FontAwesomeIcon icon={faCheck} />
                         Đặt Lịch Hẹn
+                      </>
+                    ) : showConsultantSelection && selectedTime ? (
+                      <>
+                        <FontAwesomeIcon icon={faInfoCircle} />
+                        Chọn tư vấn viên để tiếp tục
                       </>
                     ) : (
                       <>

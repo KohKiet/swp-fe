@@ -28,6 +28,7 @@ export const API_CONFIG = {
     // Admin endpoints
     ADMIN_USERS: "/api/admin/users",
     ADMIN_USER_BY_ID: "/api/admin/users/{id}",
+    ADMIN_UPDATE_ROLE: "/api/Admin/update-role/{userId}",
     ADMIN_DASHBOARD: "/api/admin/dashboard",
     ADMIN_STATS: "/api/admin/stats",
     ADMIN_POSTS: "/api/admin/posts",
@@ -37,7 +38,7 @@ export const API_CONFIG = {
     ADMIN_POST_REJECT: "/api/admin/posts/{id}/reject",
 
     // Role endpoints
-    ROLE_ALL: "/api/role",
+    ROLE_ALL: "/api/Role/all",
     ROLE_BY_ID: "/api/role/{id}",
     ROLE_USER: "/api/role/user/{userId}",
     ROLE_ASSIGN: "/api/role/assign",
@@ -72,6 +73,7 @@ export const API_CONFIG = {
     QUIZ_BY_ID: "/api/Quiz/{quizId}",
     QUIZ_BY_LESSON: "/api/Quiz/lesson/{lessonId}",
     QUIZ_BY_COURSE: "/api/Quiz/course/{courseId}",
+    QUIZ_START_SESSION: "/api/Quiz/{quizId}/start",
 
     // Question endpoints
     QUESTION_ALL: "/api/Question",

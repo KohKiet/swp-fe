@@ -567,32 +567,48 @@ class CourseService {
   // ==================== QUIZ RESULTS ENDPOINTS ====================
 
   // Submit quiz answers
-  async submitQuizAnswers({ quizId, answers }) {
-    // Tạo sessionId mới mỗi lần nộp (nếu backend yêu cầu)
-    const sessionId =
-      window.crypto && window.crypto.randomUUID
-        ? window.crypto.randomUUID()
-        : Date.now().toString();
-    const submittedAt = new Date().toISOString();
-    const body = {
-      quizId,
-      sessionId,
-      userAnswers: answers.map((a) => ({
-        questionId: a.questionId,
-        answerId: a.selectedAnswerId,
-        isSelected: true,
-      })),
-      timeSpentMinutes: 0,
-      notes: "",
-      submittedAt,
-    };
-    return this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.QUIZ_RESULT_SUBMIT,
-      {
-        method: "POST",
-        body: JSON.stringify(body),
+  async submitQuizAnswers({
+    quizId,
+    answers,
+    timeSpent = 30,
+    sessionId = null,
+  }) {
+    try {
+      // Nếu không có sessionId, bắt đầu quiz session để lấy sessionId
+      let actualSessionId = sessionId;
+      if (!actualSessionId) {
+        const sessionResponse = await this.startQuizSession(quizId);
+        if (!sessionResponse.success) {
+          throw new Error("Failed to start quiz session");
+        }
+        actualSessionId = sessionResponse.data.sessionId;
       }
-    );
+
+      const submittedAt = new Date().toISOString();
+      const body = {
+        quizId,
+        sessionId: actualSessionId,
+        userAnswers: answers.map((a) => ({
+          questionId: a.questionId,
+          answerId: a.selectedAnswerId || a.answerId,
+          isSelected: true,
+        })),
+        timeSpentMinutes: timeSpent,
+        notes: "Quiz submission",
+        submittedAt,
+      };
+
+      return this.authenticatedRequest(
+        API_CONFIG.ENDPOINTS.QUIZ_RESULT_SUBMIT,
+        {
+          method: "POST",
+          body: JSON.stringify(body),
+        }
+      );
+    } catch (error) {
+      console.error("Error submitting quiz:", error);
+      throw error;
+    }
   }
 
   // Get quiz results by quiz
@@ -940,7 +956,10 @@ class CourseService {
 
   async getQuizResultsByUserQuiz(quizId) {
     return await this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.QUIZ_RESULT_BY_USER_QUIZ.replace("{quizId}", quizId)
+      API_CONFIG.ENDPOINTS.QUIZ_RESULT_BY_USER_QUIZ.replace(
+        "{quizId}",
+        quizId
+      )
     );
   }
 }

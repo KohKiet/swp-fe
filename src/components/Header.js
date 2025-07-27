@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -15,8 +15,27 @@ import { useAuth } from "../context/AuthContext";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { currentUser, logout, isAdmin, isConsultant } = useAuth();
+  const {
+    currentUser,
+    logout,
+    isAdmin,
+    isConsultant,
+    refreshUserData,
+  } = useAuth();
   const navigate = useNavigate();
+  const hasRefreshedRef = useRef(false);
+
+  // Effect to refresh user data only once on component mount
+  useEffect(() => {
+    if (currentUser && refreshUserData && !hasRefreshedRef.current) {
+      // Only refresh if we're missing important data like profile picture
+      if (!currentUser.profilePicture) {
+        hasRefreshedRef.current = true;
+        refreshUserData();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -30,6 +49,19 @@ const Header = () => {
       console.error("Logout error:", error);
       navigate("/");
     }
+  };
+
+  // Function to get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (!currentUser) return "";
+    const fullname = currentUser.fullname || currentUser.email || "";
+    if (fullname.includes(" ")) {
+      // Get first letter of first and last name
+      const names = fullname.split(" ");
+      return names[0][0] + names[names.length - 1][0];
+    }
+    // Get first two letters if no space
+    return fullname.substring(0, 2);
   };
 
   // Function to check if user is a regular member (not admin or consultant)
@@ -65,25 +97,26 @@ const Header = () => {
                   Khóa Học
                 </Link>
               </li>
-
               <li className="nav-item">
                 <Link to="/counseling" className="nav-link">
                   Đặt Lịch Tư Vấn
                 </Link>
               </li>
-
               <li className="nav-item">
                 <Link to="/surveys" className="nav-link">
                   Khảo Sát
                 </Link>
               </li>
-
               <li className="nav-item">
                 <Link to="/programs" className="nav-link">
                   Sự Kiện
                 </Link>
               </li>
-
+              <li className="nav-item">
+                <a href="/consultants" className="nav-link">
+                  Chuyên gia tư vấn
+                </a>
+              </li>
               {isMember() && (
                 <li className="nav-item">
                   <Link to="/my-appointments" className="nav-link">
@@ -91,28 +124,18 @@ const Header = () => {
                   </Link>
                 </li>
               )}
-
               {isConsultant() && (
                 <li className="nav-item">
                   <Link to="/consult-time" className="nav-link">
-                    <FontAwesomeIcon icon={faClock} /> Quản Lý Lịch
+                    Quản Lý Lịch
                   </Link>
                 </li>
               )}
-
               {isAdmin() && (
                 <li className="nav-item">
                   <Link to="/dashboard" className="nav-link">
-                    <FontAwesomeIcon icon={faTachometerAlt} />{" "}
-                    Dashboard
-                  </Link>
-                </li>
-              )}
-
-              {isAdmin() && (
-                <li className="nav-item">
-                  <Link to="/admin/courses" className="nav-link">
-                    Course Management
+                    {" "}
+                    Bảng điều khiển
                   </Link>
                 </li>
               )}
@@ -142,10 +165,32 @@ const Header = () => {
                         src={currentUser.profilePicture}
                         alt="Profile"
                         className="user-profile-pic"
+                        onError={(e) => {
+                          // Fallback to initials if image fails to load
+                          e.target.style.display = "none";
+                          e.target.parentNode.querySelector(
+                            ".user-initials"
+                          ).style.display = "flex";
+                        }}
                       />
-                    ) : (
-                      <FontAwesomeIcon icon={faUser} />
-                    )}
+                    ) : null}
+                    <div
+                      className="user-initials"
+                      style={{
+                        display: currentUser.profilePicture
+                          ? "none"
+                          : "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "100%",
+                        height: "100%",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        textTransform: "uppercase",
+                        color: "#3f51b5",
+                      }}>
+                      {getUserInitials()}
+                    </div>
                   </div>
                   <span className="user-name">
                     {getDisplayName()}
@@ -168,22 +213,13 @@ const Header = () => {
                       <Link
                         to="/consult-time"
                         className="dropdown-item">
-                        <FontAwesomeIcon icon={faClock} /> Quản Lý
-                        Lịch
+                        Quản Lý Lịch
                       </Link>
                     </>
                   )}
                   {isAdmin() && (
                     <Link to="/dashboard" className="dropdown-item">
-                      <FontAwesomeIcon icon={faTachometerAlt} />{" "}
-                      Dashboard
-                    </Link>
-                  )}
-                  {isAdmin() && (
-                    <Link
-                      to="/admin/courses"
-                      className="dropdown-item">
-                      Course Management
+                      Bảng thông tin
                     </Link>
                   )}
                   <button

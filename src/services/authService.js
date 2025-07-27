@@ -3,6 +3,7 @@ import { API_CONFIG } from "./apiConfig";
 class AuthService {
   constructor() {
     this.baseURL = API_CONFIG.BASE_URL;
+    this.profilePromise = null; // Cache the current profile promise
   }
 
   async login(email, password) {
@@ -58,6 +59,15 @@ class AuthService {
         const dateOfBirth =
           userData.DateOfBirth || userData.dateOfBirth || "";
         const address = userData.Address || userData.address || "";
+        const profilePicture =
+          userData.ProfilePicture ||
+          userData.profilePicture ||
+          userData.avatar ||
+          userData.Profile_Picture ||
+          "";
+        const specialization =
+          userData.Specialization || userData.specialization || "";
+        const degree = userData.Degree || userData.degree || "";
 
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("refreshToken", refreshToken);
@@ -70,14 +80,46 @@ class AuthService {
         localStorage.setItem("userDateOfBirth", dateOfBirth);
         localStorage.setItem("userAddress", address);
 
+        // Save profile picture if available from login response
+        if (profilePicture) {
+          localStorage.setItem("userProfilePicture", profilePicture);
+        }
+
+        // Save specialization and degree if available from login response
+        if (specialization) {
+          localStorage.setItem("userSpecialization", specialization);
+        }
+        if (degree) {
+          localStorage.setItem("userDegree", degree);
+        }
+
         console.log(
           "AuthService - User authenticated successfully:",
           {
             email: email,
             fullname: fullname,
             role: role,
+            profilePicture: profilePicture,
+            specialization: specialization,
+            degree: degree,
           }
         );
+
+        // Debug: Log all user data fields to see available profile picture fields
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            "AuthService - Full userData from login:",
+            userData
+          );
+        }
+
+        // Fetch additional profile data including profile picture
+        try {
+          await this.fetchUserProfile();
+        } catch (profileError) {
+          console.warn("Could not fetch profile data:", profileError);
+          // Don't fail login if profile fetch fails
+        }
       } else {
         console.error(
           "AuthService - No access token found in response"
@@ -557,6 +599,8 @@ class AuthService {
       "userDateOfBirth",
       "userAddress",
       "userProfilePicture",
+      "userSpecialization",
+      "userDegree",
     ];
 
     authKeys.forEach((key) => {
@@ -592,6 +636,8 @@ class AuthService {
       dateOfBirth: localStorage.getItem("userDateOfBirth"),
       address: localStorage.getItem("userAddress"),
       profilePicture: localStorage.getItem("userProfilePicture"),
+      specialization: localStorage.getItem("userSpecialization"),
+      degree: localStorage.getItem("userDegree"),
       accessToken: localStorage.getItem("accessToken"),
     };
   }
@@ -648,6 +694,207 @@ class AuthService {
     } catch (error) {
       console.error("Authenticated request error:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Fetch user profile data from API
+   * @returns {Promise} - API response with profile data
+   */
+  async fetchUserProfile() {
+    // If already fetching, return the cached promise
+    if (this.profilePromise) {
+      return this.profilePromise;
+    }
+
+    // Cache the entire execution
+    this.profilePromise = (async () => {
+      try {
+        const response = await this.authenticatedRequest(
+          `${this.baseURL}/api/User/me`,
+          { method: "GET" }
+        );
+
+        // Parse response if it's not already parsed
+        let responseData;
+        if (response.ok) {
+          responseData = await response.json();
+        } else {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Handle the API response structure: { success: true, data: { ... } }
+        if (responseData.success && responseData.data) {
+          const profileData = responseData.data;
+
+          // Update localStorage with profile picture if available
+          if (profileData.profilePicture) {
+            localStorage.setItem(
+              "userProfilePicture",
+              profileData.profilePicture
+            );
+          }
+
+          // Update other profile fields if they exist
+          if (profileData.fullname) {
+            localStorage.setItem(
+              "userFullname",
+              profileData.fullname
+            );
+          }
+          if (profileData.phone) {
+            localStorage.setItem("userPhone", profileData.phone);
+          }
+          if (profileData.gender) {
+            localStorage.setItem("userGender", profileData.gender);
+          }
+          if (profileData.dateOfBirth) {
+            localStorage.setItem(
+              "userDateOfBirth",
+              profileData.dateOfBirth
+            );
+          }
+          if (profileData.address) {
+            localStorage.setItem("userAddress", profileData.address);
+          }
+          if (profileData.specialization) {
+            localStorage.setItem(
+              "userSpecialization",
+              profileData.specialization
+            );
+          }
+          if (profileData.degree) {
+            localStorage.setItem("userDegree", profileData.degree);
+          }
+          if (profileData.userId) {
+            localStorage.setItem("userId", profileData.userId);
+          }
+          if (profileData.email) {
+            localStorage.setItem("userEmail", profileData.email);
+          }
+
+          return { success: true, data: profileData };
+        }
+
+        return { success: false, error: "No profile data received" };
+      } catch (error) {
+        return { success: false, error: error.message };
+      } finally {
+        // Clear the promise after completion (success or failure)
+        this.profilePromise = null;
+      }
+    })();
+
+    return this.profilePromise;
+  }
+
+  /**
+   * Update user profile
+   * @param {object} profileData - Profile data to update
+   * @returns {Promise} - API response
+   */
+  async updateProfile(profileData) {
+    try {
+      const response = await this.authenticatedRequest(
+        `${this.baseURL}/api/User/profile`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            fullname: profileData.fullname,
+            phone: profileData.phone,
+            gender: profileData.gender,
+            dateOfBirth: profileData.dateOfBirth,
+            address: profileData.address,
+            specialization: profileData.specialization,
+            degree: profileData.degree,
+            profilePicture: profileData.profilePicture,
+          }),
+        }
+      );
+
+      // Parse response if it's not already parsed
+      let responseData;
+      if (response.ok) {
+        responseData = await response.json();
+      } else {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Handle the API response structure: { success: true, data: { ... } }
+      if (responseData.success && responseData.data) {
+        const updatedProfileData = responseData.data;
+
+        // Debug: Log updated profile data
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            "AuthService - Profile updated successfully:",
+            updatedProfileData
+          );
+        }
+
+        // Update localStorage with all the updated profile data
+        if (updatedProfileData.fullname) {
+          localStorage.setItem(
+            "userFullname",
+            updatedProfileData.fullname
+          );
+        }
+        if (updatedProfileData.phone) {
+          localStorage.setItem("userPhone", updatedProfileData.phone);
+        }
+        if (updatedProfileData.gender) {
+          localStorage.setItem(
+            "userGender",
+            updatedProfileData.gender
+          );
+        }
+        if (updatedProfileData.dateOfBirth) {
+          localStorage.setItem(
+            "userDateOfBirth",
+            updatedProfileData.dateOfBirth
+          );
+        }
+        if (updatedProfileData.address) {
+          localStorage.setItem(
+            "userAddress",
+            updatedProfileData.address
+          );
+        }
+        if (updatedProfileData.profilePicture) {
+          localStorage.setItem(
+            "userProfilePicture",
+            updatedProfileData.profilePicture
+          );
+        }
+        if (updatedProfileData.specialization) {
+          localStorage.setItem(
+            "userSpecialization",
+            updatedProfileData.specialization
+          );
+        }
+        if (updatedProfileData.degree) {
+          localStorage.setItem(
+            "userDegree",
+            updatedProfileData.degree
+          );
+        }
+        if (updatedProfileData.userId) {
+          localStorage.setItem("userId", updatedProfileData.userId);
+        }
+        if (updatedProfileData.email) {
+          localStorage.setItem("userEmail", updatedProfileData.email);
+        }
+
+        return { success: true, data: updatedProfileData };
+      }
+
+      return {
+        success: false,
+        error: responseData.message || "Failed to update profile",
+      };
+    } catch (error) {
+      console.error("Update profile error:", error);
+      return { success: false, error: error.message };
     }
   }
 }

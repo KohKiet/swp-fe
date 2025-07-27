@@ -3,6 +3,7 @@ import React, {
   useState,
   useContext,
   useEffect,
+  useRef,
 } from "react";
 import { authService } from "../services";
 
@@ -16,6 +17,8 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const refreshingRef = useRef(false);
+  const startupFetchRef = useRef(false);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -23,6 +26,27 @@ export const AuthProvider = ({ children }) => {
     if (user) {
       setCurrentUser(user);
       setIsAuthenticated(true);
+
+      // Fetch fresh profile data including profile picture (only once during startup)
+      if (!startupFetchRef.current) {
+        startupFetchRef.current = true;
+        (async () => {
+          try {
+            const profileResult =
+              await authService.fetchUserProfile();
+            if (profileResult.success) {
+              // Update current user with fresh data from localStorage
+              const updatedUser = authService.getCurrentUser();
+              setCurrentUser(updatedUser);
+            }
+          } catch (error) {
+            console.error(
+              "Error fetching profile on startup:",
+              error
+            );
+          }
+        })();
+      }
     }
     setLoading(false);
   }, []);
@@ -92,10 +116,10 @@ export const AuthProvider = ({ children }) => {
     try {
       const result = await authService.updateProfile(userData);
       if (result.success) {
-        const user = authService.getCurrentUser();
-        setCurrentUser(user);
-        setIsAuthenticated(true);
-        return { success: true };
+        // Get the updated user data from localStorage and update context
+        const updatedUser = authService.getCurrentUser();
+        setCurrentUser(updatedUser);
+        return { success: true, data: result.data };
       } else {
         return { success: false, error: result.error };
       }
@@ -137,6 +161,47 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const refreshUserData = async () => {
+    if (!isAuthenticated || refreshingRef.current) return;
+
+    // Check if we already have essential data (avoid unnecessary API calls)
+    const currentUserData = authService.getCurrentUser();
+    if (
+      currentUserData &&
+      currentUserData.fullname &&
+      currentUserData.phone
+    ) {
+      // For consultants, check if we have specialization and degree
+      const isConsultantRole =
+        currentUserData.role === "consultant" ||
+        currentUserData.roleName === "consultant";
+      if (
+        isConsultantRole &&
+        (!currentUserData.specialization || !currentUserData.degree)
+      ) {
+        // Need to fetch consultant-specific data
+      } else if (!isConsultantRole) {
+        // Regular user has basic data, no need to refresh
+        return;
+      }
+    }
+
+    refreshingRef.current = true;
+
+    try {
+      const profileResult = await authService.fetchUserProfile();
+      if (profileResult.success) {
+        // Update current user with fresh data from localStorage
+        const updatedUser = authService.getCurrentUser();
+        setCurrentUser(updatedUser);
+      }
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+    } finally {
+      refreshingRef.current = false;
+    }
+  };
+
   const isAdmin = () => {
     return currentUser && currentUser.role === "admin";
   };
@@ -151,12 +216,14 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     currentUser,
+    setCurrentUser,
     login,
     register,
     logout,
     updateProfile,
     changePassword,
     refreshToken,
+    refreshUserData, // Add the new method
     isAuthenticated,
     isAdmin,
     isConsultant,

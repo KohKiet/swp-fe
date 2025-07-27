@@ -1,4 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -57,6 +62,8 @@ const ProfilePage = () => {
     address: "",
     dateOfBirth: "",
     profilePicture: null,
+    specialization: "",
+    degree: "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -74,30 +81,32 @@ const ProfilePage = () => {
     dashboard: null,
   });
 
-  // Track if we've attempted to load profile to prevent repeated calls
-  const [profileLoadAttempted, setProfileLoadAttempted] =
-    useState(false);
+  // Track if profile has been loaded to prevent multiple calls
+  const profileLoadedRef = useRef(false);
+  const mountedRef = useRef(false);
 
   // API Functions for User Profile Endpoints
   const fetchUserProfile = async (silent = false) => {
     setLoading((prev) => ({ ...prev, profile: true }));
     try {
-      const response = await authService.authenticatedRequest(
-        `${API_CONFIG.BASE_URL}/api/userprofile/me`,
-        { method: "GET" }
-      );
+      // Use AuthService fetchUserProfile which calls /api/User/me correctly
+      const result = await authService.fetchUserProfile();
 
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, data };
+      if (result.success && result.data) {
+        // Update current user with fresh data from API
+        const updatedUser = authService.getCurrentUser();
+        setCurrentUser(updatedUser);
+        return { success: true, data: result.data };
       } else {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || "Failed to fetch profile"
-        );
+        if (!silent) {
+          setMessage({
+            type: "error",
+            text: `Error loading profile: ${result.error}`,
+          });
+        }
+        return { success: false, error: result.error };
       }
     } catch (error) {
-      console.error("Fetch profile error:", error);
       if (!silent) {
         setMessage({
           type: "error",
@@ -261,34 +270,8 @@ const ProfilePage = () => {
     }
   };
 
-  const updateUserProfile = async (profileData) => {
-    setLoading((prev) => ({ ...prev, profile: true }));
-    try {
-      const response = await authService.authenticatedRequest(
-        `${API_CONFIG.BASE_URL}/api/userprofile/me`,
-        {
-          method: "PUT",
-          body: JSON.stringify(profileData),
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, data };
-      } else {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || "Failed to update profile"
-        );
-      }
-    } catch (error) {
-      console.error("Update profile error:", error);
-      return { success: false, error: error.message };
-    } finally {
-      setLoading((prev) => ({ ...prev, profile: false }));
-    }
-  };
-
+  // Note: Profile updates now use AuthService.updateProfile() method
+  // which handles the /api/User/profile PUT request with proper response parsing
   const fetchUserById = async (userId) => {
     try {
       const response = await authService.authenticatedRequest(
@@ -348,40 +331,46 @@ const ProfilePage = () => {
 
   // Load initial profile data when component mounts
   const loadInitialProfile = useCallback(async () => {
-    if (currentUser && !loading.profile && !profileLoadAttempted) {
-      setProfileLoadAttempted(true);
+    // Only load once and only if user exists, not already loading, and component is mounted
+    if (
+      currentUser &&
+      !loading.profile &&
+      !profileLoadedRef.current &&
+      mountedRef.current
+    ) {
+      profileLoadedRef.current = true;
 
-      // Only fetch if we haven't loaded profile data yet
-      const hasProfileData =
-        currentUser.fullname && currentUser.phone;
-      if (!hasProfileData) {
-        try {
-          const result = await fetchUserProfile(true); // Silent mode
-          if (result.success && result.data && result.data.data) {
-            const profileFromApi = result.data.data;
-            // Update current user with API data if available
-            const updatedUser = { ...currentUser, ...profileFromApi };
-            setCurrentUser(updatedUser);
-          } else {
-            // If API call fails, don't show error message on profile tab, just log it
-            console.warn(
-              "API FAILLL:",
-              result.error
-            );
-          }
-        } catch (error) {
-          console.warn(
-            "Profile loading failed, using cached user data:",
-            error
-          );
+      try {
+        const result = await fetchUserProfile(true); // Silent mode
+        if (!result.success) {
+          // Reset flag on failure so it can try again
+          profileLoadedRef.current = false;
         }
+      } catch (error) {
+        // Reset flag on error so it can try again
+        profileLoadedRef.current = false;
       }
     }
-  }, [currentUser, loading.profile, profileLoadAttempted]); // Add profileLoadAttempted to dependencies
+  }, [currentUser?.email, loading.profile]);
 
   useEffect(() => {
     loadInitialProfile();
   }, [loadInitialProfile]);
+
+  // Set mounted flag and cleanup
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // Reset profile loaded flag when user changes (for logout/login scenarios)
+  useEffect(() => {
+    if (currentUser?.email) {
+      profileLoadedRef.current = false;
+    }
+  }, [currentUser?.email]);
 
   // Update profileData when currentUser changes
   useEffect(() => {
@@ -395,6 +384,8 @@ const ProfilePage = () => {
           ? currentUser.dateOfBirth.split("T")[0]
           : "",
         profilePicture: currentUser.profilePicture || null,
+        specialization: currentUser.specialization || "",
+        degree: currentUser.degree || "",
       });
     }
   }, [currentUser]);
@@ -431,17 +422,22 @@ const ProfilePage = () => {
 
   const handleSaveProfile = async () => {
     try {
-      // First, try to save to the API
-      const apiResult = await updateUserProfile(profileData);
+      // Chỉ gửi specialization và degree nếu là consultant
+      let dataToSend = { ...profileData };
+      if (
+        !(
+          currentUser.roleName === "consultant" ||
+          currentUser.role === "consultant"
+        )
+      ) {
+        delete dataToSend.specialization;
+        delete dataToSend.degree;
+      }
 
-      if (apiResult.success) {
-        // Update the AuthContext's currentUser with the new data
-        const updatedUser = { ...currentUser, ...profileData };
-        setCurrentUser(updatedUser);
+      // Use AuthContext updateProfile which now handles the API call properly
+      const result = await updateProfile(dataToSend);
 
-        // Also update the local updateProfile function to persist to localStorage
-        await updateProfile(profileData);
-
+      if (result.success) {
         setMessage({
           type: "success",
           text: "Cập nhật hồ sơ thành công",
@@ -451,52 +447,19 @@ const ProfilePage = () => {
         // Try to refresh the profile data from API (silent mode)
         try {
           await fetchUserProfile(true);
-        } catch (refreshError) {
-          console.warn(
-            "Profile refresh failed after save:",
-            refreshError
-          );
-        }
+        } catch (refreshError) {}
       } else {
-        // API failed, but still save locally
-        console.warn(
-          "API save failed, saving locally:",
-          apiResult.error
-        );
-
-        // Update the AuthContext's currentUser with the new data
-        const updatedUser = { ...currentUser, ...profileData };
-        setCurrentUser(updatedUser);
-
-        // Update localStorage
-        await updateProfile(profileData);
-
-        setMessage({
-          type: "success",
-          text: "Đã lưu hồ sơ cục bộ (API tạm thời không khả dụng)",
-        });
-        setIsEditing(false);
-      }
-    } catch (error) {
-      console.error("Profile update error:", error);
-
-      // Fallback: save locally even if API completely fails
-      try {
-        const updatedUser = { ...currentUser, ...profileData };
-        setCurrentUser(updatedUser);
-        await updateProfile(profileData);
-
-        setMessage({
-          type: "success",
-          text: "Đã lưu hồ sơ cục bộ (API tạm thời không khả dụng)",
-        });
-        setIsEditing(false);
-      } catch (localError) {
         setMessage({
           type: "error",
-          text: "Có lỗi xảy ra khi cập nhật hồ sơ",
+          text: result.error || "Có lỗi xảy ra khi cập nhật hồ sơ",
         });
       }
+    } catch (error) {
+      console.error("Profile save error:", error);
+      setMessage({
+        type: "error",
+        text: "Có lỗi xảy ra khi cập nhật hồ sơ",
+      });
     }
     setTimeout(() => setMessage({ type: "", text: "" }), 3000);
   };
@@ -556,6 +519,8 @@ const ProfilePage = () => {
           ? currentUser.dateOfBirth.split("T")[0]
           : "",
         profilePicture: currentUser.profilePicture || null,
+        specialization: currentUser.specialization || "",
+        degree: currentUser.degree || "",
       });
     }
     setIsEditing(false);
@@ -574,6 +539,33 @@ const ProfilePage = () => {
     } catch (error) {
       console.error("Logout error:", error);
       navigate("/");
+    }
+  };
+
+  // Hàm chuyển trạng thái enrollment sang tiếng Việt
+  const getEnrollmentStatusText = (status) => {
+    if (!status) return "Không xác định";
+    const s = status.toLowerCase();
+    switch (s) {
+      case "inprogress":
+      case "enrolled":
+      case "active":
+      case "studying":
+        return "Đang học";
+      case "completed":
+      case "done":
+        return "Đã hoàn thành";
+      case "pending":
+        return "Chờ xác nhận";
+      case "cancelled":
+      case "canceled":
+        return "Đã hủy";
+      case "failed":
+        return "Không đạt";
+      case "expired":
+        return "Hết hạn";
+      default:
+        return status;
     }
   };
 
@@ -642,10 +634,6 @@ const ProfilePage = () => {
                           <h4>
                             {enrollment.courseTitle || "Tên khóa học"}
                           </h4>
-                          <p>
-                            {enrollment.courseDescription ||
-                              "Mô tả khóa học"}
-                          </p>
                           <div className="enrollment-details">
                             <span className="enrollment-date">
                               Đăng ký:{" "}
@@ -657,10 +645,9 @@ const ProfilePage = () => {
                             </span>
                             <span className="enrollment-status">
                               Trạng thái:{" "}
-                              {enrollment.status || "Đang học"}
-                            </span>
-                            <span className="enrollment-progress">
-                              Tiến độ: {enrollment.progress || 0}%
+                              {getEnrollmentStatusText(
+                                enrollment.status
+                              )}
                             </span>
                           </div>
                         </div>
@@ -781,102 +768,6 @@ const ProfilePage = () => {
           </div>
         );
 
-      case "dashboard":
-        return (
-          <div className="profile-section">
-            <h3>
-              <FontAwesomeIcon icon={faChartLine} /> Thống kê
-            </h3>
-            {loading.dashboard ? (
-              <div className="loading">
-                <FontAwesomeIcon icon={faSpinner} spin /> Đang tải...
-              </div>
-            ) : (
-              <div className="dashboard-stats">
-                {userProfileData.dashboard ? (
-                  <div className="stats-grid">
-                    <div className="stat-item">
-                      <div className="stat-icon">
-                        <FontAwesomeIcon icon={faGraduationCap} />
-                      </div>
-                      <div className="stat-info">
-                        <h4>
-                          {userProfileData.dashboard
-                            .totalEnrollments || 0}
-                        </h4>
-                        <p>Khóa học đã đăng ký</p>
-                      </div>
-                    </div>
-                    <div className="stat-item">
-                      <div className="stat-icon">
-                        <FontAwesomeIcon icon={faMedal} />
-                      </div>
-                      <div className="stat-info">
-                        <h4>
-                          {userProfileData.dashboard.totalBadges || 0}
-                        </h4>
-                        <p>Huy hiệu đạt được</p>
-                      </div>
-                    </div>
-                    <div className="stat-item">
-                      <div className="stat-icon">
-                        <FontAwesomeIcon icon={faStar} />
-                      </div>
-                      <div className="stat-info">
-                        <h4>
-                          {userProfileData.dashboard.totalReviews ||
-                            0}
-                        </h4>
-                        <p>Đánh giá đã viết</p>
-                      </div>
-                    </div>
-                    <div className="stat-item">
-                      <div className="stat-icon">
-                        <FontAwesomeIcon icon={faBlog} />
-                      </div>
-                      <div className="stat-info">
-                        <h4>
-                          {userProfileData.dashboard.totalPosts || 0}
-                        </h4>
-                        <p>Bài viết đã đăng</p>
-                      </div>
-                    </div>
-                    <div className="stat-item">
-                      <div className="stat-icon">
-                        <FontAwesomeIcon icon={faChartLine} />
-                      </div>
-                      <div className="stat-info">
-                        <h4>
-                          {userProfileData.dashboard
-                            .averageProgress || 0}
-                          %
-                        </h4>
-                        <p>Tiến độ trung bình</p>
-                      </div>
-                    </div>
-                    <div className="stat-item">
-                      <div className="stat-icon">
-                        <FontAwesomeIcon icon={faCalendar} />
-                      </div>
-                      <div className="stat-info">
-                        <h4>
-                          {userProfileData.dashboard.daysActive || 0}
-                        </h4>
-                        <p>Ngày hoạt động</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="empty-state">
-                    <FontAwesomeIcon icon={faExclamationTriangle} />
-                    <p>Không có dữ liệu thống kê</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        );
-
       default:
         return (
           <div className="profile-details">
@@ -980,6 +871,50 @@ const ProfilePage = () => {
                   </span>
                 )}
               </div>
+
+              {/* Chỉ hiển thị cho consultant khi chỉnh sửa */}
+              {(currentUser.roleName === "consultant" ||
+                currentUser.role === "consultant") && (
+                <>
+                  <div className="detail-item">
+                    <label>
+                      <FontAwesomeIcon icon={faGraduationCap} />
+                      Bằng cấp
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        name="degree"
+                        value={profileData.degree}
+                        onChange={handleInputChange}
+                      />
+                    ) : (
+                      <span>
+                        {currentUser.degree || "Chưa cập nhật"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="detail-item">
+                    <label>
+                      <FontAwesomeIcon icon={faStar} />
+                      Chuyên môn
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        name="specialization"
+                        value={profileData.specialization}
+                        onChange={handleInputChange}
+                      />
+                    ) : (
+                      <span>
+                        {currentUser.specialization ||
+                          "Chưa cập nhật"}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             {isEditing && (
@@ -1046,7 +981,8 @@ const ProfilePage = () => {
             </p>
             <p className="user-role">
               <FontAwesomeIcon icon={faUsers} />
-              Vai trò: {currentUser.role || "User"}
+              Vai trò:{" "}
+              {currentUser.roleName || currentUser.role || "User"}
             </p>
           </div>
 
@@ -1099,43 +1035,11 @@ const ProfilePage = () => {
           </button>
           <button
             className={`tab-btn ${
-              activeTab === "dashboard" ? "active" : ""
-            }`}
-            onClick={() => setActiveTab("dashboard")}>
-            <FontAwesomeIcon icon={faChartLine} />
-            Thống kê
-          </button>
-          <button
-            className={`tab-btn ${
-              activeTab === "badges" ? "active" : ""
-            }`}
-            onClick={() => setActiveTab("badges")}>
-            <FontAwesomeIcon icon={faMedal} />
-            Huy hiệu
-          </button>
-          <button
-            className={`tab-btn ${
               activeTab === "enrollments" ? "active" : ""
             }`}
             onClick={() => setActiveTab("enrollments")}>
             <FontAwesomeIcon icon={faGraduationCap} />
             Khóa học
-          </button>
-          <button
-            className={`tab-btn ${
-              activeTab === "reviews" ? "active" : ""
-            }`}
-            onClick={() => setActiveTab("reviews")}>
-            <FontAwesomeIcon icon={faStar} />
-            Đánh giá
-          </button>
-          <button
-            className={`tab-btn ${
-              activeTab === "posts" ? "active" : ""
-            }`}
-            onClick={() => setActiveTab("posts")}>
-            <FontAwesomeIcon icon={faBlog} />
-            Bài viết
           </button>
         </div>
 

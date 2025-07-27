@@ -3,48 +3,393 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
   faTrash,
-  faEdit,
   faUsers,
   faCheckCircle,
   faTimes,
-  faChartBar,
-  faFileAlt,
-  faCog,
   faBook,
-  faLayerGroup,
-  faFlask,
-  faPoll,
-  faChartLine,
-  faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 import "./Dashboard.css";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { adminService } from "../services";
-import {
-  USE_MOCK_SERVICES,
-  USE_MOCK_ADMIN,
-} from "../services/serviceConfig";
 
-// Initial tabs for the dashboard
+// Add styles for the dashboard
+const additionalStyles = `
+  .role-select {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+    min-width: 120px;
+    cursor: pointer;
+  }
+
+  .role-select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+
+  .role-select:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .users-table td {
+    vertical-align: middle;
+  }
+
+  .dashboard-container {
+    max-width: 1530.4px;
+    margin: 0 auto;
+    padding: 0;
+    width: 100%;
+  }
+
+  .page-header {
+    background-image: url('https://i.pinimg.com/736x/b5/31/76/b5317669cef30ef46f6239ddc61256a3.jpg');
+    color: white;
+    padding: 5rem 0;
+    text-align: center;
+    margin-bottom: 2rem;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    width: 100%;
+  }
+
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1;
+  }
+
+  .page-header .container {
+    position: relative;
+    z-index: 2;
+  }
+
+  .secondary-bg {
+    background-color: #E8F5E9;
+  }
+
+  .page-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+    letter-spacing: 1px;
+  }
+
+  .page-header p {
+    font-size: 1.2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    color: #ffffff;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+    font-weight: 400;
+  }
+
+  .fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInDashboard 0.8s ease-in-out forwards;
+  }
+
+  @keyframes fadeInDashboard {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .delay-100 {
+    animation-delay: 0.1s;
+  }
+
+  .delay-200 {
+    animation-delay: 0.2s;
+  }
+
+  .delay-300 {
+    animation-delay: 0.3s;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 1530.4px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  .dashboard-tabs {
+    display: flex;
+    gap: 10px;
+    margin: 0 1rem 30px 1rem;
+    border-bottom: 2px solid #f1f3f4;
+    padding-bottom: 0;
+  }
+
+  .tab-button {
+    background: none;
+    border: none;
+    padding: 15px 25px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .tab-button:hover {
+    background-color: #f8f9fa;
+    color: #333;
+  }
+
+  .tab-button.active {
+    background-color: #fff;
+    color: #007bff;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+  }
+
+  .tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: #007bff;
+  }
+
+  .tab-content {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    min-height: 400px;
+    margin: 0 1rem;
+  }
+
+  .search-container {
+    margin-bottom: 25px;
+  }
+
+  .search-input {
+    width: 100%;
+    max-width: 400px;
+    padding: 12px 20px;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  }
+
+  .users-table-container {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .users-table th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 20px 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+  }
+
+  .users-table td {
+    padding: 18px 15px;
+    border-bottom: 1px solid #f1f3f4;
+  }
+
+  .users-table tr:hover {
+    background-color: #f8f9fa;
+  }
+
+  .user-name {
+    font-weight: 500;
+    color: #333;
+  }
+
+  .user-email {
+    color: #666;
+    font-size: 13px;
+  }
+
+  .loading, .error, .no-data {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+    font-size: 16px;
+  }
+
+  .error {
+    color: #dc3545;
+  }
+
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+  }
+
+  .notification.success {
+    background-color: #28a745;
+  }
+
+  .notification.error {
+    background-color: #dc3545;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .notification-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .notification-close {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 10px;
+    font-size: 18px;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .confirm-modal {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: 90%;
+  }
+
+  .confirm-modal h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+  }
+
+  .confirm-modal p {
+    margin: 0 0 25px 0;
+    color: #666;
+    line-height: 1.5;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-danger {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background-color: #c82333;
+  }
+
+  .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background-color: #5a6268;
+  }
+`;
+
+// Inject styles into the document
+if (typeof document !== "undefined") {
+  const styleElement = document.createElement("style");
+  styleElement.textContent = additionalStyles;
+  document.head.appendChild(styleElement);
+}
+
+// Simplified tabs for the dashboard
 const DASHBOARD_TABS = {
   USERS: "users",
-  POSTS: "posts",
-  STATS: "stats",
   COURSES: "courses",
-  CATEGORIES: "categories",
-  SUBSTANCES: "substances",
-  SURVEYS: "surveys",
-  ANALYTICS: "analytics",
-  BADGES: "badges",
-  HEALTH: "health",
 };
 
 const Dashboard = () => {
   const { currentUser, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
-  const [editingUser, setEditingUser] = useState(null);
+  const [roles, setRoles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [notification, setNotification] = useState({
@@ -55,7 +400,6 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState(DASHBOARD_TABS.USERS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     // Redirect if not admin
@@ -64,6 +408,7 @@ const Dashboard = () => {
     } else {
       // Load initial data
       loadDashboardData();
+      fetchRoles();
     }
   }, [isAdmin, navigate]);
 
@@ -84,12 +429,20 @@ const Dashboard = () => {
       case DASHBOARD_TABS.USERS:
         await fetchUsers();
         break;
-      case DASHBOARD_TABS.STATS:
-        await fetchStats();
-        break;
-      // Additional cases for other tabs
       default:
         await fetchUsers();
+    }
+  };
+
+  const fetchRoles = async () => {
+    try {
+      const response = await adminService.getRoles();
+      if (response.success) {
+        let rolesData = response.data || [];
+        setRoles(rolesData);
+      }
+    } catch (err) {
+      console.error("Error fetching roles:", err);
     }
   };
 
@@ -99,13 +452,9 @@ const Dashboard = () => {
     try {
       const response = await adminService.getUsers();
       if (response.success) {
-        // Ensure users is always an array
         let usersData = response.data || [];
 
-        // Handle different data structures that might come from the backend
         if (usersData && !Array.isArray(usersData)) {
-          console.log("Converting users data to array format");
-          // If data is not an array, check if it's an object with a users property
           if (usersData.users && Array.isArray(usersData.users)) {
             usersData = usersData.users;
           } else if (
@@ -114,7 +463,6 @@ const Dashboard = () => {
           ) {
             usersData = usersData.data;
           } else {
-            // If we can't find an array, convert object to array or use empty array
             usersData =
               Object.values(usersData).filter(
                 (item) =>
@@ -125,35 +473,19 @@ const Dashboard = () => {
           }
         }
 
-        console.log("Final users data:", usersData);
         setUsers(usersData);
       } else {
-        setError(response.error || "Failed to fetch users");
-        showNotification("Failed to fetch users", "error");
+        setError(
+          response.error || "Không thể tải danh sách người dùng"
+        );
+        showNotification(
+          "Không thể tải danh sách người dùng",
+          "error"
+        );
       }
     } catch (err) {
-      console.error("Error in fetchUsers:", err);
-      setError(err.message || "An unexpected error occurred");
-      showNotification("An unexpected error occurred", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchStats = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await adminService.getStats();
-      if (response.success) {
-        setStats(response.data || null);
-      } else {
-        setError(response.error || "Failed to fetch statistics");
-        showNotification("Failed to fetch statistics", "error");
-      }
-    } catch (err) {
-      setError(err.message || "An unexpected error occurred");
-      showNotification("An unexpected error occurred", "error");
+      setError(err.message || "Đã xảy ra lỗi không mong muốn");
+      showNotification("Đã xảy ra lỗi không mong muốn", "error");
     } finally {
       setLoading(false);
     }
@@ -164,12 +496,21 @@ const Dashboard = () => {
   };
 
   const handleRoleChange = async (userId, newRole) => {
+    if (!newRole || newRole.trim() === "") {
+      showNotification("Vui lòng chọn vai trò hợp lệ", "error");
+      return;
+    }
+
+    const roleObj = roles.find((r) => r.roleName === newRole);
+
     setLoading(true);
     try {
-      const response = await adminService.updateUser(userId, {
-        role: newRole,
-      });
-      if (response.success) {
+      const response = await adminService.updateUserRole(
+        userId,
+        newRole,
+        roleObj?.roleId
+      );
+      if (response.success || response.isSuccess) {
         setUsers(
           users.map((user) =>
             user.userId === userId
@@ -177,66 +518,33 @@ const Dashboard = () => {
               : user
           )
         );
-        showNotification(
-          `User role updated to ${newRole} successfully!`,
-          "success"
-        );
+
+        const successMessage =
+          response.message ||
+          `Đã thay đổi vai trò thành ${newRole} thành công!`;
+
+        showNotification(successMessage, "success");
       } else {
-        showNotification(
-          response.error || "Failed to update user role",
-          "error"
-        );
+        let errorMessage = "Không thể cập nhật vai trò người dùng";
+
+        if (response.errors && response.errors.length > 0) {
+          errorMessage = response.errors.join(", ");
+        } else if (response.message) {
+          errorMessage = response.message;
+        } else if (response.error) {
+          errorMessage = response.error;
+        }
+
+        showNotification(errorMessage, "error");
       }
     } catch (err) {
       showNotification(
-        err.message || "An unexpected error occurred",
+        err.message || "Đã xảy ra lỗi không mong muốn",
         "error"
       );
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleEditUser = (user) => {
-    setEditingUser(user);
-  };
-
-  const handleSaveEdit = async () => {
-    setLoading(true);
-    try {
-      const response = await adminService.updateUser(
-        editingUser.userId,
-        editingUser
-      );
-      if (response.success) {
-        setUsers(
-          users.map((user) =>
-            user.userId === editingUser.userId ? editingUser : user
-          )
-        );
-        setEditingUser(null);
-        showNotification(
-          `User "${editingUser.fullname}" updated successfully!`,
-          "success"
-        );
-      } else {
-        showNotification(
-          response.error || "Failed to update user",
-          "error"
-        );
-      }
-    } catch (err) {
-      showNotification(
-        err.message || "An unexpected error occurred",
-        "error"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingUser(null);
   };
 
   const handleDeleteUser = (userId) => {
@@ -256,18 +564,18 @@ const Dashboard = () => {
           users.filter((user) => user.userId !== confirmDelete)
         );
         showNotification(
-          `User "${userToDelete.fullname}" deleted successfully!`,
+          `Người dùng "${userToDelete.fullname}" đã được xóa thành công!`,
           "success"
         );
       } else {
         showNotification(
-          response.error || "Failed to delete user",
+          response.error || "Không thể xóa người dùng",
           "error"
         );
       }
     } catch (err) {
       showNotification(
-        err.message || "An unexpected error occurred",
+        err.message || "Đã xảy ra lỗi không mong muốn",
         "error"
       );
     } finally {
@@ -280,14 +588,6 @@ const Dashboard = () => {
     setConfirmDelete(null);
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditingUser({
-      ...editingUser,
-      [name]: value,
-    });
-  };
-
   const handleTabChange = (tab) => {
     setActiveTab(tab);
 
@@ -296,11 +596,7 @@ const Dashboard = () => {
       case DASHBOARD_TABS.COURSES:
         navigate("/admin/courses");
         break;
-      case DASHBOARD_TABS.CATEGORIES:
-        navigate("/admin/categories");
-        break;
       default:
-        // For other tabs, load data and stay on dashboard
         loadDashboardData();
         break;
     }
@@ -323,165 +619,118 @@ const Dashboard = () => {
 
   const renderUsers = () => {
     if (loading) {
-      return <div className="loading">Loading users...</div>;
+      return <div className="loading">Đang tải người dùng...</div>;
     }
 
     if (error) {
-      return <div className="error">Error: {error}</div>;
+      return <div className="error">Lỗi: {error}</div>;
     }
 
     if (!users || users.length === 0) {
-      return <div className="no-data">No users found</div>;
+      return (
+        <div className="no-data">Không tìm thấy người dùng nào</div>
+      );
     }
 
     return (
-      <div className="users-table-container card">
-        <table className="users-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Join Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map((user) => (
-              <tr key={user.userId}>
-                <td>
-                  {editingUser &&
-                  editingUser.userId === user.userId ? (
-                    <input
-                      type="text"
-                      name="fullname"
-                      value={editingUser.fullname}
-                      onChange={handleInputChange}
-                      className="edit-input"
-                    />
-                  ) : (
-                    <div className="user-name">{user.fullname}</div>
-                  )}
-                </td>
-                <td>
-                  {editingUser &&
-                  editingUser.userId === user.userId ? (
-                    <input
-                      type="text"
-                      name="email"
-                      value={editingUser.email}
-                      onChange={handleInputChange}
-                      className="edit-input"
-                    />
-                  ) : (
-                    <div className="user-email">{user.email}</div>
-                  )}
-                </td>
-                <td>
-                  {editingUser &&
-                  editingUser.userId === user.userId ? (
-                    <select
-                      name="roleName"
-                      value={editingUser.roleName}
-                      onChange={handleInputChange}
-                      className="edit-input">
-                      <option value="user">User</option>
-                      <option value="staff">Staff</option>
-                      <option value="consultant">Consultant</option>
-                      <option value="manager">Manager</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  ) : (
-                    <span
-                      className={`role-badge role-${user.roleName?.toLowerCase()}`}>
-                      {user.roleName}
-                    </span>
-                  )}
-                </td>
-                <td>
-                  {user.createdAt
-                    ? new Date(user.createdAt).toLocaleDateString()
-                    : "N/A"}
-                </td>
-                <td className="actions-cell">
-                  {editingUser &&
-                  editingUser.userId === user.userId ? (
-                    <div className="actions-cell-edit">
-                      <button
-                        className="action-btn save"
-                        onClick={handleSaveEdit}>
-                        Save
-                      </button>
-                      <button
-                        className="action-btn cancel"
-                        onClick={handleCancelEdit}>
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="actions-cell-view">
-                      <button
-                        className="action-btn edit"
-                        onClick={() => handleEditUser(user)}
-                        title="Edit user">
-                        <FontAwesomeIcon icon={faEdit} />
-                      </button>
-                      <button
-                        className="action-btn delete"
-                        onClick={() => handleDeleteUser(user.userId)}
-                        title="Delete user">
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
-                    </div>
-                  )}
-                </td>
+      <>
+        <div className="search-container fade-in delay-300">
+          <input
+            type="text"
+            placeholder="Tìm kiếm người dùng theo tên, email hoặc vai trò..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+        </div>
+
+        <div className="users-table-container fade-in delay-300">
+          <table className="users-table">
+            <thead>
+              <tr>
+                <th>Tên</th>
+                <th>Email</th>
+                <th>Vai trò</th>
+                <th>Ngày tham gia</th>
+                <th>Hành động</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
+            </thead>
+            <tbody>
+              {filteredUsers.map((user) => (
+                <tr key={user.userId}>
+                  <td>
+                    <div className="user-name">{user.fullname}</div>
+                  </td>
+                  <td>
+                    <div className="user-email">{user.email}</div>
+                  </td>
+                  <td>
+                    <select
+                      value={user.roleName || ""}
+                      onChange={(e) => {
+                        const newRole = e.target.value;
+                        if (newRole && newRole !== user.roleName) {
+                          handleRoleChange(user.userId, newRole);
+                        }
+                      }}
+                      className="role-select"
+                      disabled={loading}>
+                      {user.roleName &&
+                        !roles.some(
+                          (r) => r.roleName === user.roleName
+                        ) && (
+                          <option value={user.roleName}>
+                            {user.roleName} (hiện tại)
+                          </option>
+                        )}
 
-  const renderStats = () => {
-    if (loading) {
-      return <div className="loading">Loading statistics...</div>;
-    }
+                      {roles.map((role) => (
+                        <option
+                          key={role.roleId}
+                          value={role.roleName}>
+                          {role.roleName}
+                        </option>
+                      ))}
 
-    if (error) {
-      return <div className="error">Error: {error}</div>;
-    }
-
-    if (!stats) {
-      return <div className="no-data">No statistics available</div>;
-    }
-
-    return (
-      <div className="stats-container">
-        <div className="stats-grid">
-          <div className="stat-card">
-            <h3>Total Users</h3>
-            <div className="stat-value">{stats.totalUsers || 0}</div>
-          </div>
-          <div className="stat-card">
-            <h3>Total Courses</h3>
-            <div className="stat-value">
-              {stats.totalCourses || 0}
-            </div>
-          </div>
-          <div className="stat-card">
-            <h3>Total Posts</h3>
-            <div className="stat-value">{stats.totalPosts || 0}</div>
-          </div>
-          <div className="stat-card">
-            <h3>Active Users</h3>
-            <div className="stat-value">{stats.activeUsers || 0}</div>
-          </div>
+                      {roles.length === 0 && (
+                        <>
+                          <option value="">-- Chọn vai trò --</option>
+                          <option value="user">User</option>
+                          <option value="staff">Staff</option>
+                          <option value="consultant">
+                            Consultant
+                          </option>
+                          <option value="manager">Manager</option>
+                          <option value="admin">Admin</option>
+                        </>
+                      )}
+                    </select>
+                  </td>
+                  <td>
+                    {user.createdAt
+                      ? new Date(user.createdAt).toLocaleDateString(
+                          "vi-VN"
+                        )
+                      : "N/A"}
+                  </td>
+                  <td>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => handleDeleteUser(user.userId)}
+                      disabled={loading}
+                      style={{
+                        padding: "5px 10px",
+                        fontSize: "12px",
+                      }}>
+                      <FontAwesomeIcon icon={faTrash} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <div className="last-updated">
-          Last updated: {new Date(stats.lastUpdated).toLocaleString()}
-        </div>
-      </div>
+      </>
     );
   };
 
@@ -489,11 +738,8 @@ const Dashboard = () => {
     switch (activeTab) {
       case DASHBOARD_TABS.USERS:
         return renderUsers();
-      case DASHBOARD_TABS.STATS:
-        return renderStats();
-      // Add cases for other tabs
       default:
-        return <div>Select a tab to view content</div>;
+        return <div>Chọn một tab để xem nội dung</div>;
     }
   };
 
@@ -522,175 +768,59 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* {(USE_MOCK_SERVICES || USE_MOCK_ADMIN) && (
-        <div className="mock-data-warning">
-          <FontAwesomeIcon icon={faExclamationTriangle} />
-          <span>
-            Hybrid Mode: Using real admin authentication with backend
-            data when available
-          </span>
-        </div>
-      )} */}
-
       {confirmDelete && (
         <div className="modal-overlay">
           <div className="confirm-modal">
-            <h3>Confirm Delete</h3>
+            <h3>Xác nhận xóa</h3>
             <p>
-              Are you sure you want to delete this user? This action
-              cannot be undone.
+              Bạn có chắc chắn muốn xóa người dùng này? Hành động này
+              không thể hoàn tác.
             </p>
             <div className="modal-actions">
               <button
                 className="btn btn-danger"
                 onClick={confirmDeleteUser}
                 disabled={loading}>
-                {loading ? "Deleting..." : "Delete"}
+                {loading ? "Đang xóa..." : "Xóa"}
               </button>
               <button
                 className="btn btn-secondary"
                 onClick={cancelDelete}
                 disabled={loading}>
-                Cancel
+                Hủy
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="page-header secondary-bg">
+      <div className="page-header fade-in">
         <div className="container">
-          <h1>Admin Dashboard</h1>
-          <p>Manage users, content, and system settings</p>
+          <h1>Bảng điều khiển Admin</h1>
+          <p>Quản lý người dùng và khóa học</p>
         </div>
       </div>
 
-      <div className="container">
-        <div className="dashboard-grid">
-          <div className="dashboard-sidebar">
-            <div className="dashboard-nav">
-              <button
-                className={`nav-item ${
-                  activeTab === DASHBOARD_TABS.USERS ? "active" : ""
-                }`}
-                onClick={() => handleTabChange(DASHBOARD_TABS.USERS)}>
-                <FontAwesomeIcon icon={faUsers} /> User Management
-              </button>
-              <button
-                className={`nav-item ${
-                  activeTab === DASHBOARD_TABS.POSTS ? "active" : ""
-                }`}
-                onClick={() => handleTabChange(DASHBOARD_TABS.POSTS)}>
-                <FontAwesomeIcon icon={faFileAlt} /> Post Management
-              </button>
-              <button
-                className={`nav-item ${
-                  activeTab === DASHBOARD_TABS.STATS ? "active" : ""
-                }`}
-                onClick={() => handleTabChange(DASHBOARD_TABS.STATS)}>
-                <FontAwesomeIcon icon={faChartBar} /> Statistics
-              </button>
-              <button
-                className={`nav-item ${
-                  activeTab === DASHBOARD_TABS.COURSES ? "active" : ""
-                }`}
-                onClick={() =>
-                  handleTabChange(DASHBOARD_TABS.COURSES)
-                }>
-                <FontAwesomeIcon icon={faBook} /> Courses
-              </button>
-              <button
-                className={`nav-item ${
-                  activeTab === DASHBOARD_TABS.CATEGORIES
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  handleTabChange(DASHBOARD_TABS.CATEGORIES)
-                }>
-                <FontAwesomeIcon icon={faLayerGroup} /> Categories
-              </button>
-              <button
-                className={`nav-item ${
-                  activeTab === DASHBOARD_TABS.SUBSTANCES
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  handleTabChange(DASHBOARD_TABS.SUBSTANCES)
-                }>
-                <FontAwesomeIcon icon={faFlask} /> Substances
-              </button>
-              <button
-                className={`nav-item ${
-                  activeTab === DASHBOARD_TABS.SURVEYS ? "active" : ""
-                }`}
-                onClick={() =>
-                  handleTabChange(DASHBOARD_TABS.SURVEYS)
-                }>
-                <FontAwesomeIcon icon={faPoll} /> Surveys
-              </button>
-              <button
-                className={`nav-item ${
-                  activeTab === DASHBOARD_TABS.ANALYTICS
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  handleTabChange(DASHBOARD_TABS.ANALYTICS)
-                }>
-                <FontAwesomeIcon icon={faChartLine} /> Analytics
-              </button>
-              <button
-                className={`nav-item ${
-                  activeTab === DASHBOARD_TABS.HEALTH ? "active" : ""
-                }`}
-                onClick={() =>
-                  handleTabChange(DASHBOARD_TABS.HEALTH)
-                }>
-                <FontAwesomeIcon icon={faCog} /> System Health
-              </button>
-            </div>
-          </div>
+      <div className="dashboard-container">
+        <div className="dashboard-tabs fade-in delay-100">
+          <button
+            className={`tab-button ${
+              activeTab === DASHBOARD_TABS.USERS ? "active" : ""
+            }`}
+            onClick={() => handleTabChange(DASHBOARD_TABS.USERS)}>
+            <FontAwesomeIcon icon={faUsers} /> Quản lý người dùng
+          </button>
+          <button
+            className={`tab-button ${
+              activeTab === DASHBOARD_TABS.COURSES ? "active" : ""
+            }`}
+            onClick={() => handleTabChange(DASHBOARD_TABS.COURSES)}>
+            <FontAwesomeIcon icon={faBook} /> Quản lý khóa học
+          </button>
+        </div>
 
-          <div className="dashboard-main">
-            <div className="tab-content">
-              <div className="tab-header">
-                <h2>
-                  {activeTab === DASHBOARD_TABS.USERS &&
-                    "User Management"}
-                  {activeTab === DASHBOARD_TABS.POSTS &&
-                    "Post Management"}
-                  {activeTab === DASHBOARD_TABS.STATS && "Statistics"}
-                  {activeTab === DASHBOARD_TABS.COURSES &&
-                    "Course Management"}
-                  {activeTab === DASHBOARD_TABS.CATEGORIES &&
-                    "Category Management"}
-                  {activeTab === DASHBOARD_TABS.SUBSTANCES &&
-                    "Substance Management"}
-                  {activeTab === DASHBOARD_TABS.SURVEYS &&
-                    "Survey Management"}
-                  {activeTab === DASHBOARD_TABS.ANALYTICS &&
-                    "Analytics"}
-                  {activeTab === DASHBOARD_TABS.HEALTH &&
-                    "System Health"}
-                </h2>
-                {activeTab === DASHBOARD_TABS.USERS && (
-                  <div className="search-container">
-                    <input
-                      type="text"
-                      placeholder="Search users..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="search-input"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {renderActiveTabContent()}
-            </div>
-          </div>
+        <div className="tab-content fade-in delay-200">
+          {renderActiveTabContent()}
         </div>
       </div>
     </div>

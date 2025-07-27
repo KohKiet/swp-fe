@@ -26,6 +26,7 @@ import ProfilePage from "./pages/ProfilePage";
 import MyAppointments from "./pages/MyAppointments";
 import Lesson from "./pages/Lesson";
 import Quiz from "./pages/Quiz";
+import ConsultantList from "./pages/ConsultantList";
 
 // Components
 import Header from "./components/Header";
@@ -46,6 +47,7 @@ import EventListPage from "./pages/events/EventListPage";
 import AdminCourseManagement from "./pages/admin/AdminCourseManagement";
 import CourseContentManager from "./pages/admin/CourseContentManager";
 import CourseEditor from "./pages/admin/CourseEditor";
+import CourseQuizManagement from "./pages/admin/CourseQuizManagement";
 import CategoryManagement from "./components/admin/CategoryManagement";
 import FeatureDemo from "./components/FeatureDemo";
 
@@ -115,6 +117,7 @@ function AppContent() {
               <ConsultantProtectedRoute element={<ConsultTime />} />
             }
           />
+          <Route path="/consultants" element={<ConsultantList />} />
 
           <Route path="/programs" element={<EventListPage />} />
 
@@ -166,6 +169,12 @@ function AppContent() {
           <Route
             path="/admin/courses/:courseId/edit"
             element={<ProtectedRoute element={<CourseEditor />} />}
+          />
+          <Route
+            path="/admin/courses/:courseId/quiz"
+            element={
+              <ProtectedRoute element={<CourseQuizManagement />} />
+            }
           />
           <Route
             path="/admin/categories"
