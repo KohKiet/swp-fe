@@ -1,7 +1,5 @@
 // API Configuration
 export const API_CONFIG = {
-  // Change this URL to match your backend server
-  // Examples: "http://localhost:3000", "https://your-api.com"
   BASE_URL: "http://localhost:5150",
   ENDPOINTS: {
     // Authentication endpoints
@@ -86,7 +84,7 @@ export const API_CONFIG = {
     QUIZ_RESULT_BY_USER: "/api/QuizResult/user/{userId}",
     QUIZ_RESULT_BY_USER_QUIZ: "/api/Quiz/result?quizId={quizId}",
 
-    // Course Enrollment endpoints (Authentication Required)
+    // Course Enrollment endpoints (Amin Thoi)
     ENROLLMENT_ENROLL: "/api/CourseEnrollment/enroll/{courseId}",
     ENROLLMENT_DROP: "/api/CourseEnrollment/drop/{courseId}",
     ENROLLMENT_MY_ENROLLMENTS: "/api/CourseEnrollment/my-enrollments",
@@ -94,7 +92,7 @@ export const API_CONFIG = {
     ENROLLMENT_IS_ENROLLED: "/api/CourseEnrollment/status/{courseId}",
     ENROLLMENT_COMPLETE: "/api/CourseEnrollment/complete/{courseId}",
 
-    // Admin Enrollment endpoints (Admin/Manager only)
+    // Admin Enrollment endpoints (Admin Thoi)
     ENROLLMENT_ALL: "/api/CourseEnrollment/all",
     ENROLLMENT_BY_COURSE: "/api/CourseEnrollment/course/{courseId}",
     ENROLLMENT_COUNT: "/api/CourseEnrollment/course/{courseId}/count",

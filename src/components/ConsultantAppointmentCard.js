@@ -30,17 +30,28 @@ const ConsultantAppointmentCard = ({
   const { currentUser, isConsultant } = useAuth();
 
   // Helper: xác định vai trò hiện tại
-  const isCurrentConsultant = typeof isConsultant === 'function' ? isConsultant() : false;
+  const isCurrentConsultant =
+    typeof isConsultant === "function" ? isConsultant() : false;
 
   // Helper: lấy thông tin video call đúng theo vai trò
   const getAgoraInfo = () => {
     const info = appointment.agoraInfo || {};
     return {
-      appId: info.appId || appointment.agoraAppId || appointment.AgoraAppId,
-      channelName: info.channelName || appointment.agoraChannelName || appointment.ChannelName,
+      appId:
+        info.appId ||
+        appointment.agoraAppId ||
+        appointment.AgoraAppId,
+      channelName:
+        info.channelName ||
+        appointment.agoraChannelName ||
+        appointment.ChannelName,
       token: isCurrentConsultant
-        ? info.consultant?.token || appointment.agoraToken || appointment.AgoraToken
-        : info.member?.token || appointment.agoraToken || appointment.AgoraToken,
+        ? info.consultant?.token ||
+          appointment.agoraToken ||
+          appointment.AgoraToken
+        : info.member?.token ||
+          appointment.agoraToken ||
+          appointment.AgoraToken,
       userId: isCurrentConsultant
         ? info.consultant?.userId
         : info.member?.userId,
