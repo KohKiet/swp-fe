@@ -195,20 +195,17 @@ const Header = () => {
                   <span className="user-name">
                     {getDisplayName()}
                   </span>
-                  <FontAwesomeIcon icon={faChevronDown} />
                 </button>
                 <div className="dropdown-menu">
                   {!isAdmin() && !isConsultant() && (
                     <Link to="/profile" className="dropdown-item">
-                      <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá
-                      Nhân
+                      Hồ Sơ Cá Nhân
                     </Link>
                   )}
                   {isConsultant() && (
                     <>
                       <Link to="/profile" className="dropdown-item">
-                        <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá
-                        Nhân
+                        Hồ Sơ Cá Nhân
                       </Link>
                       <Link
                         to="/consult-time"
@@ -256,7 +253,7 @@ const Header = () => {
           {currentUser && !isAdmin() && (
             <>
               <Link to="/profile" className="mobile-nav-link">
-                <FontAwesomeIcon icon={faUserCog} /> Hồ Sơ Cá Nhân
+                Hồ Sơ Cá Nhân
               </Link>
               {!isConsultant() && (
                 <Link
@@ -269,12 +266,12 @@ const Header = () => {
           )}
           {isConsultant() && (
             <Link to="/consult-time" className="mobile-nav-link">
-              <FontAwesomeIcon icon={faClock} /> Quản Lý Lịch
+              Quản Lý Lịch
             </Link>
           )}
           {isAdmin() && (
             <Link to="/dashboard" className="mobile-nav-link">
-              <FontAwesomeIcon icon={faTachometerAlt} /> Dashboard
+              Dashboard
             </Link>
           )}
           {currentUser ? (

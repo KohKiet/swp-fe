@@ -24,9 +24,8 @@ const blogPosts = [
     excerpt:
       "Làm thế nào mà sự hỗ trợ và giáo dục từ cộng đồng đã thay đổi cuộc sống của tôi và giúp tôi vượt qua nghiện ngập.",
     author: "Nguyễn Văn B",
-    date: "15/05/2025",
-    image:
-      "https://placehold.co/300x200/e8f5e9/2D7DD2?text=Recovery+Story",
+    date: "15/01/2025",
+    image: "Lanh.jpg",
   },
   {
     id: 2,
@@ -34,10 +33,9 @@ const blogPosts = [
       "Hiểu Về Các Yếu Tố Rủi Ro Trong Việc Sử Dụng Ma Túy Ở Thanh Thiếu Niên",
     excerpt:
       "Tìm hiểu về các yếu tố môi trường và cá nhân có thể dẫn đến lạm dụng chất gây nghiện ở thanh thiếu niên.",
-    author: "TS. Trần Văn Nam",
-    date: "02/06/2023",
-    image:
-      "https://placehold.co/300x200/e8f5e9/2D7DD2?text=Teen+Education",
+    author: "TS. Trần Văn N",
+    date: "02/06/2025",
+    image: "RR.jpg",
   },
   {
     id: 3,
@@ -45,10 +43,9 @@ const blogPosts = [
       "Làm Thế Nào Để Các Trường Học Triển Khai Chương Trình Phòng Ngừa Hiệu Quả",
     excerpt:
       "Hướng dẫn cho các nhà giáo dục về việc tạo ra môi trường hỗ trợ ngăn chặn lạm dụng chất gây nghiện.",
-    author: "GS. Lê Thị Hương",
-    date: "28/04/2023",
-    image:
-      "https://placehold.co/300x200/e8f5e9/2D7DD2?text=School+Programs",
+    author: "GS. Lê Thị H",
+    date: "28/04/2025",
+    image: "hs-6548.jpg",
   },
 ];
 
@@ -59,23 +56,23 @@ const courseCategories = [
     description:
       "Giáo dục phù hợp với lứa tuổi về nhận thức ma túy, chống lại áp lực đồng trang lứa và lựa chọn lành mạnh.",
     icon: faBook,
-    link: "/education?group=students",
+    link: "/education",
   },
   {
     id: 2,
-    title: "Cho Phụ Huynh",
+    title: "Chung Tay Nhận Biết",
     description:
       "Học cách nói chuyện với con cái về ma túy và nhận biết các dấu hiệu cảnh báo của việc lạm dụng chất gây nghiện.",
     icon: faUsers,
-    link: "/education?group=parents",
+    link: "/education",
   },
   {
     id: 3,
-    title: "Cho Giáo Viên",
+    title: "Khóa Học Online",
     description:
       "Tài nguyên và chiến lược để giáo dục học sinh về phòng chống ma túy và thúc đẩy môi trường lành mạnh.",
     icon: faChalkboardTeacher,
-    link: "/education?group=teachers",
+    link: "/education",
   },
 ];
 
@@ -396,7 +393,7 @@ const HomePage = () => {
               }}>
               <Button
                 component={Link}
-                to="/education/surveys/assist"
+                to="/surveys"
                 variant="contained"
                 size="medium"
                 startIcon={<AssessmentOutlined />}
@@ -418,7 +415,7 @@ const HomePage = () => {
                     boxShadow: "0 6px 16px rgba(76, 175, 80, 0.4)",
                   },
                 }}>
-                Làm Bài Đánh Giá Rủi Ro
+                Làm Bài Khảo Sát
               </Button>
               <Button
                 component={Link}
@@ -443,7 +440,7 @@ const HomePage = () => {
                     boxShadow: "0 6px 16px rgba(63, 81, 181, 0.2)",
                   },
                 }}>
-                Duyệt Khóa Học
+                Tới Khóa Học
               </Button>
             </Box>
           </div>
