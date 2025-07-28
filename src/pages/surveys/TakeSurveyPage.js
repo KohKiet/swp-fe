@@ -30,9 +30,21 @@ const TakeSurveyPage = () => {
     const saved = localStorage.getItem('survey_progress');
     if (saved) {
       const { survey, answers, current } = JSON.parse(saved);
+      // Đảm bảo current luôn nằm trong khoảng hợp lệ
+      let safeCurrent = Number(current) || 0;
+      if (!survey || !survey.questions || safeCurrent < 0 || safeCurrent >= survey.questions.length) {
+        safeCurrent = 0;
+      }
       setSurvey(survey);
-      setAnswers(answers);
-      setCurrent(current);
+      setAnswers(
+        Array.isArray(answers) && answers.length === survey.questions.length
+          ? answers.map((a, idx) => ({
+              questionId: survey.questions[idx].questionId,
+              selectedAnswerId: a.selectedAnswerId ?? null
+            }))
+          : survey.questions.map(q => ({ questionId: q.questionId, selectedAnswerId: null }))
+      );
+      setCurrent(safeCurrent);
       setLoading(false);
       return;
     }
@@ -64,13 +76,17 @@ const TakeSurveyPage = () => {
 
   // Xử lý khi người dùng nhấn nút "Nộp bài"
   const handleSubmit = async () => {
-    // Kiểm tra đã trả lời hết tất cả câu hỏi chưa
+    // Nếu còn câu hỏi chưa trả lời, cảnh báo nhưng vẫn cho submit
     if (answers.some(a => !a.selectedAnswerId)) {
-      setError('Vui lòng trả lời tất cả câu hỏi');
-      return;
+      if (!window.confirm('Bạn chưa trả lời hết tất cả câu hỏi. Bạn vẫn muốn nộp bài?')) {
+        return;
+      }
     }
     setSubmitting(true);
     try {
+      // Log dữ liệu gửi lên để debug
+      console.log('surveyId:', survey.surveyId);
+      console.log('answers:', answers);
       // Gửi đáp án lên server
       const result = await surveyService.submitSurvey(survey.surveyId, answers);
       // Xóa tiến trình khảo sát đã lưu
