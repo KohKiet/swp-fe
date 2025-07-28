@@ -232,7 +232,7 @@ const ConsultantNotes = ({
                     className="member-icon"
                   />
                   <span className="member-name">
-                    {note.memberName || "Thành viên"}
+                    {note.memberName || "Tư Vấn Viên"}
                   </span>
                 </div>
                 <div className="note-actions">
@@ -254,7 +254,7 @@ const ConsultantNotes = ({
                     </>
                   ) : (
                     <>
-                      <button
+                      {/* <button
                         onClick={() => handleEditNote(note)}
                         className="btn btn-info btn-small">
                         <FontAwesomeIcon icon={faEdit} />
@@ -265,18 +265,18 @@ const ConsultantNotes = ({
                         className="btn btn-danger btn-small">
                         <FontAwesomeIcon icon={faTrash} />
                         Xóa
-                      </button>
+                      </button> */}
                     </>
                   )}
                 </div>
               </div>
 
               <div className="note-date">
-                <FontAwesomeIcon
+                {/* <FontAwesomeIcon
                   icon={faCalendar}
                   className="date-icon"
-                />
-                <span>{formatDate(note.createdAt)}</span>
+                /> */}
+                {/* <span>{formatDate(note.createdAt)}</span> */}
               </div>
 
               <div className="note-content">

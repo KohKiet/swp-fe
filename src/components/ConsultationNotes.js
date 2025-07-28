@@ -71,11 +71,11 @@ const ConsultationNotes = ({ appointmentId, showTitle = true }) => {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "Ngày không hợp lệ";
       return date.toLocaleDateString("vi-VN", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+        // year: "numeric",
+        // month: "long",
+        // day: "numeric",
+        // hour: "2-digit",
+        // minute: "2-digit",
       });
     } catch (error) {
       return "Ngày không hợp lệ";
