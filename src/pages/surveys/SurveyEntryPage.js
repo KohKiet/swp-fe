@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import surveyService from '../../services/surveyService';
 import { Link } from 'react-router-dom';
 import './styles/survey.css';
+import './styles/AdminSurveyModal.css';
 import adminSurveyService from '../../services/adminSurveyService';
 import { useAuth } from '../../context/AuthContext';
 
@@ -24,9 +25,19 @@ const SurveyEntryPage = () => {
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [showAnswerModal, setShowAnswerModal] = useState(false);
   const [editingAnswer, setEditingAnswer] = useState(null);
-  const [surveyForm, setSurveyForm] = useState({ name: '', description: '' });
+  const [surveyForm, setSurveyForm] = useState({
+    title: '',
+    description: '',
+    type: '',
+    minAge: 0,
+    maxAge: 0,
+    status: true,
+    createdBy: ''
+  });
   const [questionForm, setQuestionForm] = useState({ content: '' });
-  const [answerForm, setAnswerForm] = useState({ content: '' });
+  const [answerForm, setAnswerForm] = useState({ content: '', score: 0 });
+  // State cho modal admin
+  const [showAdminModal, setShowAdminModal] = useState(false);
 
   useEffect(() => {
     surveyService.checkSurveyStatus()
@@ -73,14 +84,33 @@ const SurveyEntryPage = () => {
   // CRUD Survey
   const handleOpenSurveyModal = (survey = null) => {
     setEditingSurvey(survey);
-    setSurveyForm(survey ? { name: survey.name, description: survey.description } : { name: '', description: '' });
+    setSurveyForm(survey ? {
+      title: survey.title || '',
+      description: survey.description || '',
+      type: survey.type || '',
+      minAge: survey.minAge ?? 0,
+      maxAge: survey.maxAge ?? 0,
+      status: survey.status !== undefined ? survey.status : true,
+      createdBy: survey.createdBy || ''
+    } : {
+      title: '',
+      description: '',
+      type: '',
+      minAge: 0,
+      maxAge: 0,
+      status: true,
+      createdBy: ''
+    });
     setShowSurveyModal(true);
   };
   const handleSaveSurvey = async () => {
+    // Lấy userId từ localStorage nếu có
+    const userId = localStorage.getItem('userId') || '';
+    const payload = { ...surveyForm, createdBy: surveyForm.createdBy || userId };
     if (editingSurvey) {
-      await adminSurveyService.updateSurvey(editingSurvey.id, surveyForm, getAuthConfig());
+      await adminSurveyService.updateSurvey(editingSurvey.id, payload, getAuthConfig());
     } else {
-      await adminSurveyService.createSurvey(surveyForm, getAuthConfig());
+      await adminSurveyService.createSurvey(payload, getAuthConfig());
     }
     setShowSurveyModal(false);
     const res = await adminSurveyService.getAllSurveys(getAuthConfig());
@@ -127,28 +157,56 @@ const SurveyEntryPage = () => {
   // CRUD Answer
   const handleOpenAnswerModal = (answer = null) => {
     setEditingAnswer(answer);
-    setAnswerForm(answer ? { content: answer.content } : { content: '' });
+    setAnswerForm({
+      content: (answer && typeof answer.content === 'string' ? answer.content : (answer && answer.content !== undefined ? String(answer.content) : '')),
+      score: (answer && typeof answer.score === 'number') ? answer.score : (answer && answer.score !== undefined ? Number(answer.score) : 0)
+    });
     setShowAnswerModal(true);
   };
   const handleSaveAnswer = async () => {
-    if (!selectedQuestion) return;
-    if (editingAnswer) {
-      await adminSurveyService.updateAnswer(editingAnswer.id, { ...answerForm, questionId: selectedQuestion.id }, getAuthConfig());
-    } else {
-      await adminSurveyService.createAnswer({ ...answerForm, questionId: selectedQuestion.id }, getAuthConfig());
+    if (!selectedQuestion) {
+      alert('Vui lòng chọn câu hỏi trước khi thêm/sửa đáp án!');
+      return;
     }
-    setShowAnswerModal(false);
-    const res = await adminSurveyService.getQuestionAnswers
-      ? await adminSurveyService.getQuestionAnswers(selectedQuestion.id, getAuthConfig())
-      : { data: selectedQuestion.answers || [] };
-    setAnswers(res.data || res);
+    try {
+      if (editingAnswer) {
+        if (!editingAnswer.id) {
+          alert('Không tìm thấy ID đáp án để sửa!');
+          return;
+        }
+        console.log('Update Answer:', { id: editingAnswer.id, ...answerForm, questionId: selectedQuestion.id });
+        await adminSurveyService.updateAnswer(editingAnswer.id, { ...answerForm, questionId: selectedQuestion.id }, getAuthConfig());
+      } else {
+        console.log('Create Answer:', { ...answerForm, questionId: selectedQuestion.id });
+        await adminSurveyService.createAnswer({ ...answerForm, questionId: selectedQuestion.id }, getAuthConfig());
+      }
+      setShowAnswerModal(false);
+      const res = await adminSurveyService.getQuestionAnswers
+        ? await adminSurveyService.getQuestionAnswers(selectedQuestion.id, getAuthConfig())
+        : { data: selectedQuestion.answers || [] };
+      setAnswers(res.data || res);
+    } catch (err) {
+      console.error('Lỗi khi thêm/sửa đáp án:', err);
+      alert('Có lỗi khi thêm/sửa đáp án! ' + (err?.response?.data?.message || err.message));
+    }
   };
+
   const handleDeleteAnswer = async (answerId) => {
-    await adminSurveyService.deleteAnswer(answerId, getAuthConfig());
-    const res = await adminSurveyService.getQuestionAnswers
-      ? await adminSurveyService.getQuestionAnswers(selectedQuestion.id, getAuthConfig())
-      : { data: selectedQuestion.answers || [] };
-    setAnswers(res.data || res);
+    if (!answerId) {
+      alert('Không tìm thấy ID đáp án để xóa!');
+      return;
+    }
+    try {
+      console.log('Delete Answer:', answerId);
+      await adminSurveyService.deleteAnswer(answerId, getAuthConfig());
+      const res = await adminSurveyService.getQuestionAnswers
+        ? await adminSurveyService.getQuestionAnswers(selectedQuestion.id, getAuthConfig())
+        : { data: selectedQuestion.answers || [] };
+      setAnswers(res.data || res);
+    } catch (err) {
+      console.error('Lỗi khi xóa đáp án:', err);
+      alert('Có lỗi khi xóa đáp án! ' + (err?.response?.data?.message || err.message));
+    }
   };
 
   if (loading) return (
@@ -305,73 +363,92 @@ const SurveyEntryPage = () => {
       </div>
       {isAdmin() && (
         <div style={{margin:'32px 0'}}>
-          <h2>Quản lý khảo sát</h2>
-          <button onClick={() => handleOpenSurveyModal()}>Thêm khảo sát</button>
-          <ul>
-            {surveys.map(survey => (
-              <li key={survey.id} style={{margin:'12px 0'}}>
-                <span style={{fontWeight:'bold',cursor:'pointer'}} onClick={() => handleSelectSurvey(survey)}>{survey.name || survey.title}</span>
-                <button onClick={() => handleOpenSurveyModal(survey)}>Sửa</button>
-                <button onClick={() => handleDeleteSurvey(survey.id)}>Xóa</button>
-                {selectedSurvey && selectedSurvey.id === survey.id && (
-                  <div style={{marginLeft:24}}>
-                    <h4>Câu hỏi</h4>
-                    <button onClick={() => handleOpenQuestionModal()}>Thêm câu hỏi</button>
-                    <ul>
-                      {questions.map(q => (
-                        <li key={q.id} style={{margin:'8px 0'}}>
-                          <span style={{cursor:'pointer'}} onClick={() => handleSelectQuestion(q)}>{q.content || q.questionText}</span>
-                          <button onClick={() => handleOpenQuestionModal(q)}>Sửa</button>
-                          <button onClick={() => handleDeleteQuestion(q.id)}>Xóa</button>
-                          {selectedQuestion && selectedQuestion.id === q.id && (
-                            <div style={{marginLeft:24}}>
-                              <h5>Đáp án</h5>
-                              <button onClick={() => handleOpenAnswerModal()}>Thêm đáp án</button>
-                              <ul>
-                                {answers.map(a => (
-                                  <li key={a.id}>
-                                    {a.content || a.answerText}
-                                    <button onClick={() => handleOpenAnswerModal(a)}>Sửa</button>
-                                    <button onClick={() => handleDeleteAnswer(a.id)}>Xóa</button>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
+          <button className="admin-modal-btn" onClick={() => setShowAdminModal(true)}>Quản lý khảo sát</button>
+          {showAdminModal && (
+            <div className="admin-modal-overlay">
+              <div className="admin-modal-content">
+                <button className="admin-modal-close" onClick={() => setShowAdminModal(false)} title="Đóng">×</button>
+                <div className="admin-modal-title">Quản lý khảo sát</div>
+                <button className="admin-modal-btn" onClick={() => handleOpenSurveyModal()}>Thêm khảo sát</button>
+                <ul className="admin-modal-list">
+                  {surveys.map(survey => (
+                    <li key={survey.id}>
+                      <span style={{fontWeight:'bold',cursor:'pointer'}} onClick={() => handleSelectSurvey(survey)}>{survey.name || survey.title}</span>
+                      <button className="admin-modal-btn" onClick={() => handleOpenSurveyModal(survey)}>Sửa</button>
+                      <button className="admin-modal-btn" onClick={() => handleDeleteSurvey(survey.id)}>Xóa</button>
+                      {selectedSurvey && selectedSurvey.id === survey.id && (
+                        <div className="admin-modal-section" style={{marginLeft:24}}>
+                          <h4>Câu hỏi</h4>
+                          <button className="admin-modal-btn" onClick={() => handleOpenQuestionModal()}>Thêm câu hỏi</button>
+                          <ul className="admin-modal-list">
+                            {questions.map(q => (
+                              <li key={q.id}>
+                                <span style={{cursor:'pointer'}} onClick={() => handleSelectQuestion(q)}>{q.content || q.questionText}</span>
+                                <button className="admin-modal-btn" onClick={() => handleOpenQuestionModal(q)}>Sửa</button>
+                                <button className="admin-modal-btn" onClick={() => handleDeleteQuestion(q.id)}>Xóa</button>
+                                {selectedQuestion && selectedQuestion.id === q.id && (
+                                  <div className="admin-modal-section" style={{marginLeft:24}}>
+                                    <h5>Đáp án</h5>
+                                    <button className="admin-modal-btn" onClick={() => handleOpenAnswerModal()}>Thêm đáp án</button>
+                                    <ul className="admin-modal-list">
+                                      {answers.map(a => (
+                                        <li key={a.id}>
+                                          {a.content || a.answerText}
+                                          <button className="admin-modal-btn" onClick={() => handleOpenAnswerModal(a)}>Sửa</button>
+                                          <button className="admin-modal-btn" onClick={() => handleDeleteAnswer(a.id)}>Xóa</button>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                {/* Modal khảo sát */}
+                {showSurveyModal && (
+                  <div className="admin-modal-modal">
+                    <h3>{editingSurvey ? 'Sửa khảo sát' : 'Thêm khảo sát'}</h3>
+                    <input className="admin-modal-input" placeholder="Tên khảo sát" value={surveyForm.title} onChange={e => setSurveyForm(f => ({...f, title: e.target.value}))} />
+                    <input className="admin-modal-input" placeholder="Mô tả" value={surveyForm.description} onChange={e => setSurveyForm(f => ({...f, description: e.target.value}))} />
+                    <input className="admin-modal-input" placeholder="Loại khảo sát (type)" value={surveyForm.type} onChange={e => setSurveyForm(f => ({...f, type: e.target.value}))} />
+                    <input className="admin-modal-input" type="number" placeholder="Độ tuổi tối thiểu (minAge)" value={surveyForm.minAge} min={0} onChange={e => setSurveyForm(f => ({...f, minAge: Number(e.target.value)}))} />
+                    <input className="admin-modal-input" type="number" placeholder="Độ tuổi tối đa (maxAge)" value={surveyForm.maxAge} min={0} onChange={e => setSurveyForm(f => ({...f, maxAge: Number(e.target.value)}))} />
+                    {/* <input className="admin-modal-input" placeholder="Ảnh (image)" value={surveyForm.image} onChange={e => setSurveyForm(f => ({...f, image: e.target.value}))} /> */}
+                    <label style={{display:'block',margin:'8px 0'}}>Trạng thái:
+                      <select className="admin-modal-input" value={surveyForm.status ? 'true' : 'false'} onChange={e => setSurveyForm(f => ({...f, status: e.target.value === 'true'}))}>
+                        <option value="true">Hoạt động</option>
+                        <option value="false">Ẩn</option>
+                      </select>
+                    </label>
+                    <button className="admin-modal-btn" onClick={handleSaveSurvey}>Lưu</button>
+                    <button className="admin-modal-btn" onClick={() => setShowSurveyModal(false)}>Hủy</button>
                   </div>
                 )}
-              </li>
-            ))}
-          </ul>
-          {/* Modal khảo sát */}
-          {showSurveyModal && (
-            <div className="modal">
-              <h3>{editingSurvey ? 'Sửa khảo sát' : 'Thêm khảo sát'}</h3>
-              <input placeholder="Tên khảo sát" value={surveyForm.name} onChange={e => setSurveyForm(f => ({...f, name: e.target.value}))} />
-              <input placeholder="Mô tả" value={surveyForm.description} onChange={e => setSurveyForm(f => ({...f, description: e.target.value}))} />
-              <button onClick={handleSaveSurvey}>Lưu</button>
-              <button onClick={() => setShowSurveyModal(false)}>Hủy</button>
-            </div>
-          )}
-          {/* Modal câu hỏi */}
-          {showQuestionModal && (
-            <div className="modal">
-              <h3>{editingQuestion ? 'Sửa câu hỏi' : 'Thêm câu hỏi'}</h3>
-              <input placeholder="Nội dung câu hỏi" value={questionForm.content} onChange={e => setQuestionForm(f => ({...f, content: e.target.value}))} />
-              <button onClick={handleSaveQuestion}>Lưu</button>
-              <button onClick={() => setShowQuestionModal(false)}>Hủy</button>
-            </div>
-          )}
-          {/* Modal đáp án */}
-          {showAnswerModal && (
-            <div className="modal">
-              <h3>{editingAnswer ? 'Sửa đáp án' : 'Thêm đáp án'}</h3>
-              <input placeholder="Nội dung đáp án" value={answerForm.content} onChange={e => setAnswerForm(f => ({...f, content: e.target.value}))} />
-              <button onClick={handleSaveAnswer}>Lưu</button>
-              <button onClick={() => setShowAnswerModal(false)}>Hủy</button>
+                {/* Modal câu hỏi */}
+                {showQuestionModal && (
+                  <div className="admin-modal-modal">
+                    <h3>{editingQuestion ? 'Sửa câu hỏi' : 'Thêm câu hỏi'}</h3>
+                    <input className="admin-modal-input" placeholder="Nội dung câu hỏi" value={questionForm.content} onChange={e => setQuestionForm(f => ({...f, content: e.target.value}))} />
+                    <button className="admin-modal-btn" onClick={handleSaveQuestion}>Lưu</button>
+                    <button className="admin-modal-btn" onClick={() => setShowQuestionModal(false)}>Hủy</button>
+                  </div>
+                )}
+                {/* Modal đáp án */}
+                {showAnswerModal && (
+                  <div className="admin-modal-modal">
+                    <h3>{editingAnswer ? 'Sửa đáp án' : 'Thêm đáp án'}</h3>
+                    <input className="admin-modal-input" placeholder="Nội dung đáp án" value={answerForm.content || ''} onChange={e => setAnswerForm(f => ({...f, content: e.target.value}))} />
+                    <input className="admin-modal-input" type="number" placeholder="Điểm số (score)" value={answerForm.score ?? 0} min={0} onChange={e => setAnswerForm(f => ({...f, score: Number(e.target.value)}))} />
+                    <button className="admin-modal-btn" onClick={handleSaveAnswer}>Lưu</button>
+                    <button className="admin-modal-btn" onClick={() => setShowAnswerModal(false)}>Hủy</button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

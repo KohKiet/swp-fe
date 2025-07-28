@@ -20,8 +20,23 @@ const adminSurveyService = {
 
   // Survey Answer CRUD
   getQuestionAnswers: (questionId, config = {}) => axios.get(BASE_URL + ENDPOINTS.ADMIN_QUESTION_ANSWERS.replace('{questionId}', questionId), config || {}),
-  createAnswer: (data, config = {}) => axios.post(BASE_URL + ENDPOINTS.ADMIN_SURVEY_ANSWER_CREATE, data, config || {}),
-  updateAnswer: (id, data, config = {}) => axios.put(BASE_URL + ENDPOINTS.ADMIN_SURVEY_ANSWER_UPDATE.replace('{id}', id), data, config || {}),
+  createAnswer: (data, config = {}) => {
+    // data: { content, questionId }
+    const payload = {
+      answerText: data.content,
+      score: typeof data.score === 'number' ? data.score : 0,
+      questionId: data.questionId
+    };
+    return axios.post(BASE_URL + ENDPOINTS.ADMIN_SURVEY_ANSWER_CREATE, payload, config || {});
+  },
+  updateAnswer: (id, data, config = {}) => {
+    // data: { content, score }
+    const payload = {
+      answerText: data.content,
+      score: typeof data.score === 'number' ? data.score : 0
+    };
+    return axios.put(BASE_URL + ENDPOINTS.ADMIN_SURVEY_ANSWER_UPDATE.replace('{id}', id), payload, config || {});
+  },
   deleteAnswer: (id, config = {}) => axios.delete(BASE_URL + ENDPOINTS.ADMIN_SURVEY_ANSWER_DELETE.replace('{id}', id), config || {}),
 };
 
