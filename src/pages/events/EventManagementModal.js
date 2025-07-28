@@ -1,6 +1,18 @@
+
+// Import React và các hook cần thiết
 import React, { useState, useEffect } from 'react';
 import eventService from '../../services/eventService';
 
+
+/**
+ * Modal quản lý sự kiện (tạo mới hoặc chỉnh sửa)
+ * Props:
+ *   - isOpen: boolean, hiển thị modal hay không
+ *   - onClose: function, đóng modal
+ *   - eventToEdit: object, dữ liệu sự kiện cần chỉnh sửa (nếu có)
+ *   - onEventSaved: callback khi lưu thành công
+ *   - mode: 'create' hoặc 'edit'
+ */
 const EventManagementModal = ({ 
   isOpen, 
   onClose, 
@@ -8,6 +20,7 @@ const EventManagementModal = ({
   onEventSaved,
   mode = 'create' // 'create' or 'edit'
 }) => {
+  // State lưu dữ liệu form
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -17,12 +30,15 @@ const EventManagementModal = ({
     onlineLink: '',
     imageUrl: ''
   });
-  
+  // State loading khi gửi form
   const [loading, setLoading] = useState(false);
+  // State lỗi khi validate hoặc gửi
   const [error, setError] = useState(null);
+  // State preview ảnh sự kiện
   const [imagePreview, setImagePreview] = useState(null);
 
-  // Helper: format datetime cho input và backend
+
+  // Helper: format datetime cho input type="datetime-local"
   const formatDateTimeLocal = (dateString) => {
     if (!dateString) return '';
     try {
@@ -38,6 +54,7 @@ const EventManagementModal = ({
       return '';
     }
   };
+  // Helper: format datetime cho backend (ISO +07:00)
   const formatDateTime = (dateTimeString) => {
     if (!dateTimeString) return null;
     try {
@@ -55,6 +72,8 @@ const EventManagementModal = ({
     }
   };
 
+
+  // Form rỗng để reset khi tạo mới
   const emptyForm = {
     title: '',
     description: '',
@@ -65,7 +84,8 @@ const EventManagementModal = ({
     imageUrl: ''
   };
 
-  // Initialize form data when editing
+
+  // Khởi tạo dữ liệu form khi mở modal (tạo mới hoặc chỉnh sửa)
   useEffect(() => {
     if (mode === 'edit' && eventToEdit) {
       setFormData({
@@ -85,12 +105,15 @@ const EventManagementModal = ({
     setError(null);
   }, [mode, eventToEdit, isOpen]);
 
-  // Remove selected image
+
+  // Xóa ảnh đã chọn khỏi form
   const removeImage = () => {
     setImagePreview(null);
     setFormData(prev => ({ ...prev, imageUrl: '' }));
   };
 
+
+  // Xử lý thay đổi input form
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -99,6 +122,8 @@ const EventManagementModal = ({
     }));
   };
 
+
+  // Validate dữ liệu form trước khi gửi
   const validateForm = () => {
     if (!formData.title.trim()) return setError('Tiêu đề sự kiện là bắt buộc'), false;
     if (!formData.description.trim()) return setError('Mô tả sự kiện là bắt buộc'), false;
@@ -108,6 +133,8 @@ const EventManagementModal = ({
     return true;
   };
 
+
+  // Xử lý submit form (tạo mới hoặc cập nhật sự kiện)
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -119,6 +146,7 @@ const EventManagementModal = ({
     setError(null);
 
     try {
+      // Chuẩn bị dữ liệu gửi lên server
       const eventData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -129,7 +157,7 @@ const EventManagementModal = ({
         imageUrl: formData.imageUrl || null
       };
 
-      // Validate required fields
+      // Validate trường bắt buộc
       if (!eventData.startTime) {
         setError('Thời gian bắt đầu không hợp lệ');
         return;
@@ -137,22 +165,26 @@ const EventManagementModal = ({
 
       let response;
       if (mode === 'edit' && eventToEdit?.id) {
+        // Gọi API cập nhật sự kiện
         response = await eventService.updateEvent(eventToEdit.id, eventData);
       } else {
+        // Gọi API tạo mới sự kiện
         response = await eventService.createEvent(eventData);
       }
 
       if (response && response.success) {
+        // Gọi callback khi lưu thành công
         onEventSaved && onEventSaved(response.data);
         onClose();
         
-        // Reset form
+        // Reset form về rỗng
         setFormData({ ...emptyForm });
         setImagePreview(null);
       } else {
         setError(response?.message || `Lỗi khi ${mode === 'edit' ? 'cập nhật' : 'tạo'} sự kiện`);
       }
     } catch (err) {
+      // Xử lý lỗi trả về từ server
       console.error(`${mode === 'edit' ? 'Update' : 'Create'} event error:`, err);
       console.error('Error response:', {
         status: err.response?.status,
@@ -169,7 +201,7 @@ const EventManagementModal = ({
       } else if (err.response?.data?.error) {
         errorMessage = err.response.data.error;
       } else if (err.response?.data?.errors) {
-        // Handle validation errors
+        // Xử lý lỗi validate
         const errors = err.response.data.errors;
         if (Array.isArray(errors)) {
           errorMessage = errors.join(', ');
@@ -190,8 +222,12 @@ const EventManagementModal = ({
     }
   };
 
+
+  // Nếu modal chưa mở thì không render gì cả
   if (!isOpen) return null;
 
+
+  // Giao diện modal quản lý sự kiện (tạo/sửa)
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="event-management-modal" onClick={(e) => e.stopPropagation()} style={{
@@ -199,11 +235,12 @@ const EventManagementModal = ({
         display: 'flex',
         flexDirection: 'column'
       }}>
+        {/* Header modal */}
         <div className="modal-header">
           <h2>{mode === 'edit' ? 'Chỉnh sửa sự kiện' : 'Tạo sự kiện mới'}</h2>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
-        
+        {/* Form nhập thông tin sự kiện */}
         <form onSubmit={handleSubmit} className="event-form" style={{
           display: 'flex',
           flexDirection: 'column',
@@ -216,6 +253,7 @@ const EventManagementModal = ({
             padding: '20px',
             maxHeight: 'calc(90vh - 120px)' // Trừ đi chiều cao header và footer
           }}>
+            {/* Hiển thị lỗi nếu có */}
             {error && (
               <div className="error-message mb-4">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,6 +263,7 @@ const EventManagementModal = ({
               </div>
             )}
 
+            {/* Tiêu đề sự kiện */}
             <div className="form-group">
               <label htmlFor="title">Tiêu đề sự kiện *</label>
               <input
@@ -238,6 +277,7 @@ const EventManagementModal = ({
               />
             </div>
 
+            {/* Mô tả sự kiện */}
             <div className="form-group">
               <label htmlFor="description">Mô tả sự kiện *</label>
               <textarea
@@ -251,6 +291,7 @@ const EventManagementModal = ({
               />
             </div>
 
+            {/* Ảnh sự kiện */}
             <div className="form-group">
               <label htmlFor="imageUrl">Ảnh sự kiện</label>
               <input
@@ -260,7 +301,7 @@ const EventManagementModal = ({
                 value={formData.imageUrl}
                 onChange={(e) => {
                   handleInputChange(e);
-                  // Update image preview when URL changes
+                  // Update image preview khi thay đổi URL
                   if (e.target.value) {
                     setImagePreview(e.target.value);
                   } else {
@@ -321,6 +362,7 @@ const EventManagementModal = ({
               </small>
             </div>
 
+            {/* Thời gian bắt đầu/kết thúc */}
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="startTime">Thời gian bắt đầu *</label>
@@ -346,6 +388,7 @@ const EventManagementModal = ({
               </div>
             </div>
 
+            {/* Địa điểm tổ chức */}
             <div className="form-group">
               <label htmlFor="location">Địa điểm</label>
               <input
@@ -358,6 +401,7 @@ const EventManagementModal = ({
               />
             </div>
 
+            {/* Link tham gia online */}
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="onlineLink">Link tham gia online</label>
@@ -373,6 +417,7 @@ const EventManagementModal = ({
             </div>
           </div>
 
+          {/* Footer: nút hủy và lưu */}
           <div className="modal-footer">
             <button 
               type="button" 
@@ -396,4 +441,6 @@ const EventManagementModal = ({
   );
 };
 
+
+// Export component để sử dụng ở các trang quản lý sự kiện
 export default EventManagementModal;

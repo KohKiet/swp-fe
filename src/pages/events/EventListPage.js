@@ -56,46 +56,58 @@ const EventsBanner = () => (
   </div>
 );
 
-// Event Detail Modal Component
+// =============================
+// Component: EventDetailModal
+// Mô tả: Hiển thị modal chi tiết sự kiện khi người dùng bấm vào xem chi tiết.
+// Bao gồm: tải dữ liệu chi tiết từ API, xử lý loading, lỗi, hiệu ứng đóng mở, và hiển thị thông tin sự kiện.
+// =============================
 const EventDetailModal = ({ event, isOpen, onClose }) => {
+  // State lưu thông tin chi tiết sự kiện lấy từ API
   const [eventDetails, setEventDetails] = useState(null);
+  // State kiểm soát trạng thái loading khi gọi API
   const [loading, setLoading] = useState(false);
+  // State lưu thông báo lỗi khi tải dữ liệu thất bại
   const [error, setError] = useState(null);
+  // State kiểm soát hiệu ứng đóng modal (animation)
   const [isClosing, setIsClosing] = useState(false);
 
+  // useEffect: Khi modal mở và có event id, gọi hàm fetchEventDetails để lấy dữ liệu chi tiết sự kiện
   useEffect(() => {
     if (isOpen && event?.id) {
-      setIsClosing(false);
-      fetchEventDetails();
+      setIsClosing(false); // Reset hiệu ứng đóng
+      fetchEventDetails(); // Gọi API lấy chi tiết sự kiện
     }
   }, [isOpen, event?.id]);
 
+  // Hàm xử lý đóng modal với hiệu ứng (delay 300ms để khớp với animation CSS)
   const handleClose = () => {
-    setIsClosing(true);
+    setIsClosing(true); // Bật hiệu ứng đóng
     setTimeout(() => {
-      onClose();
-      setIsClosing(false);
-    }, 300); // Match animation duration
+      onClose(); // Gọi callback đóng modal từ cha
+      setIsClosing(false); // Reset lại trạng thái
+    }, 300); // Thời gian trùng với animation CSS
   };
 
+  // Hàm gọi API lấy chi tiết sự kiện theo id
   const fetchEventDetails = async () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); // Bật loading
+    setError(null); // Xóa lỗi cũ
     try {
-      const response = await eventService.getEventById(event.id);
+      const response = await eventService.getEventById(event.id); // Gọi API lấy chi tiết
       if (response && response.success) {
-        setEventDetails(response.data);
+        setEventDetails(response.data); // Lưu dữ liệu vào state
       } else {
-        setError('Không thể tải thông tin chi tiết sự kiện');
+        setError('Không thể tải thông tin chi tiết sự kiện'); // Báo lỗi nếu API trả về lỗi
       }
     } catch (err) {
-      setError('Lỗi khi tải thông tin sự kiện');
+      setError('Lỗi khi tải thông tin sự kiện'); // Báo lỗi nếu có exception
       console.error('Error fetching event details:', err);
     } finally {
-      setLoading(false);
+      setLoading(false); // Tắt loading dù thành công hay thất bại
     }
   };
 
+  // Hàm format ngày giờ sang tiếng Việt, dùng cho hiển thị thời gian sự kiện
   const formatDate = (dateString) => {
     if (!dateString) return 'Chưa xác định';
     return new Date(dateString).toLocaleString('vi-VN', {
@@ -108,16 +120,19 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
     });
   };
 
+  // Nếu modal chưa mở thì không render gì cả
   if (!isOpen) return null;
 
+  // Render modal chi tiết sự kiện
   return React.createElement('div', {
     className: `modal-overlay ${isClosing ? 'closing' : ''}`,
-    onClick: handleClose
+    onClick: handleClose // Bấm ra ngoài overlay sẽ đóng modal
   }, 
     React.createElement('div', {
       className: 'modal-content event-detail-modal',
-      onClick: (e) => e.stopPropagation()
+      onClick: (e) => e.stopPropagation() // Ngăn sự kiện click lan ra ngoài modal
     }, [
+      // Header modal: tiêu đề và nút đóng
       React.createElement('div', { className: 'modal-header', key: 'header' }, [
         React.createElement('h2', { key: 'title' }, event?.title || 'Chi tiết sự kiện'),
         React.createElement('button', {
@@ -126,7 +141,9 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
           key: 'close'
         }, '×')
       ]),
-        React.createElement('div', { className: 'modal-body', key: 'body' }, [
+      // Body modal: hiển thị loading, lỗi, hoặc nội dung chi tiết sự kiện
+      React.createElement('div', { className: 'modal-body', key: 'body' }, [
+        // Hiển thị loading khi đang tải dữ liệu
         loading && React.createElement('div', { 
           key: 'loading',
           style: {
@@ -138,6 +155,7 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
             color: '#666'
           }
         }, 'Đang tải...'),
+        // Hiển thị thông báo lỗi nếu có lỗi khi tải dữ liệu
         error && React.createElement('div', { 
           key: 'error',
           style: {
@@ -153,20 +171,21 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
             margin: '16px 0'
           }
         }, ['⚠️ ', error]),
-        
+        // Hiển thị nội dung chi tiết sự kiện nếu đã có dữ liệu
         eventDetails && React.createElement('div', { className: 'event-detail-content', key: 'content' }, [          
           React.createElement('div', { className: 'detail-info', key: 'info' }, [
+            // Thông tin thời gian sự kiện
             React.createElement('div', { className: 'info-section', key: 'time' }, [
               React.createElement('h3', { key: 'time-title' }, '📅 Thời gian'),
               React.createElement('p', { key: 'start' }, `Bắt đầu: ${formatDate(eventDetails.startTime || eventDetails.startDate)}`),
               eventDetails.endTime && React.createElement('p', { key: 'end' }, `Dự kiến kết thúc: ${formatDate(eventDetails.endTime)}`)
             ]),
-            
+            // Thông tin địa điểm nếu có
             eventDetails.location && React.createElement('div', { className: 'info-section', key: 'location' }, [
               React.createElement('h3', { key: 'loc-title' }, '📍 Địa điểm'),
               React.createElement('p', { key: 'loc-text' }, eventDetails.location)
             ]),
-            
+            // Mô tả sự kiện
             React.createElement('div', { className: 'info-section', key: 'desc' }, [
               React.createElement('h3', { key: 'desc-title' }, '📝 Mô tả'),
               React.createElement('div', { 
@@ -174,12 +193,12 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
                 key: 'desc-content'
               }, eventDetails.description || 'Chưa có mô tả')
             ]),
-            
+            // Thông tin người tổ chức nếu có
             eventDetails.creatorName && React.createElement('div', { className: 'info-section', key: 'creator' }, [
               React.createElement('h3', { key: 'creator-title' }, '👤 Tổ chức bởi'),
               React.createElement('p', { key: 'creator-text' }, eventDetails.creatorName)
             ]),
-            
+            // Thông tin số lượng người tham gia
             React.createElement('div', { className: 'info-section', key: 'participants' }, [
               React.createElement('h3', { key: 'part-title' }, '👥 Tham gia'),
               React.createElement('p', { key: 'part-text' }, 
@@ -189,7 +208,8 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
           ])
         ])
       ]),
-        React.createElement('div', { className: 'modal-footer', key: 'footer' }, [
+      // Footer modal: nút đóng
+      React.createElement('div', { className: 'modal-footer', key: 'footer' }, [
         React.createElement('button', {
           className: 'btn-secondary',
           onClick: handleClose,

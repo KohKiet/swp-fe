@@ -1,9 +1,13 @@
-/* Survey (Assessment) Page Modern CSS - Inspired by Google Forms, Typeform, SurveyMonkey */
 
-/* Import font và áp dụng cho trang khảo sát */
+/*
+  Survey (Assessment) Page Modern CSS - Inspired by Google Forms, Typeform, SurveyMonkey
+  Chú thích chi tiết từng block bên dưới
+*/
+
+/* Import font Roboto từ Google Fonts và áp dụng cho toàn bộ trang khảo sát */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap');
 
-/* Apply font to survey page only */
+/* Áp dụng font cho tất cả thành phần trong trang khảo sát */
 .survey-banner,
 .survey-banner *,
 .survey-root,
@@ -21,7 +25,14 @@
   font-family: 'Roboto', 'Segoe UI', sans-serif !important;
 }
 
-/* Banner for Survey Pages */
+/*
+  =============================
+  Banner đầu trang khảo sát
+  (ảnh nền, tiêu đề, mô tả)
+  - Tạo phần banner nổi bật ở đầu trang khảo sát
+  - Sử dụng ảnh nền, hiệu ứng động, lớp phủ gradient và nội dung tiêu đề/mô tả
+  =============================
+*/
 .survey-banner {
   position: relative;
   width: 100%;
@@ -35,9 +46,15 @@
   margin-bottom: 2rem;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  animation: slowZoom 30s infinite alternate ease-in-out;
+  animation: slowZoom 30s infinite alternate ease-in-out; /* Hiệu ứng phóng to chậm */
 }
 
+
+/*
+  Hiệu ứng phóng to nền banner chậm
+  - Tạo hiệu ứng động phóng to nhẹ cho ảnh nền banner
+  - Giúp banner sinh động, thu hút hơn
+*/
 @keyframes slowZoom {
   from {
     background-size: 100%;
@@ -47,6 +64,12 @@
   }
 }
 
+
+/*
+  Lớp phủ gradient làm tối ảnh nền banner
+  - Tạo lớp phủ gradient xanh tím giúp chữ nổi bật hơn trên ảnh nền
+  - Sử dụng ::before để không ảnh hưởng đến nội dung bên trong
+*/
 .survey-banner::before {
   content: '';
   position: absolute;
@@ -58,6 +81,12 @@
   z-index: 1;
 }
 
+
+/*
+  Nội dung tiêu đề, mô tả trong banner
+  - Đảm bảo nội dung nằm trên lớp phủ gradient
+  - Căn giữa, giới hạn chiều rộng, padding hợp lý
+*/
 .survey-banner-content {
   position: relative;
   z-index: 2;
@@ -66,6 +95,12 @@
   padding: 0 1rem;
 }
 
+
+/*
+  Tiêu đề lớn trong banner
+  - Font lớn, đậm, màu trắng, có bóng chữ
+  - Hiệu ứng xuất hiện mượt mà từ dưới lên
+*/
 .survey-banner-title {
   font-size: 2.5rem;
   font-weight: 700;
@@ -76,6 +111,11 @@
   animation: fadeInUp 0.8s ease-out;
 }
 
+
+/*
+  Mô tả phụ dưới tiêu đề banner
+  - Font vừa phải, màu trắng, hiệu ứng xuất hiện mượt
+*/
 .survey-banner-subtitle {
   font-size: 1.4rem;
   font-weight: 400;
@@ -85,6 +125,11 @@
   animation: fadeInUp 1s ease-out;
 }
 
+
+/*
+  Hiệu ứng xuất hiện mượt từ dưới lên
+  - Dùng cho tiêu đề và mô tả banner
+*/
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -96,6 +141,11 @@
   }
 }
 
+
+/*
+  Responsive: thu nhỏ banner và font trên mobile
+  - Đảm bảo hiển thị tốt trên màn hình nhỏ
+*/
 @media (max-width: 768px) {
   .survey-banner {
     height: 180px;
@@ -109,6 +159,12 @@
     font-size: 1rem;
   }
 }
+
+/*
+  Nền tổng thể trang khảo sát
+  - Tạo nền gradient nhẹ cho toàn bộ trang khảo sát
+  - Căn giữa nội dung theo chiều dọc và ngang
+*/
 .survey-root {
   min-height: 80vh;
   background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
@@ -117,6 +173,12 @@
   justify-content: center;
   padding: 32px 8px;
 }
+
+/*
+  Khung chứa nội dung khảo sát (form, câu hỏi, kết quả)
+  - Tạo khung trắng bo góc, bóng đổ, padding lớn
+  - Dùng cho form khảo sát, câu hỏi, kết quả
+*/
 .survey-container {
   background: #fff;
   border-radius: 24px;
@@ -127,10 +189,20 @@
   position: relative;
   animation: fadeInSurvey 0.7s cubic-bezier(.4,0,.2,1);
 }
+
+/*
+  Hiệu ứng xuất hiện mượt cho container khảo sát
+  - Dùng khi container xuất hiện (fade in + trượt lên)
+*/
 @keyframes fadeInSurvey {
   from { opacity: 0; transform: translateY(40px); }
   to { opacity: 1; transform: none; }
 }
+
+/*
+  Tiêu đề lớn của khảo sát
+  - Font lớn, đậm, màu tím than, căn trái, có icon nếu cần
+*/
 .survey-title {
   font-size: 2.1rem;
   font-weight: 800;
@@ -141,11 +213,21 @@
   align-items: center;
   gap: 10px;
 }
+
+/*
+  Mô tả khảo sát dưới tiêu đề
+  - Màu xám nhạt, font vừa phải, tạo cảm giác nhẹ nhàng
+*/
 .survey-desc {
   color: #6b7280;
   font-size: 1.08rem;
   margin-bottom: 18px;
 }
+
+/*
+  Thanh tiến trình khảo sát
+  - Hiển thị tiến độ làm khảo sát (progress bar)
+*/
 .survey-progress {
   margin-bottom: 18px;
   height: 10px;
@@ -159,18 +241,25 @@
   border-radius: 6px;
   transition: width 0.4s cubic-bezier(.4,0,.2,1);
 }
+
+/*
+  Câu hỏi khảo sát
+  - Font lớn, đậm, màu tối, tạo điểm nhấn cho câu hỏi
+*/
 .survey-question {
   font-size: 1.18rem;
   font-weight: 600;
   color: #374151;
   margin-bottom: 16px;
 }
+/* Danh sách đáp án */
 .survey-answers {
   display: flex;
   flex-direction: column;
   gap: 14px;
   margin-bottom: 18px;
 }
+/* Đáp án khảo sát (chưa chọn) */
 .survey-answer {
   background: #f3f4f6;
   border-radius: 10px;
@@ -184,6 +273,7 @@
   align-items: center;
   gap: 10px;
 }
+/* Đáp án được chọn */
 .survey-answer.selected {
   background: #e0e7ff;
   border-color: #6366f1;
@@ -191,11 +281,13 @@
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(99,102,241,0.08);
 }
+/* Radio button đáp án */
 .survey-answer input[type="radio"] {
   accent-color: #6366f1;
   width: 20px;
   height: 20px;
 }
+/* Thanh điều hướng câu hỏi */
 .survey-nav {
   display: flex;
   justify-content: space-between;
@@ -203,6 +295,7 @@
   gap: 10px;
   margin-top: 10px;
 }
+/* Nút điều hướng, gửi bài */
 .survey-btn {
   background: linear-gradient(90deg, #6366f1 0%, #60a5fa 100%);
   color: #fff;
@@ -220,6 +313,7 @@
   color: #a5b4fc;
   cursor: not-allowed;
 }
+/* Thông báo lỗi/alert */
 .survey-alert {
   background: #fee2e2;
   color: #b91c1c;
@@ -232,6 +326,12 @@
   align-items: center;
   gap: 8px;
 }
+
+/*
+  Responsive: thu nhỏ padding, font, border-radius trên mobile
+  - Đảm bảo giao diện khảo sát hiển thị tốt trên điện thoại
+  - Giảm padding, font, bo góc cho phù hợp màn hình nhỏ
+*/
 @media (max-width: 600px) {
   .survey-container {
     padding: 18px 4px 18px 4px;
@@ -256,19 +356,24 @@
   }
 }
 
-/* History specific styles */
+
+/*
+  =============================
+  Lịch sử khảo sát (history page)
+  - Style cho trang hiển thị lịch sử các lần làm khảo sát
+  - Card lịch sử, tiêu đề, ngày, mức độ rủi ro, nút quay lại
+  =============================
+*/
 .survey-history-list {
   padding-left: 0;
   margin-top: 24px;
   list-style: none;
 }
-
 .survey-history-item {
   list-style: none;
   margin-bottom: 18px;
   padding: 0;
 }
-
 .survey-history-card {
   background: #f3f4f6;
   border-radius: 10px;
@@ -277,93 +382,102 @@
   flex-direction: column;
   gap: 4px;
 }
-
 .survey-history-title {
   font-weight: 700;
   color: #6366f1;
 }
-
 .survey-history-date {
   font-size: 0.98rem;
   color: #6b7280;
 }
-
 .survey-history-risk {
   font-size: 0.98rem;
 }
-
 .survey-history-risk-level {
   font-weight: bold;
   color: #f59e42;
 }
-
 .survey-back-button-container {
   margin-top: 28px;
   display: flex;
   justify-content: center;
 }
-
 .survey-history-container {
   max-width: 800px;
 }
-
 .survey-title-center {
   justify-content: center;
 }
-
 .survey-back-link {
   text-decoration: none;
 }
-
 .survey-back-arrow {
   margin-right: 8px;
 }
 
-/* Results page specific styles */
+
+/*
+  =============================
+  Trang kết quả khảo sát (results page)
+  - Style cho trang hiển thị kết quả sau khi làm khảo sát
+  - Container, tóm tắt, mức độ rủi ro, gợi ý, chi tiết đáp án
+  =============================
+*/
 .survey-results-container {
   max-width: 800px;
 }
 
+/* =============================
+   Trang kết quả khảo sát (results page)
+   - Style cho trang hiển thị kết quả sau khi làm khảo sát
+   - Container, tóm tắt, mức độ rủi ro, gợi ý, chi tiết đáp án
+   ============================= */
 .survey-results-summary {
+  /* Tóm tắt kết quả khảo sát, hiển thị phía trên cùng */
   margin-bottom: 18px;
   color: #6b7280;
   font-size: 1.08rem;
 }
-
 .survey-results-risk {
+  /* Mức độ rủi ro (ví dụ: Cao/Trung bình/Thấp) */
   color: #6366f1;
   font-weight: 700;
 }
-
 .survey-results-suggestion {
+  /* Gợi ý, lời khuyên sau khảo sát */
   color: #16a34a;
 }
-
 .survey-results-detail-title {
+  /* Tiêu đề phần chi tiết đáp án */
   margin-bottom: 10px;
 }
-
 .survey-results-answers {
+  /* Danh sách đáp án đã chọn */
   padding-left: 18px;
   margin-bottom: 24px;
 }
-
 .survey-results-answer {
+  /* Mỗi đáp án đã chọn */
   margin-bottom: 8px;
 }
-
 .survey-results-answer-text {
+  /* Đáp án nổi bật (in màu tím) */
   color: #6366f1;
 }
 
+/* =============================
+   Các nút hành động sau khi hoàn thành khảo sát
+   - Nút làm lại, xem lịch sử, quay về trang chủ, v.v.
+   ============================= */
 .survey-action-buttons {
+  /* Container chứa các nút hành động, xếp dọc, cách đều */
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-top: 24px;
 }
-
 .survey-action-btn {
+  /* Style chung cho nút hành động (cả primary và secondary) */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -372,8 +486,8 @@
   text-align: center;
   text-decoration: none;
 }
-
 .survey-action-btn--primary {
+  /* Nút chính (ví dụ: Làm lại khảo sát) - màu gradient tím xanh */
   background: linear-gradient(90deg, #6366f1 0%, #60a5fa 100%);
   color: #fff;
   font-weight: 700;
@@ -385,8 +499,8 @@
   box-shadow: 0 2px 8px rgba(99,102,241,0.08);
   transition: background 0.2s, box-shadow 0.2s;
 }
-
 .survey-action-btn--secondary {
+  /* Nút phụ (ví dụ: Xem lịch sử, về trang chủ) - màu xám nhạt */
   background: #f3f4f6;
   color: #374151;
   font-weight: 600;
@@ -397,33 +511,38 @@
   cursor: pointer;
   transition: background 0.2s, box-shadow 0.2s;
 }
-
 .survey-action-btn--secondary:hover {
+  /* Hiệu ứng hover cho nút phụ */
   background: #e5e7eb;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-/* Header Image for Survey Pages */
+/* =============================
+   Ảnh đầu trang khảo sát (hero image)
+   - Tạo điểm nhấn hình ảnh ở đầu trang khảo sát
+   - Có hiệu ứng phóng to khi hover, bo góc lớn
+   ============================= */
 .survey-hero {
+  /* Container ảnh hero, kéo rộng ra ngoài container chính */
   margin: -40px -28px 20px -28px;
   position: relative;
   height: 200px;
   overflow: hidden;
   border-radius: 24px 24px 0 0;
 }
-
 .survey-hero-image {
+  /* Ảnh nền, luôn phủ kín, hiệu ứng phóng to khi hover */
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.5s ease;
 }
-
 .survey-hero:hover .survey-hero-image {
+  /* Khi hover vào hero, ảnh phóng to nhẹ */
   transform: scale(1.05);
 }
-
 .survey-hero::after {
+  /* Lớp phủ gradient trắng ở đáy ảnh, tạo hiệu ứng mờ dần lên trên */
   content: '';
   position: absolute;
   bottom: 0;
@@ -434,6 +553,10 @@
   pointer-events: none;
 }
 
+/* =============================
+   Responsive cho ảnh hero và header trên mobile
+   - Thu nhỏ chiều cao, bo góc, margin cho phù hợp màn nhỏ
+   ============================= */
 @media (max-width: 600px) {
   .survey-hero {
     height: 150px;
@@ -441,9 +564,9 @@
     border-radius: 14px 14px 0 0;
   }
 }
-
 @media (max-width: 600px) {
   .survey-header-image {
+    /* Nếu có ảnh header riêng, thu nhỏ trên mobile */
     height: 140px;
     margin: -18px -4px 15px -4px;
     border-radius: 14px 14px 0 0;

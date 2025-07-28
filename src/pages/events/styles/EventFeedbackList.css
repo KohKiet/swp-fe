@@ -1,4 +1,18 @@
 /* Event Feedback List Page Styles */
+/*
+============================================================
+ EventFeedbackList.css - Chú thích chi tiết từng đoạn code
+============================================================
+*/
+
+/*
+ * Container chính của trang danh sách feedback sự kiện
+ * - max-width: giới hạn chiều rộng
+ * - margin: căn giữa
+ * - padding: khoảng cách nội dung
+ * - background: màu nền nhẹ
+ * - min-height: đảm bảo full màn hình
+ */
 .feedback-list-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -8,6 +22,9 @@
 }
 
 /* Header */
+/*
+ * Header trang: tiêu đề và mô tả
+ */
 .feedback-list-header {
   text-align: center;
   margin-bottom: 3rem;
@@ -24,6 +41,10 @@
 }
 
 /* Event Selector */
+/*
+ * Bộ chọn sự kiện để xem feedback theo từng event
+ * - Style cho label, input, box-shadow
+ */
 .event-selector {
   background: #fff;
   padding: 1.5rem;
@@ -52,7 +73,11 @@
   box-shadow: 0 0 0 3px rgba(94,182,233,0.1);
 }
 
-/* Selected Event Info */
+/*
+ * Thông tin sự kiện đang được chọn (hiển thị nổi bật)
+ * - Gradient nền xanh, chữ trắng, căn giữa
+ * - Dùng để nhấn mạnh sự kiện đang xem feedback
+ */
 .selected-event-info {
   background: linear-gradient(135deg, #5eb6e9 0%, #a7e9af 100%);
   color: #fff;
@@ -61,18 +86,27 @@
   margin-bottom: 2rem;
   text-align: center;
 }
+/*
+ * Tiêu đề sự kiện đang chọn
+ */
 .selected-event-info h2 {
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
 }
+/*
+ * Ngày diễn ra sự kiện
+ */
 .event-date {
   font-size: 1rem;
   opacity: 0.9;
   margin: 0;
 }
 
-/* Feedback Statistics */
+/*
+ * Thống kê feedback (số lượng, điểm trung bình, phân phối rating)
+ * - Nền trắng, bo góc, bóng đổ nhẹ, padding lớn
+ */
 .feedback-stats {
   background: #fff;
   border-radius: 12px;
@@ -80,12 +114,18 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   margin-bottom: 2rem;
 }
+/*
+ * Lưới thống kê (số lượng, điểm TB, v.v.)
+ */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
+/*
+ * Card từng chỉ số thống kê
+ */
 .stat-card {
   text-align: center;
   padding: 1.5rem;
@@ -93,24 +133,36 @@
   border-radius: 8px;
   border: 1px solid #e2e8f0;
 }
+/*
+ * Số liệu lớn (số lượng feedback, điểm TB...)
+ */
 .stat-number {
   font-size: 2rem;
   font-weight: 700;
   color: #5eb6e9;
   margin-bottom: 0.5rem;
 }
+/*
+ * Nhãn mô tả chỉ số
+ */
 .stat-label {
   font-size: 0.875rem;
   color: #64748b;
   margin-bottom: 0.5rem;
 }
+/*
+ * Hiển thị các ngôi sao trung bình
+ */
 .stat-stars {
   display: flex;
   justify-content: center;
   gap: 0.25rem;
 }
 
-/* Rating Distribution */
+/*
+ * Phân phối rating (số lượng feedback theo từng mức sao)
+ * - Hiển thị biểu đồ thanh cho từng mức sao
+ */
 .rating-distribution h3 {
   font-size: 1.125rem;
   font-weight: 600;
@@ -127,12 +179,18 @@
   align-items: center;
   gap: 1rem;
 }
+/*
+ * Nhãn mức sao (5 sao, 4 sao...)
+ */
 .rating-label {
   min-width: 60px;
   font-size: 0.875rem;
   font-weight: 500;
   color: #374151;
 }
+/*
+ * Thanh progress biểu diễn tỉ lệ feedback
+ */
 .progress-bar {
   flex: 1;
   height: 8px;
@@ -145,6 +203,9 @@
   background: linear-gradient(135deg, #5eb6e9 0%, #a7e9af 100%);
   transition: width 0.3s;
 }
+/*
+ * Số lượng feedback cho từng mức sao
+ */
 .count-label {
   min-width: 40px;
   font-size: 0.875rem;
@@ -152,7 +213,9 @@
   text-align: right;
 }
 
-/* Stars */
+/*
+ * Icon ngôi sao (dùng cho rating)
+ */
 .star {
   color: #d1d5db;
   font-size: 1.25rem;
@@ -163,14 +226,34 @@
 }
 
 /* Feedback List */
+/*
+ * Danh sách feedback (card, lưới, style từng feedback)
+ */
+
+/*
+ * Danh sách feedback (container chứa các feedback card)
+ * - margin-top: tạo khoảng cách phía trên
+ */
 .feedback-list {
   margin-top: 2rem;
 }
+
+/*
+ * Lưới hiển thị các feedback card
+ * - grid: responsive, tự động fill theo chiều rộng
+ * - gap: khoảng cách giữa các card
+ */
 .feedbacks-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 1.5rem;
 }
+
+/*
+ * Card feedback từng người dùng
+ * - Nền trắng, bo góc, bóng đổ nhẹ, border
+ * - Hover: đổi màu border, tăng bóng đổ
+ */
 .feedback-card {
   background: #fff;
   border-radius: 12px;
@@ -183,17 +266,30 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   border-color: #5eb6e9;
 }
+
+/*
+ * Header của mỗi feedback card
+ * - Hiển thị thông tin user, ngày, nút xóa
+ */
 .feedback-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
 }
+
+/*
+ * Thông tin user (avatar + tên)
+ */
 .user-info {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
+
+/*
+ * Avatar user (chữ cái đầu, màu gradient)
+ */
 .user-avatar {
   width: 40px;
   height: 40px;
@@ -206,21 +302,38 @@
   font-weight: 600;
   font-size: 1.125rem;
 }
+
+/*
+ * Tên user (h4) trong card
+ */
 .user-details h4 {
   font-size: 1rem;
   font-weight: 600;
   color: #374151;
   margin: 0 0 0.25rem 0;
 }
+
+/*
+ * Ngày gửi feedback
+ */
 .feedback-date {
   font-size: 0.75rem;
   color: #64748b;
   margin: 0;
 }
+
+/*
+ * Nhóm nút thao tác (xóa feedback)
+ */
 .feedback-actions {
   display: flex;
   gap: 0.5rem;
 }
+
+/*
+ * Nút xóa feedback
+ * - Nền đỏ nhạt, chữ đỏ, hover đậm hơn
+ */
 .btn-delete-feedback {
   width: 32px;
   height: 32px;
@@ -238,6 +351,10 @@
   background: #fecaca;
   transform: scale(1.05);
 }
+
+/*
+ * Vùng hiển thị rating (số sao + text)
+ */
 .feedback-rating {
   display: flex;
   align-items: center;
@@ -253,6 +370,11 @@
   font-weight: 600;
   color: #374151;
 }
+
+/*
+ * Nội dung comment feedback
+ * - Nền xám nhạt, border trái màu xanh, bo góc
+ */
 .feedback-comment {
   background: #f8fafc;
   border-left: 4px solid #5eb6e9;
@@ -267,6 +389,15 @@
 }
 
 /* Empty State */
+/*
+ * Trạng thái rỗng (không có feedback)
+ */
+
+/*
+ * Trạng thái rỗng (không có feedback)
+ * - Hiển thị khi không có dữ liệu feedback
+ * - Nền trắng, bo góc, bóng đổ nhẹ, căn giữa nội dung
+ */
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
@@ -274,6 +405,9 @@
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
+/*
+ * Icon minh họa trạng thái rỗng
+ */
 .empty-icon {
   font-size: 4rem;
   margin-bottom: 1rem;
@@ -290,7 +424,11 @@
   margin: 0;
 }
 
-/* Loading State */
+/*
+ * Trạng thái loading (đang tải dữ liệu)
+ * - Hiển thị khi đang lấy dữ liệu từ API
+ * - Nền trắng, bo góc, bóng đổ nhẹ, spinner
+ */
 .loading-state {
   text-align: center;
   padding: 3rem;
@@ -298,6 +436,9 @@
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
+/*
+ * Spinner loading
+ */
 .loading-spinner {
   width: 40px;
   height: 40px;
@@ -316,7 +457,10 @@
   margin: 0;
 }
 
-/* Error Message */
+/*
+ * Thông báo lỗi (hiển thị khi có lỗi API hoặc thao tác)
+ * - Nền đỏ nhạt, border đỏ, chữ đỏ, icon cảnh báo
+ */
 .error-message {
   display: flex;
   align-items: center;
@@ -334,7 +478,11 @@
   flex-shrink: 0;
 }
 
-/* Access Denied */
+/*
+ * Trạng thái không có quyền truy cập
+ * - Hiển thị khi user không đủ quyền xem trang
+ * - Nền trắng, bo góc, bóng đổ nhẹ, căn giữa nội dung
+ */
 .access-denied {
   text-align: center;
   padding: 4rem 2rem;
@@ -353,7 +501,10 @@
   margin: 0;
 }
 
-/* Responsive Design */
+/*
+ * Responsive: điều chỉnh layout cho tablet/mobile
+ * - Thu nhỏ padding, font, đổi layout lưới sang dọc
+ */
 @media (max-width: 768px) {
   .feedback-list-container { padding: 1rem; }
   .feedback-list-header h1 { font-size: 2rem; }
@@ -372,6 +523,9 @@
 }
 /* Utility Classes */
 .w-4 { width: 1rem; }
+/*
+ * Utility classes: width/height cho icon
+ */
 .h-4 { height: 1rem; }
 .w-5 { width: 1.25rem; }
 .h-5 { height: 1.25rem; }

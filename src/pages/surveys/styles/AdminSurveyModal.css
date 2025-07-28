@@ -1,51 +1,75 @@
+
+/*
+  Lớp phủ modal, che toàn bộ màn hình và căn giữa nội dung modal
+*/
 .admin-modal-overlay {
-  position: fixed;
+  position: fixed; /* Giữ modal ở vị trí cố định trên màn hình */
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.35);
-  z-index: 1000;
-  display: flex;
+  background: rgba(0,0,0,0.35); /* Nền tối mờ */
+  z-index: 1000; /* Đảm bảo nổi trên các thành phần khác */
+  display: flex; /* Dùng flex để căn giữa */
   align-items: center;
   justify-content: center;
 }
+
+/*
+  Nội dung chính của modal (khung trắng bo góc)
+*/
 .admin-modal-content {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.18);
-  padding: 32px 24px 24px 24px;
+  background: #fff; /* Nền trắng */
+  border-radius: 12px; /* Bo góc mềm mại */
+  box-shadow: 0 4px 32px rgba(0,0,0,0.18); /* Đổ bóng nổi bật */
+  padding: 32px 24px 24px 24px; /* Padding rộng rãi */
   min-width: 340px;
-  max-width: 95vw;
+  max-width: 95vw; /* Đảm bảo không vượt quá màn hình */
   max-height: 90vh;
-  overflow-y: auto;
+  overflow-y: auto; /* Cuộn nếu nội dung dài */
   position: relative;
 }
+
+/*
+  Nút đóng modal (góc trên bên phải)
+*/
 .admin-modal-close {
   position: absolute;
   top: 16px;
   right: 20px;
-  background: none;
+  background: none; /* Không nền */
   border: none;
   font-size: 22px;
-  color: #64748b;
+  color: #64748b; /* Màu xám nhạt */
   cursor: pointer;
   transition: color 0.2s;
 }
 .admin-modal-close:hover {
-  color: #ef4444;
+  color: #ef4444; /* Đỏ khi hover */
 }
+
+/*
+  Tiêu đề modal
+*/
 .admin-modal-title {
   font-size: 22px;
   font-weight: 700;
   margin-bottom: 18px;
   color: #1e293b;
 }
+
+/*
+  Section trong modal (cách nhau bằng margin)
+*/
 .admin-modal-section {
   margin-bottom: 24px;
 }
 .admin-modal-section h4 {
   margin: 0 0 8px 0;
   font-size: 16px;
-  color: #2563eb;
+  color: #2563eb; /* Xanh nổi bật */
 }
+
+/*
+  Danh sách item trong modal (không có dấu chấm)
+*/
 .admin-modal-list {
   list-style: none;
   padding: 0;
@@ -54,14 +78,18 @@
 .admin-modal-list li {
   margin-bottom: 10px;
   padding: 8px 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9; /* Gạch chân nhẹ */
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 8px; /* Khoảng cách giữa các phần tử trong item */
 }
 .admin-modal-list li:last-child {
   border-bottom: none;
 }
+
+/*
+  Nút thao tác trong modal (gradient xanh tím)
+*/
 .admin-modal-btn {
   background: linear-gradient(90deg,#60a5fa 0%,#6366f1 100%);
   color: #fff;
@@ -77,6 +105,10 @@
 .admin-modal-btn:hover {
   background: linear-gradient(90deg,#2563eb 0%,#7c3aed 100%);
 }
+
+/*
+  Input trong modal
+*/
 .admin-modal-input {
   width: 100%;
   padding: 7px 10px;
@@ -85,6 +117,10 @@
   margin-bottom: 10px;
   font-size: 15px;
 }
+
+/*
+  Box modal phụ (ví dụ: thông báo, confirm)
+*/
 .admin-modal-modal {
   background: #f9fafb;
   border-radius: 8px;

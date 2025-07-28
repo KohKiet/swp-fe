@@ -1,16 +1,35 @@
+
+// Import React và các hook cần thiết
 import React, { useState, useEffect } from 'react';
 import eventService from '../../services/eventService';
 
+
+/**
+ * Modal đánh giá sự kiện (gửi hoặc cập nhật feedback)
+ * Props:
+ *   - event: object, thông tin sự kiện
+ *   - isOpen: boolean, hiển thị modal hay không
+ *   - onClose: function, đóng modal
+ *   - onFeedbackSubmitted: callback khi gửi thành công
+ */
 const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => {
+  // State lưu dữ liệu form: rating (số sao), comment (nhận xét)
   const [formData, setFormData] = useState({ rating: 0, comment: '' });
+  // State loading khi gửi hoặc kiểm tra feedback
   const [loading, setLoading] = useState(false);
+  // State lỗi khi gửi hoặc validate
   const [error, setError] = useState(null);
+  // State hiển thị trạng thái gửi thành công
   const [success, setSuccess] = useState(false);
+  // Nếu user đã gửi feedback trước đó, lưu lại để cập nhật
   const [existingFeedback, setExistingFeedback] = useState(null);
+  // Đang kiểm tra feedback cũ hay không
   const [checkingExisting, setCheckingExisting] = useState(false);
+  // Hiệu ứng đóng modal (animation)
   const [isClosing, setIsClosing] = useState(false);
 
-  // Reset form khi modal mở/đóng
+
+  // Reset form và kiểm tra feedback cũ mỗi khi mở modal hoặc đổi sự kiện
   useEffect(() => {
     if (isOpen && event?.id) {
       setIsClosing(false);
@@ -23,12 +42,15 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
     }
   }, [isOpen, event?.id]);
 
+
+  // Kiểm tra xem user đã gửi feedback cho sự kiện này chưa
   const checkExistingFeedback = async () => {
     if (!event?.id) return;
     setCheckingExisting(true);
     try {
       const response = await eventService.checkUserFeedbackStatus(event.id);
       if (response?.success && response?.data?.id) {
+        // Nếu đã có feedback, set lại form để user cập nhật
         setExistingFeedback(response.data);
         setFormData({
           rating: response.data.rating || 0,
@@ -40,6 +62,7 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
         setFormData({ rating: 0, comment: '' });
       }
     } catch (err) {
+      // Nếu API không hỗ trợ, coi như chưa có feedback
       console.log('⚠️ Could not check existing feedback (this is normal if endpoint doesn\'t exist):', err.message);
       setExistingFeedback(null);
       setFormData({ rating: 0, comment: '' });
@@ -48,6 +71,8 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
     }
   };
 
+
+  // Đóng modal với hiệu ứng mượt
   const handleClose = () => {
     setIsClosing(true);
     setTimeout(() => {
@@ -56,14 +81,19 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
     }, 300);
   };
 
+
+  // Xử lý thay đổi input comment
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+  // Xử lý click chọn số sao
   const handleRatingClick = (rating) => {
     setFormData(prev => ({ ...prev, rating }));
   };
 
+
+  // Validate form trước khi gửi
   const validateForm = () => {
     if (formData.rating === 0) {
       setError('Vui lòng chọn số sao đánh giá');
@@ -80,12 +110,15 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
     return true;
   };
 
+
+  // Xử lý gửi feedback (hoặc cập nhật nếu đã có)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
     setLoading(true);
     setError(null);
     try {
+      // Chuẩn bị dữ liệu gửi lên server
       const feedbackData = {
         eventId: event.id,
         rating: parseInt(formData.rating),
@@ -93,8 +126,10 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
       };
       let response;
       try {
+        // Thử gửi feedback mới
         response = await eventService.submitFeedback(feedbackData);
       } catch (createError) {
+        // Nếu đã có feedback (409), chuyển sang update
         if (existingFeedback?.id && createError.response?.status === 409) {
           response = await eventService.updateFeedback(existingFeedback.id, feedbackData);
         } else {
@@ -109,6 +144,7 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
         setError(response?.message || 'Đã xảy ra lỗi khi gửi đánh giá');
       }
     } catch (err) {
+      // Xử lý lỗi trả về từ server
       let errorMessage = 'Đã xảy ra lỗi khi gửi đánh giá';
       const data = err.response?.data;
       if (err.response?.status === 400) {
@@ -136,8 +172,12 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
     }
   };
 
+
+  // Nếu modal chưa mở thì không render gì cả
   if (!isOpen) return null;
 
+
+  // Giao diện modal đánh giá sự kiện
   return (
     <div
       className={`modal-overlay${isClosing ? ' closing' : ''}`}
@@ -146,22 +186,26 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
       aria-modal="true"
       tabIndex="-1"
     >
+      {/* Modal chính, ngăn click lan ra ngoài */}
       <div
         className="modal-content event-feedback-modal"
         onClick={e => e.stopPropagation()}
         role="document"
       >
+        {/* Header modal */}
         <div className="modal-header">
           <h2>{existingFeedback ? 'Cập nhật đánh giá' : 'Đánh giá sự kiện'}</h2>
           <button className="modal-close" onClick={handleClose}>×</button>
         </div>
         <div className="modal-body">
+          {/* Đang kiểm tra feedback cũ */}
           {checkingExisting ? (
             <div className="loading-state">
               <div className="loading-spinner"></div>
               <p>Đang kiểm tra đánh giá hiện tại...</p>
             </div>
           ) : success ? (
+            // Gửi thành công
             <div className="success-state">
               <div className="success-icon">✅</div>
               <h3>Gửi đánh giá thành công!</h3>
@@ -169,6 +213,7 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
             </div>
           ) : (
             <>
+              {/* Thông tin sự kiện */}
               <div className="event-info">
                 <h3>Sự kiện: {event?.title}</h3>
                 <p className="event-date">
@@ -177,6 +222,7 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
                   })}
                 </p>
               </div>
+              {/* Hiển thị lỗi nếu có */}
               {error && (
                 <div className="error-message">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,6 +231,7 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
                   {error}
                 </div>
               )}
+              {/* Form đánh giá */}
               <form onSubmit={handleSubmit} className="feedback-form">
                 <div className="form-group">
                   <label htmlFor="rating">Đánh giá tổng thể *</label>
@@ -235,6 +282,7 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
             </>
           )}
         </div>
+        {/* Footer: nút gửi/hủy, chỉ hiện khi không loading/success */}
         {!checkingExisting && !success && (
           <div className="modal-footer">
             <button
@@ -267,4 +315,6 @@ const EventFeedbackModal = ({ event, isOpen, onClose, onFeedbackSubmitted }) => 
   );
 };
 
+
+// Export component để sử dụng ở các trang/quản lý sự kiện
 export default EventFeedbackModal;
