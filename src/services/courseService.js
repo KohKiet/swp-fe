@@ -1,4 +1,5 @@
 import API_CONFIG from "./apiConfig";
+import { mockCourseData, mockProgressData } from "./mockData";
 
 class CourseService {
   constructor() {
@@ -8,6 +9,13 @@ class CourseService {
   // Helper method for authenticated requests
   async authenticatedRequest(url, options = {}) {
     const token = localStorage.getItem("accessToken");
+
+    console.log("🔧 authenticatedRequest - Token exists:", !!token);
+    console.log("🔧 authenticatedRequest - URL:", url);
+    console.log(
+      "🔧 authenticatedRequest - Method:",
+      options.method || "GET"
+    );
 
     const defaultHeaders = {
       Authorization: `Bearer ${token}`,
@@ -122,12 +130,22 @@ class CourseService {
 
   // Get specific public course details
   async getPublicCourseById(courseId) {
-    return this.publicRequest(
-      API_CONFIG.ENDPOINTS.PUBLIC_COURSE_BY_ID.replace(
-        "{courseId}",
-        courseId
-      )
-    );
+    try {
+      const response = await this.publicRequest(
+        API_CONFIG.ENDPOINTS.PUBLIC_COURSE_BY_ID.replace(
+          "{courseId}",
+          courseId
+        )
+      );
+      console.log("API response for course:", response);
+      return response;
+    } catch (error) {
+      console.warn(
+        "API failed for getPublicCourseById:",
+        error.message
+      );
+      throw error; // Re-throw error instead of returning mock data
+    }
   }
 
   // Search courses by age group
@@ -328,13 +346,24 @@ class CourseService {
 
   // Get chapters by course
   async getChaptersByCourse(courseId) {
-    var res = await this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.CHAPTER_BY_COURSE.replace(
-        "{courseId}",
-        courseId
-      )
-    );
-    return res.data;
+    try {
+      const res = await this.authenticatedRequest(
+        API_CONFIG.ENDPOINTS.CHAPTER_BY_COURSE.replace(
+          "{courseId}",
+          courseId
+        )
+      );
+
+      if (res?.success && res.data) {
+        return res.data;
+      } else {
+        console.warn("Chapters API failed, returning empty array");
+        return [];
+      }
+    } catch (error) {
+      console.warn("Error fetching chapters:", error.message);
+      return [];
+    }
   }
 
   // Create new chapter
@@ -394,13 +423,24 @@ class CourseService {
 
   // Get lessons by chapter
   async getLessonsByChapter(chapterId) {
-    var res = await this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.LESSON_BY_CHAPTER.replace(
-        "{chapterId}",
-        chapterId
-      )
-    );
-    return res.data;
+    try {
+      const res = await this.authenticatedRequest(
+        API_CONFIG.ENDPOINTS.LESSON_BY_CHAPTER.replace(
+          "{chapterId}",
+          chapterId
+        )
+      );
+
+      if (res?.success && res.data) {
+        return res.data;
+      } else {
+        console.warn("Lessons API failed, returning empty array");
+        return [];
+      }
+    } catch (error) {
+      console.warn("Error fetching lessons:", error.message);
+      return [];
+    }
   }
 
   // Create new lesson
@@ -467,7 +507,7 @@ class CourseService {
 
   // Get quizzes by course
   async getQuizzesByCourse(courseId) {
-    return this.publicRequest(
+    return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.QUIZ_BY_COURSE.replace(
         "{courseId}",
         courseId
@@ -508,7 +548,7 @@ class CourseService {
 
   // Get questions by quiz
   async getQuestionsByQuiz(quizId) {
-    return this.publicRequest(
+    return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.QUESTION_BY_QUIZ.replace(
         "{quizId}",
         quizId
@@ -574,20 +614,15 @@ class CourseService {
     sessionId = null,
   }) {
     try {
-      // Nếu không có sessionId, bắt đầu quiz session để lấy sessionId
-      let actualSessionId = sessionId;
-      if (!actualSessionId) {
-        const sessionResponse = await this.startQuizSession(quizId);
-        if (!sessionResponse.success) {
-          throw new Error("Failed to start quiz session");
-        }
-        actualSessionId = sessionResponse.data.sessionId;
+      // Validate sessionId is required
+      if (!sessionId) {
+        throw new Error("Session ID is required for quiz submission");
       }
 
       const submittedAt = new Date().toISOString();
       const body = {
         quizId,
-        sessionId: actualSessionId,
+        sessionId: sessionId,
         userAnswers: answers.map((a) => ({
           questionId: a.questionId,
           answerId: a.selectedAnswerId || a.answerId,
@@ -598,15 +633,54 @@ class CourseService {
         submittedAt,
       };
 
-      return this.authenticatedRequest(
+      const response = await this.authenticatedRequest(
         API_CONFIG.ENDPOINTS.QUIZ_RESULT_SUBMIT,
         {
           method: "POST",
           body: JSON.stringify(body),
         }
       );
+
+      // Handle session-related errors
+      if (!response.success) {
+        if (
+          response.message?.includes("session") ||
+          response.message?.includes("Session")
+        ) {
+          throw new Error(
+            "Quiz session expired. Please start again."
+          );
+        }
+        if (response.message?.includes("Invalid quiz session")) {
+          throw new Error(
+            "Invalid session. Please refresh and try again."
+          );
+        }
+        if (response.message?.includes("Quiz not found")) {
+          throw new Error("Quiz not available for this course.");
+        }
+      }
+
+      return response;
     } catch (error) {
       console.error("Error submitting quiz:", error);
+
+      // Enhanced error handling for session-related errors
+      if (
+        error.message.includes("session") ||
+        error.message.includes("Session")
+      ) {
+        throw new Error("Quiz session expired. Please start again.");
+      }
+      if (error.message.includes("Invalid quiz session")) {
+        throw new Error(
+          "Invalid session. Please refresh and try again."
+        );
+      }
+      if (error.message.includes("Quiz not found")) {
+        throw new Error("Quiz not available for this course.");
+      }
+
       throw error;
     }
   }
@@ -739,33 +813,6 @@ class CourseService {
     );
   }
 
-  // Get my enrollments
-  async getMyEnrollments() {
-    return this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.ENROLLMENT_MY_ENROLLMENTS
-    );
-  }
-
-  // Check enrollment status
-  async getEnrollmentStatus(courseId) {
-    return this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.ENROLLMENT_STATUS.replace(
-        "{courseId}",
-        courseId
-      )
-    );
-  }
-
-  // Check if enrolled
-  async isEnrolled(courseId) {
-    return await this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.ENROLLMENT_IS_ENROLLED.replace(
-        "{courseId}",
-        courseId
-      )
-    );
-  }
-
   // Complete course
   async completeCourse(courseId) {
     return this.authenticatedRequest(
@@ -837,21 +884,123 @@ class CourseService {
 
   // ==================== PROGRESS TRACKING ENDPOINTS ====================
 
-  // Get my progress
-  async getMyProgress() {
-    return this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.PROGRESS_ALL
-    );
+  // Get my progress with error handling
+  async getMyProgress(forceRefresh = false) {
+    // Check if Progress API is disabled
+    if (localStorage.getItem("disableProgressApi") === "true") {
+      console.log("Progress API disabled by user setting");
+      return {
+        success: false,
+        message: "Progress API disabled",
+        data: null,
+        fallback: true,
+        disabled: true,
+      };
+    }
+
+    try {
+      // Add cache busting if force refresh is requested
+      const url = forceRefresh
+        ? `${API_CONFIG.ENDPOINTS.PROGRESS_ALL}?t=${Date.now()}`
+        : API_CONFIG.ENDPOINTS.PROGRESS_ALL;
+
+      console.log(
+        `🔄 Getting progress data${
+          forceRefresh ? " (force refresh)" : ""
+        }...`
+      );
+
+      const response = await this.authenticatedRequest(url);
+
+      if (response?.success) {
+        console.log("🔄 Progress data received:", response.data);
+        return response;
+      } else {
+        console.warn("Progress API returned unsuccessful response");
+        return {
+          success: false,
+          message: "Progress data temporarily unavailable",
+          data: null,
+          fallback: true,
+        };
+      }
+    } catch (error) {
+      console.warn(
+        "Progress API failed, using fallback:",
+        error.message
+      );
+      // Return fallback response structure
+      return {
+        success: false,
+        message: "Progress data temporarily unavailable",
+        data: null,
+        fallback: true,
+      };
+    }
   }
 
-  // Get course progress
+  // Get course progress with error handling
   async getCourseProgress(courseId) {
-    return this.authenticatedRequest(
-      API_CONFIG.ENDPOINTS.PROGRESS_BY_COURSE.replace(
-        "{courseId}",
-        courseId
-      )
-    );
+    try {
+      return await this.authenticatedRequest(
+        API_CONFIG.ENDPOINTS.PROGRESS_BY_COURSE.replace(
+          "{courseId}",
+          courseId
+        )
+      );
+    } catch (error) {
+      console.warn(
+        "Course progress API failed, using enrollment status fallback:",
+        error.message
+      );
+
+      // Fallback to enrollment status
+      try {
+        const enrollmentResponse = await this.getEnrollmentStatus(
+          courseId
+        );
+        if (enrollmentResponse?.success && enrollmentResponse.data) {
+          const { isEnrolled, status } = enrollmentResponse.data;
+
+          // Convert enrollment status to progress-like format
+          let completionPercentage = 0;
+          let isCompleted = false;
+
+          if (status === "Completed") {
+            completionPercentage = 100;
+            isCompleted = true;
+          } else if (status === "InProgress") {
+            completionPercentage = 50; // Default progress for in-progress
+          } else if (status === "Enrolled") {
+            completionPercentage = 0;
+          }
+
+          return {
+            success: true,
+            data: {
+              completionPercentage,
+              isCompleted,
+              status: status,
+              fallback: true,
+            },
+            fallback: true,
+          };
+        }
+      } catch (enrollmentError) {
+        console.warn(
+          "Enrollment status fallback also failed:",
+          enrollmentError.message
+        );
+      }
+
+      // Ultimate fallback
+      return {
+        success: false,
+        message: "Progress data temporarily unavailable",
+        data: null,
+        fallback: true,
+      };
+    }
   }
 
   // Get progress by ID
@@ -877,6 +1026,14 @@ class CourseService {
 
   // Complete lesson
   async completeLessonProgress(lessonData) {
+    console.log("🔧 completeLessonProgress called with:", lessonData);
+    console.log(
+      "🔧 Endpoint:",
+      API_CONFIG.ENDPOINTS.PROGRESS_LESSON_COMPLETE
+    );
+    console.log("🔧 Method: POST");
+    console.log("🔧 Body:", JSON.stringify(lessonData));
+
     return this.authenticatedRequest(
       API_CONFIG.ENDPOINTS.PROGRESS_LESSON_COMPLETE,
       {
@@ -961,6 +1118,36 @@ class CourseService {
         quizId
       )
     );
+  }
+
+  // ==================== ENROLLMENT ENDPOINTS ====================
+
+  // Check enrollment status
+  async getEnrollmentStatus(courseId) {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.ENROLLMENT_STATUS.replace(
+        "{courseId}",
+        courseId
+      )
+    );
+  }
+
+  // Get my enrollments
+  async getMyEnrollments() {
+    return this.authenticatedRequest(
+      API_CONFIG.ENDPOINTS.ENROLLMENT_MY_ENROLLMENTS
+    );
+  }
+
+  // Check if enrolled
+  async isEnrolled(courseId) {
+    try {
+      const response = await this.getEnrollmentStatus(courseId);
+      return response?.success && response.data?.isEnrolled;
+    } catch (error) {
+      console.error("Error checking enrollment:", error);
+      return false;
+    }
   }
 }
 

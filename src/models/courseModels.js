@@ -324,15 +324,15 @@ export const createCourseFormData = ({
   CourseType = "BasicAwareness",
   AgeGroup = 2, // Adults by default
   CategoryId = "", // Add required CategoryId
-  Image = null,
+  ImageUrl = "",
 } = {}) => {
   const formData = new FormData();
   formData.append("Title", Title);
   if (Description) formData.append("Description", Description);
   formData.append("CourseType", CourseType);
   formData.append("AgeGroup", AgeGroup.toString());
-  if (CategoryId) formData.append("CategoryId", CategoryId); // Add CategoryId to form data
-  if (Image) formData.append("Image", Image);
+  if (CategoryId) formData.append("CategoryId", CategoryId);
+  if (ImageUrl) formData.append("ImageUrl", ImageUrl);
   return formData;
 };
 

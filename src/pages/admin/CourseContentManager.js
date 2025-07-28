@@ -7,34 +7,20 @@ import {
   Button,
   Card,
   CardContent,
-  CardActions,
   Grid,
   List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  ListItemButton,
-  IconButton,
-  Collapse,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Alert,
   CircularProgress,
   Chip,
-  Tabs,
-  Tab,
   Accordion,
   AccordionSummary,
   AccordionDetails,
   Stack,
-  Divider,
   Paper,
   Breadcrumbs,
   Link as MuiLink,
@@ -45,28 +31,20 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
   DragHandle as DragHandleIcon,
-  PlayArrow as PlayIcon,
   Quiz as QuizIcon,
   MenuBook as ChapterIcon,
   Article as LessonIcon,
-  CloudUpload as UploadIcon,
-  Image as ImageIcon,
-  VideoFile as VideoIcon,
-  AudioFile as AudioIcon,
-  Description as DocumentIcon,
   Save as SaveIcon,
   ArrowBack as BackIcon,
   Visibility as PreviewIcon,
-  School as SchoolIcon,
-  CheckCircle as CheckCircle,
-  Cancel as CancelIcon,
+  CheckCircle,
   Publish as PublishIcon,
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 import adminService from "../../services/adminService";
 import courseService from "../../services/courseService";
+import { API_CONFIG } from "../../services/apiConfig";
 import {
   getCourseTypeLabel,
   getAgeGroupLabel,
@@ -153,17 +131,12 @@ const CourseContentManager = () => {
   const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState(0);
   const [expandedChapter, setExpandedChapter] = useState(null);
 
   // Dialog states
   const [showChapterDialog, setShowChapterDialog] = useState(false);
   const [showLessonDialog, setShowLessonDialog] = useState(false);
-  const [showQuizDialog, setShowQuizDialog] = useState(false);
-  const [showMediaDialog, setShowMediaDialog] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  const [selectedChapter, setSelectedChapter] = useState(null);
-  const [selectedLesson, setSelectedLesson] = useState(null);
 
   // Form states
   const [chapterForm, setChapterForm] = useState({
@@ -183,22 +156,6 @@ const CourseContentManager = () => {
     additionalResources: "",
     passingScore: 100,
   });
-  const [quizForm, setQuizForm] = useState({
-    title: "",
-    description: "",
-    passingScore: 70,
-    chapterId: "",
-    lessonId: "",
-    questions: [],
-  });
-  const [mediaForm, setMediaForm] = useState({
-    title: "",
-    type: "image",
-    file: null,
-    description: "",
-    chapterId: "",
-    lessonId: "",
-  });
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -209,10 +166,6 @@ const CourseContentManager = () => {
   const [showQuizEditor, setShowQuizEditor] = useState(false);
   const [quizEditorLessonId, setQuizEditorLessonId] = useState(null);
   const [quizEditorQuiz, setQuizEditorQuiz] = useState(null);
-
-  // Add state at the top of CourseContentManager
-  const [expandedLessonQuestions, setExpandedLessonQuestions] =
-    useState({});
 
   // Load course data on mount
   useEffect(() => {
@@ -412,15 +365,103 @@ const CourseContentManager = () => {
     }
   };
 
+  // Helper function to check if course has any quiz
+  const hasCourseQuiz = () => {
+    return Object.values(chapterLessons).some((lessons) =>
+      lessons.some(
+        (lesson) => lesson.quizzes && lesson.quizzes.length > 0
+      )
+    );
+  };
+
+  // Helper function to get course quiz
+  const getCourseQuiz = () => {
+    for (const lessons of Object.values(chapterLessons)) {
+      for (const lesson of lessons) {
+        if (lesson.quizzes && lesson.quizzes.length > 0) {
+          return lesson.quizzes[0]; // Return first quiz found
+        }
+      }
+    }
+    return null;
+  };
+
+  // Helper function to check if course has any lessons
+  const hasAnyLessons = () => {
+    return Object.values(chapterLessons).some(
+      (lessons) => lessons.length > 0
+    );
+  };
+
+  // Helper function to get first lesson in course (for quiz creation)
+  const getFirstLesson = () => {
+    for (const lessons of Object.values(chapterLessons)) {
+      if (lessons.length > 0) {
+        return lessons[0];
+      }
+    }
+    return null;
+  };
+
   // Helper function to check if chapter already has a lesson
   const hasLesson = (chapterId) => {
     const lessons = chapterLessons[chapterId] || [];
     return lessons.length > 0;
   };
 
-  // Helper function to check if lesson already has a quiz
-  const hasQuiz = (lesson) => {
-    return lesson.quizzes && lesson.quizzes.length > 0;
+  // Complete course function
+  const handleCompleteCourse = async () => {
+    try {
+      setSubmitting(true);
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/api/CourseEnrolledment/complete/${courseId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem(
+              "accessToken"
+            )}`,
+          },
+          body: JSON.stringify(courseId),
+        }
+      );
+
+      if (response.ok) {
+        alert("🎉 Chúc mừng! Bạn đã hoàn thành khóa học!");
+        navigate("/education/courses"); // Navigate back to courses list
+      } else {
+        let errorData = {};
+        try {
+          errorData = await response.json();
+        } catch (err) {
+          // Nếu lỗi là Unexpected end of JSON input thì không báo lỗi
+          if (
+            err.message &&
+            err.message.includes("Unexpected end of JSON input")
+          ) {
+            setSubmitting(false);
+            return;
+          }
+        }
+        alert(
+          `Không thể hoàn thành khóa học: ${
+            errorData.message || "Unknown error"
+          }`
+        );
+      }
+    } catch (error) {
+      if (
+        error.message &&
+        error.message.includes("Unexpected end of JSON input")
+      ) {
+        setSubmitting(false);
+        return;
+      }
+      alert(`Lỗi khi hoàn thành khóa học: ${error.message}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Publish course function
@@ -459,7 +500,7 @@ const CourseContentManager = () => {
       return;
     }
 
-    setSelectedChapter(chapterId);
+    setEditingItem(null);
     setLessonForm({
       title: "",
       description: "",
@@ -472,7 +513,6 @@ const CourseContentManager = () => {
       additionalResources: "",
       passingScore: 100,
     });
-    setEditingItem(null);
     setShowLessonDialog(true);
   };
 
@@ -580,15 +620,15 @@ const CourseContentManager = () => {
 
   // Delete lesson function
   const handleDeleteLesson = async (lesson) => {
-    // Check if lesson has quiz first
-    if (hasQuiz(lesson)) {
+    // Check if course has quiz first (since quiz is now at course level)
+    if (hasCourseQuiz()) {
       if (
         !window.confirm(
-          `⚠️ CẢNH BÁO: Bài học "${lesson.title}" có chứa quiz. 
+          `⚠️ CẢNH BÁO: Khóa học này có chứa quiz. 
         
-Việc xóa bài học sẽ xóa luôn quiz và tất cả câu hỏi bên trong.
+Việc xóa bài học có thể ảnh hưởng đến quiz.
         
-Bạn có chắc chắn muốn xóa bài học này và tất cả nội dung liên quan?`
+Bạn có chắc chắn muốn xóa bài học "${lesson.title}"?`
         )
       ) {
         return;
@@ -643,72 +683,7 @@ Bạn có chắc chắn muốn xóa bài học này và tất cả nội dung li
     }
   };
 
-  // Quiz management
-  const handleCreateQuiz = (chapterId, lessonId = null) => {
-    setEditingItem(null);
-    setSelectedChapter(chapterId);
-    setSelectedLesson(lessonId);
-    setQuizForm({
-      title: "",
-      description: "",
-      passingScore: 70,
-      chapterId,
-      lessonId,
-      questions: [],
-    });
-    setShowQuizDialog(true);
-  };
-
-  const handleSubmitQuiz = async () => {
-    try {
-      setSubmitting(true);
-
-      let response;
-      if (editingItem) {
-        response = await adminService.updateQuiz(
-          editingItem.quizId,
-          quizForm
-        );
-      } else {
-        response = await adminService.createQuiz(quizForm);
-      }
-
-      if (response.success) {
-        setShowQuizDialog(false);
-        loadCourseData(); // Refresh data
-      } else {
-        setError(response.error || "Failed to save quiz");
-      }
-    } catch (err) {
-      console.error("Error saving quiz:", err);
-      setError("Failed to save quiz. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Media management
-  const handleUploadMedia = (chapterId, lessonId = null) => {
-    setSelectedChapter(chapterId);
-    setSelectedLesson(lessonId);
-    setMediaForm({
-      title: "",
-      type: "image",
-      file: null,
-      description: "",
-      chapterId,
-      lessonId,
-    });
-    setShowMediaDialog(true);
-  };
-
-  // 3. Add handler to open QuizEditor for a lesson
-  const handleOpenQuizEditor = (lessonId, quiz = null) => {
-    setQuizEditorLessonId(lessonId);
-    setQuizEditorQuiz(quiz);
-    setShowQuizEditor(true);
-  };
-
+  // Quiz management handlers (now using QuizEditor)
   const refreshLessonQuizzes = async (lessonId) => {
     let chapterIdWithLesson = null;
     let lessonIndex = null;
@@ -749,21 +724,6 @@ Bạn có chắc chắn muốn xóa bài học này và tất cả nội dung li
       ...prev,
       [chapterIdWithLesson]: lessonsCopy,
     }));
-  };
-
-  const getMediaIcon = (type) => {
-    switch (type) {
-      case "image":
-        return <ImageIcon />;
-      case "video":
-        return <VideoIcon />;
-      case "audio":
-        return <AudioIcon />;
-      case "document":
-        return <DocumentIcon />;
-      default:
-        return <DocumentIcon />;
-    }
   };
 
   const renderChapterAccordion = (chapter) => {
@@ -817,12 +777,7 @@ Bạn có chắc chắn muốn xóa bài học này và tất cả nội dung li
                   component="span"></Typography>
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {lessons.length || 0} bài học •
-                {lessons.reduce(
-                  (sum, l) => sum + (l.quizzes?.length || 0),
-                  0
-                )}{" "}
-                bài kiểm tra •{chapter.media?.length || 0} tài liệu
+                {lessons.length || 0} bài học
               </Typography>
             </Box>
           </Box>
@@ -858,7 +813,7 @@ Bạn có chắc chắn muốn xóa bài học này và tất cả nội dung li
 
           <Grid container spacing={3}>
             {/* Lessons Section */}
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12 }}>
               <Card variant="outlined">
                 <CardContent>
                   <Box
@@ -967,133 +922,8 @@ Bạn có chắc chắn muốn xóa bài học này và tất cả nội dung li
                                       }}>
                                       Xóa
                                     </ActionButton>
-
-                                    {hasQuiz(lesson) ? (
-                                      <ActionButton
-                                        size="small"
-                                        variant="contained"
-                                        startIcon={<QuizIcon />}
-                                        onClick={() => {
-                                          const existingQuiz =
-                                            lesson.quizzes[0]; // Get first quiz
-                                          setQuizEditorLessonId(
-                                            lesson.lessonId ||
-                                              lesson.id
-                                          );
-                                          setQuizEditorQuiz(
-                                            existingQuiz
-                                          );
-                                          setShowQuizEditor(true);
-                                        }}
-                                        sx={{
-                                          background:
-                                            "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)",
-                                          color: "white",
-                                        }}>
-                                        Xem Quiz
-                                      </ActionButton>
-                                    ) : (
-                                      <ActionButton
-                                        size="small"
-                                        variant="contained"
-                                        startIcon={<QuizIcon />}
-                                        onClick={() => {
-                                          setQuizEditorLessonId(
-                                            lesson.lessonId ||
-                                              lesson.id
-                                          );
-                                          setQuizEditorQuiz(null);
-                                          setShowQuizEditor(true);
-                                        }}
-                                        sx={{
-                                          background:
-                                            "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
-                                          color: "white",
-                                        }}>
-                                        Tạo Quiz
-                                      </ActionButton>
-                                    )}
                                   </Stack>
                                 </Box>
-
-                                {/* Show Quiz Details if exists */}
-                                {hasQuiz(lesson) && (
-                                  <Box
-                                    sx={{
-                                      mt: 2,
-                                      p: 2,
-                                      bgcolor: "grey.50",
-                                      borderRadius: 1,
-                                      border: "1px solid",
-                                      borderColor: "grey.200",
-                                    }}>
-                                    <Typography
-                                      variant="subtitle2"
-                                      sx={{
-                                        fontWeight: 600,
-                                        mb: 1,
-                                        color: "primary.main",
-                                      }}>
-                                      📝 Quiz:{" "}
-                                      {lesson.quizzes[0]?.title}
-                                    </Typography>
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                      sx={{ mb: 1 }}>
-                                      {lesson.quizzes[0]?.description}
-                                    </Typography>
-                                    <Box
-                                      sx={{
-                                        display: "flex",
-                                        gap: 2,
-                                        flexWrap: "wrap",
-                                      }}>
-                                      <Typography
-                                        variant="caption"
-                                        sx={{
-                                          bgcolor: "primary.main",
-                                          color: "white",
-                                          px: 1,
-                                          py: 0.5,
-                                          borderRadius: 1,
-                                        }}>
-                                        {lesson.quizzes[0]?.questions
-                                          ?.length || 0}{" "}
-                                        câu hỏi
-                                      </Typography>
-                                      <Typography
-                                        variant="caption"
-                                        sx={{
-                                          bgcolor: "success.main",
-                                          color: "white",
-                                          px: 1,
-                                          py: 0.5,
-                                          borderRadius: 1,
-                                        }}>
-                                        Điểm đạt:{" "}
-                                        {lesson.quizzes[0]
-                                          ?.passingScore || 0}
-                                        %
-                                      </Typography>
-                                      <Typography
-                                        variant="caption"
-                                        sx={{
-                                          bgcolor: "warning.main",
-                                          color: "white",
-                                          px: 1,
-                                          py: 0.5,
-                                          borderRadius: 1,
-                                        }}>
-                                        Thời gian:{" "}
-                                        {lesson.quizzes[0]
-                                          ?.timeLimitMinutes ||
-                                          0}{" "}
-                                        phút
-                                      </Typography>
-                                    </Box>
-                                  </Box>
-                                )}
                               </CardContent>
                             </ModernCard>
                           );
@@ -1277,6 +1107,24 @@ Bạn có chắc chắn muốn xóa bài học này và tất cả nội dung li
                       Xuất bản khóa học
                     </ActionButton>
                   )}
+
+                  {/* Course Completion Button - Show when course has quiz and lessons */}
+                  {/* {hasCourseQuiz() && hasAnyLessons() && (
+                    <ActionButton
+                      variant="contained"
+                      startIcon={<CheckCircle />}
+                      onClick={handleCompleteCourse}
+                      disabled={submitting}
+                      sx={{
+                        bgcolor: "purple",
+                        color: "white",
+                        "&:hover": {
+                          bgcolor: "darkpurple",
+                        },
+                      }}>
+                      Hoàn thành khóa học
+                    </ActionButton>
+                  )} */}
                 </Stack>
               </Box>
             </Grid>
@@ -1329,21 +1177,189 @@ Bạn có chắc chắn muốn xóa bài học này và tất cả nội dung li
                     0
                   )}{" "}
                   bài học
+                  {hasCourseQuiz() && (
+                    <>
+                      {" • 1 bài kiểm tra ("}
+                      {getCourseQuiz()?.questions?.length || 0} câu
+                      hỏi)
+                    </>
+                  )}
                 </Typography>
               </Box>
-              <ActionButton
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreateChapter}
-                sx={{
-                  background:
-                    "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)",
-                  color: "white",
-                }}>
-                Thêm chương
-              </ActionButton>
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <ActionButton
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleCreateChapter}
+                  sx={{
+                    background:
+                      "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)",
+                    color: "white",
+                  }}>
+                  Thêm chương
+                </ActionButton>
+
+                <ActionButton
+                  variant="contained"
+                  startIcon={
+                    hasCourseQuiz() ? <QuizIcon /> : <AddIcon />
+                  }
+                  onClick={() => {
+                    if (hasCourseQuiz()) {
+                      // Edit existing quiz
+                      const existingQuiz = getCourseQuiz();
+                      const firstLesson = getFirstLesson();
+                      if (firstLesson) {
+                        setQuizEditorLessonId(
+                          firstLesson.lessonId || firstLesson.id
+                        );
+                        setQuizEditorQuiz(existingQuiz);
+                        setShowQuizEditor(true);
+                      }
+                    } else {
+                      // Create new quiz
+                      const firstLesson = getFirstLesson();
+                      if (!firstLesson) {
+                        alert(
+                          "Vui lòng tạo ít nhất một bài học trước khi tạo quiz"
+                        );
+                        return;
+                      }
+                      setQuizEditorLessonId(
+                        firstLesson.lessonId || firstLesson.id
+                      );
+                      setQuizEditorQuiz(null);
+                      setShowQuizEditor(true);
+                    }
+                  }}
+                  disabled={!hasAnyLessons()}
+                  sx={{
+                    background: !hasAnyLessons()
+                      ? "grey.300"
+                      : hasCourseQuiz()
+                      ? "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)"
+                      : "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
+                    color: "white",
+                  }}>
+                  {!hasAnyLessons()
+                    ? "Cần có bài học"
+                    : hasCourseQuiz()
+                    ? "Chỉnh sửa Quiz"
+                    : "Tạo Quiz"}
+                </ActionButton>
+              </Box>
             </Box>
           </Paper>
+
+          {/* Quiz Details Card - Show when course has quiz */}
+          {hasCourseQuiz() && (
+            <Paper
+              sx={{
+                p: 3,
+                mb: 4,
+                borderRadius: 3,
+                background:
+                  "linear-gradient(145deg, #f0f8ff 0%, #e6f3ff 100%)",
+                border: "1px solid",
+                borderColor: "primary.main",
+                boxShadow: "0 4px 20px rgba(25, 118, 210, 0.1)",
+              }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}>
+                <Box>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      mb: 1,
+                      color: "primary.main",
+                    }}>
+                    📝 {getCourseQuiz()?.title}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 2 }}>
+                    {getCourseQuiz()?.description}
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: 2,
+                      flexWrap: "wrap",
+                    }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        bgcolor: "primary.main",
+                        color: "white",
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: 1,
+                        fontWeight: 600,
+                      }}>
+                      {getCourseQuiz()?.questions?.length || 0} câu
+                      hỏi
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        bgcolor: "success.main",
+                        color: "white",
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: 1,
+                        fontWeight: 600,
+                      }}>
+                      Điểm đạt: {getCourseQuiz()?.passingScore || 0}%
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        bgcolor: "warning.main",
+                        color: "white",
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: 1,
+                        fontWeight: 600,
+                      }}>
+                      Thời gian:{" "}
+                      {getCourseQuiz()?.timeLimitMinutes || 0} phút
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <ActionButton
+                  variant="outlined"
+                  startIcon={<QuizIcon />}
+                  onClick={() => {
+                    const existingQuiz = getCourseQuiz();
+                    const firstLesson = getFirstLesson();
+                    if (firstLesson) {
+                      setQuizEditorLessonId(
+                        firstLesson.lessonId || firstLesson.id
+                      );
+                      setQuizEditorQuiz(existingQuiz);
+                      setShowQuizEditor(true);
+                    }
+                  }}
+                  sx={{
+                    borderColor: "primary.main",
+                    color: "primary.main",
+                    "&:hover": {
+                      backgroundColor: "primary.main",
+                      color: "white",
+                    },
+                  }}>
+                  Xem chi tiết
+                </ActionButton>
+              </Box>
+            </Paper>
+          )}
 
           {chapters.length === 0 ? (
             <Paper sx={{ p: 4, textAlign: "center" }}>
@@ -1416,19 +1432,6 @@ Bạn có chắc chắn muốn xóa bài học này và tất cả nội dung li
                     description: e.target.value,
                   })
                 }
-              />
-
-              <TextField
-                label="Thứ tự"
-                type="number"
-                value={chapterForm.orderIndex}
-                onChange={(e) =>
-                  setChapterForm({
-                    ...chapterForm,
-                    orderIndex: parseInt(e.target.value),
-                  })
-                }
-                inputProps={{ min: 1 }}
               />
             </Box>
           </DialogContent>
@@ -1507,34 +1510,8 @@ Bạn có chắc chắn muốn xóa bài học này và tất cả nội dung li
                 }
                 placeholder="Nhập nội dung bài học, hướng dẫn hoặc phương tiện đã lưu trữ..."
               />
-              <TextField
-                label="URL video"
-                fullWidth
-                value={lessonForm.videoUrl}
-                onChange={(e) =>
-                  setLessonForm({
-                    ...lessonForm,
-                    videoUrl: e.target.value,
-                  })
-                }
-              />
               <Grid container spacing={2}>
-                <Grid size={{ xs: 6 }}>
-                  <TextField
-                    label="Thứ tự"
-                    type="number"
-                    fullWidth
-                    value={lessonForm.orderIndex}
-                    onChange={(e) =>
-                      setLessonForm({
-                        ...lessonForm,
-                        orderIndex: parseInt(e.target.value),
-                      })
-                    }
-                    inputProps={{ min: 1 }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     label="Thời gian ước tính (phút)"
                     type="number"
@@ -1550,41 +1527,6 @@ Bạn có chắc chắn muốn xóa bài học này và tất cả nội dung li
                   />
                 </Grid>
               </Grid>
-              <TextField
-                label="Loại bài học"
-                fullWidth
-                value={lessonForm.lessonType}
-                onChange={(e) =>
-                  setLessonForm({
-                    ...lessonForm,
-                    lessonType: e.target.value,
-                  })
-                }
-              />
-              <TextField
-                label="Tài liệu thêm"
-                fullWidth
-                value={lessonForm.additionalResources}
-                onChange={(e) =>
-                  setLessonForm({
-                    ...lessonForm,
-                    additionalResources: e.target.value,
-                  })
-                }
-              />
-              <TextField
-                label="Điểm số đạt được"
-                type="number"
-                fullWidth
-                value={lessonForm.passingScore}
-                onChange={(e) =>
-                  setLessonForm({
-                    ...lessonForm,
-                    passingScore: parseInt(e.target.value),
-                  })
-                }
-                inputProps={{ min: 0, max: 100 }}
-              />
             </Box>
           </DialogContent>
           <DialogActions>
@@ -1603,192 +1545,6 @@ Bạn có chắc chắn muốn xóa bài học này và tất cả nội dung li
                 )
               }>
               {editingItem ? "Cập nhật" : "Tạo"} bài học
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Quiz Dialog */}
-        <Dialog
-          open={showQuizDialog}
-          onClose={() => setShowQuizDialog(false)}
-          maxWidth="md"
-          fullWidth>
-          <DialogTitle>
-            {editingItem
-              ? "Chỉnh sửa bài kiểm tra"
-              : "Tạo bài kiểm tra mới"}
-          </DialogTitle>
-          <DialogContent>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 3,
-                mt: 2,
-              }}>
-              <TextField
-                label="Tiêu đề bài kiểm tra"
-                fullWidth
-                value={quizForm.title}
-                onChange={(e) =>
-                  setQuizForm({ ...quizForm, title: e.target.value })
-                }
-              />
-
-              <TextField
-                label="Mô tả"
-                fullWidth
-                multiline
-                rows={3}
-                value={quizForm.description}
-                onChange={(e) =>
-                  setQuizForm({
-                    ...quizForm,
-                    description: e.target.value,
-                  })
-                }
-              />
-
-              <TextField
-                label="Điểm số đạt được (%)"
-                type="number"
-                value={quizForm.passingScore}
-                onChange={(e) =>
-                  setQuizForm({
-                    ...quizForm,
-                    passingScore: parseInt(e.target.value),
-                  })
-                }
-                inputProps={{ min: 0, max: 100 }}
-              />
-
-              <Alert severity="info">
-                Sau khi tạo bài kiểm tra, bạn sẽ có thể thêm câu hỏi
-                trong trình chỉnh sửa bài kiểm tra.
-              </Alert>
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowQuizDialog(false)}>
-              Hủy
-            </Button>
-            <Button
-              onClick={handleSubmitQuiz}
-              variant="contained"
-              disabled={submitting}
-              startIcon={
-                submitting ? (
-                  <CircularProgress size={16} />
-                ) : (
-                  <SaveIcon />
-                )
-              }>
-              {editingItem ? "Cập nhật" : "Tạo"} bài kiểm tra
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Media Upload Dialog */}
-        <Dialog
-          open={showMediaDialog}
-          onClose={() => setShowMediaDialog(false)}
-          maxWidth="md"
-          fullWidth>
-          <DialogTitle>Tải lên tài liệu</DialogTitle>
-          <DialogContent>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 3,
-                mt: 2,
-              }}>
-              <TextField
-                label="Tiêu đề tài liệu"
-                fullWidth
-                value={mediaForm.title}
-                onChange={(e) =>
-                  setMediaForm({
-                    ...mediaForm,
-                    title: e.target.value,
-                  })
-                }
-              />
-
-              <FormControl fullWidth>
-                <InputLabel>Loại tài liệu</InputLabel>
-                <Select
-                  value={mediaForm.type}
-                  label="Loại tài liệu"
-                  onChange={(e) =>
-                    setMediaForm({
-                      ...mediaForm,
-                      type: e.target.value,
-                    })
-                  }>
-                  <MenuItem value="image">Hình ảnh</MenuItem>
-                  <MenuItem value="video">Video</MenuItem>
-                  <MenuItem value="audio">Âm thanh</MenuItem>
-                  <MenuItem value="document">Tài liệu</MenuItem>
-                </Select>
-              </FormControl>
-
-              <Box>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  startIcon={<UploadIcon />}
-                  fullWidth
-                  sx={{ mb: 1 }}>
-                  Chọn tệp
-                  <input
-                    type="file"
-                    hidden
-                    onChange={(e) =>
-                      setMediaForm({
-                        ...mediaForm,
-                        file: e.target.files[0],
-                      })
-                    }
-                  />
-                </Button>
-                {mediaForm.file && (
-                  <Typography variant="body2" color="text.secondary">
-                    Đã chọn: {mediaForm.file.name}
-                  </Typography>
-                )}
-              </Box>
-
-              <TextField
-                label="Mô tả"
-                fullWidth
-                multiline
-                rows={3}
-                value={mediaForm.description}
-                onChange={(e) =>
-                  setMediaForm({
-                    ...mediaForm,
-                    description: e.target.value,
-                  })
-                }
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowMediaDialog(false)}>
-              Hủy
-            </Button>
-            <Button
-              variant="contained"
-              disabled={!mediaForm.file || submitting}
-              startIcon={
-                submitting ? (
-                  <CircularProgress size={16} />
-                ) : (
-                  <UploadIcon />
-                )
-              }>
-              Tải lên tài liệu
             </Button>
           </DialogActions>
         </Dialog>

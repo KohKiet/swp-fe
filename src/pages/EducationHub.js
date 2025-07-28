@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import ProgressApiToggle from "../components/ProgressApiToggle";
+import QuickFixButton from "../components/QuickFixButton";
 import {
   Box,
   Container,
@@ -179,20 +181,172 @@ const EducationHub = () => {
     totalItems: 0,
   });
   const [userProgress, setUserProgress] = useState([]);
+  const [userEnrollments, setUserEnrollments] = useState([]);
+  const [enrollingCourseId, setEnrollingCourseId] = useState(null);
 
   // Load courses when component mounts or filters change
   useEffect(() => {
     loadCourses();
-    // Load user progress nếu đã đăng nhập
-    courseService
-      .getMyProgress()
-      .then((res) => {
-        if (res && res.success && Array.isArray(res.data)) {
-          setUserProgress(res.data);
-        }
-      })
-      .catch(() => setUserProgress([]));
   }, [pagination.currentPage, searchQuery]);
+
+  // Load user data only once when component mounts
+  const loadUserData = async () => {
+    try {
+      // Try to get progress first
+      const progressRes = await courseService.getMyProgress();
+      if (
+        progressRes &&
+        progressRes.success &&
+        Array.isArray(progressRes.data)
+      ) {
+        setUserProgress(progressRes.data);
+      } else if (progressRes?.fallback) {
+        // Progress API failed, use enrollments as fallback
+        try {
+          const enrollmentRes =
+            await courseService.getMyEnrollments();
+          if (
+            enrollmentRes &&
+            enrollmentRes.success &&
+            Array.isArray(enrollmentRes.data)
+          ) {
+            setUserEnrollments(enrollmentRes.data);
+            // Convert enrollments to progress-like format
+            const progressFromEnrollments = enrollmentRes.data.map(
+              (enrollment) => ({
+                courseId: enrollment.courseId,
+                isCompleted: enrollment.status === "Completed",
+                status: enrollment.status,
+                enrolledAt: enrollment.enrolledAt,
+                completeAt: enrollment.completeAt,
+              })
+            );
+            setUserProgress(progressFromEnrollments);
+          }
+        } catch (enrollmentError) {
+          setUserProgress([]);
+        }
+      } else {
+        setUserProgress([]);
+      }
+    } catch (error) {
+      // Try enrollments as fallback
+      try {
+        const enrollmentRes = await courseService.getMyEnrollments();
+        if (
+          enrollmentRes &&
+          enrollmentRes.success &&
+          Array.isArray(enrollmentRes.data)
+        ) {
+          setUserEnrollments(enrollmentRes.data);
+          // Convert enrollments to progress-like format
+          const progressFromEnrollments = enrollmentRes.data.map(
+            (enrollment) => ({
+              courseId: enrollment.courseId,
+              isCompleted: enrollment.status === "Completed",
+              status: enrollment.status,
+              enrolledAt: enrollment.enrolledAt,
+              completeAt: enrollment.completeAt,
+            })
+          );
+          setUserProgress(progressFromEnrollments);
+        }
+      } catch (enrollmentError) {
+        setUserProgress([]);
+      }
+    }
+  };
+
+  // Function to refresh user data (for when user returns from quiz)
+  const refreshUserData = async () => {
+    // Clear existing data first
+    setUserProgress([]);
+    setUserEnrollments([]);
+
+    // Force fresh data load
+    try {
+      // Try to get progress first with force refresh
+      const progressRes = await courseService.getMyProgress(true); // Force refresh
+
+      if (
+        progressRes &&
+        progressRes.success &&
+        Array.isArray(progressRes.data)
+      ) {
+        setUserProgress(progressRes.data);
+      } else if (progressRes?.fallback) {
+        // Progress API failed, use enrollments as fallback
+        try {
+          const enrollmentRes =
+            await courseService.getMyEnrollments();
+
+          if (
+            enrollmentRes &&
+            enrollmentRes.success &&
+            Array.isArray(enrollmentRes.data)
+          ) {
+            setUserEnrollments(enrollmentRes.data);
+            // Convert enrollments to progress-like format
+            const progressFromEnrollments = enrollmentRes.data.map(
+              (enrollment) => ({
+                courseId: enrollment.courseId,
+                isCompleted: enrollment.status === "Completed",
+                status: enrollment.status,
+                enrolledAt: enrollment.enrolledAt,
+                completeAt: enrollment.completeAt,
+              })
+            );
+            setUserProgress(progressFromEnrollments);
+          }
+        } catch (enrollmentError) {
+          setUserProgress([]);
+        }
+      } else {
+        setUserProgress([]);
+      }
+    } catch (error) {
+      // Try enrollments as fallback
+      try {
+        const enrollmentRes = await courseService.getMyEnrollments();
+
+        if (
+          enrollmentRes &&
+          enrollmentRes.success &&
+          Array.isArray(enrollmentRes.data)
+        ) {
+          setUserEnrollments(enrollmentRes.data);
+          // Convert enrollments to progress-like format
+          const progressFromEnrollments = enrollmentRes.data.map(
+            (enrollment) => ({
+              courseId: enrollment.courseId,
+              isCompleted: enrollment.status === "Completed",
+              status: enrollment.status,
+              enrolledAt: enrollment.enrolledAt,
+              completeAt: enrollment.completeAt,
+            })
+          );
+          setUserProgress(progressFromEnrollments);
+        }
+      } catch (enrollmentError) {
+        setUserProgress([]);
+      }
+    }
+  };
+
+  useEffect(() => {
+    loadUserData();
+
+    // Refresh data when user returns to this page
+    const handleFocus = () => {
+      refreshUserData();
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []); // Empty dependency array - only run once
 
   const loadCourses = async () => {
     try {
@@ -225,7 +379,6 @@ const EducationHub = () => {
         setCourses([]);
       }
     } catch (err) {
-      console.error("Error loading courses:", err);
       setError("Failed to load courses. Please try again.");
       setCourses([]);
     } finally {
@@ -242,8 +395,45 @@ const EducationHub = () => {
     setPagination((prev) => ({ ...prev, currentPage: newPage }));
   };
 
-  const getCourseUrl = (course) => {
-    return `/education/courses/${course.courseId}`;
+  const handleEnrollment = async (courseId) => {
+    try {
+      setEnrollingCourseId(courseId);
+
+      // Check if already enrolled
+      const existingProgress = userProgress.find(
+        (p) => p.courseId === courseId
+      );
+      if (existingProgress) {
+        // Already enrolled, navigate to lesson page
+        navigate(`/lesson/${courseId}`);
+        return;
+      }
+
+      // Enroll in course
+      const response = await courseService.enrollInCourse(courseId);
+      if (response?.success) {
+        // Update local progress state
+        const newProgress = {
+          courseId: courseId,
+          isCompleted: false,
+          status: "Enrolled",
+          enrolledAt: new Date().toISOString(),
+        };
+        setUserProgress((prev) => [...prev, newProgress]);
+
+        // Navigate to lesson page
+        navigate(`/lesson/${courseId}`);
+      } else {
+        // Handle enrollment error
+      }
+    } catch (error) {
+      if (error.message?.includes("401")) {
+        // Redirect to login if unauthorized
+        navigate("/login", { state: { returnUrl: "/education" } });
+      }
+    } finally {
+      setEnrollingCourseId(null);
+    }
   };
 
   const getImageUrl = (course) => {
@@ -292,13 +482,22 @@ const EducationHub = () => {
     const progress = userProgress.find(
       (p) => p.courseId === course.courseId
     );
+
     let courseButtonLabel = "Bắt đầu học";
     let courseButtonColor = "primary";
+
     if (progress) {
-      if (progress.isCompleted) {
+      if (progress.isCompleted || progress.status === "Completed") {
         courseButtonLabel = "Đã học xong";
         courseButtonColor = "success";
+      } else if (progress.status === "InProgress") {
+        courseButtonLabel = "Đang học";
+        courseButtonColor = "warning";
+      } else if (progress.status === "Enrolled") {
+        courseButtonLabel = "Tiếp tục học";
+        courseButtonColor = "info";
       } else {
+        // Legacy progress data without status
         courseButtonLabel = "Đang học";
         courseButtonColor = "warning";
       }
@@ -314,10 +513,17 @@ const EducationHub = () => {
               />
               <CourseOverlay className="course-overlay">
                 <IconButton
-                  component={Link}
-                  to={getCourseUrl(course)}
+                  onClick={() => handleEnrollment(course.courseId)}
+                  disabled={enrollingCourseId === course.courseId}
                   sx={{ color: "white" }}>
-                  <PlayIcon sx={{ fontSize: 48 }} />
+                  {enrollingCourseId === course.courseId ? (
+                    <CircularProgress
+                      size={48}
+                      sx={{ color: "white" }}
+                    />
+                  ) : (
+                    <PlayIcon sx={{ fontSize: 48 }} />
+                  )}
                 </IconButton>
               </CourseOverlay>
               {/* Course Type Badge */}
@@ -470,18 +676,26 @@ const EducationHub = () => {
             </CardContent>
             <CardActions sx={{ p: 2.5, pt: 0 }}>
               <Button
-                component={Link}
-                to={getCourseUrl(course)}
+                onClick={() => handleEnrollment(course.courseId)}
                 variant="contained"
                 fullWidth
-                startIcon={<PlayIcon />}
+                startIcon={
+                  enrollingCourseId === course.courseId ? (
+                    <CircularProgress size={16} />
+                  ) : (
+                    <PlayIcon />
+                  )
+                }
                 color={courseButtonColor}
+                disabled={enrollingCourseId === course.courseId}
                 sx={{
                   borderRadius: 2,
                   textTransform: "none",
                   fontWeight: 600,
                 }}>
-                {courseButtonLabel}
+                {enrollingCourseId === course.courseId
+                  ? "Đang đăng ký..."
+                  : courseButtonLabel}
               </Button>
             </CardActions>
           </StyledCourseCard>
@@ -536,6 +750,16 @@ const EducationHub = () => {
         </div>
       </div>
       <Container maxWidth="xl" sx={{ py: 4 }}>
+        {/* Debug Tool - Only show when explicitly enabled */}
+        {process.env.NODE_ENV === "development" &&
+          (process.env.REACT_APP_SHOW_DEBUG_TOOLS === "true" ||
+            localStorage.getItem("showDebugTools") === "true") && (
+            <>
+              <QuickFixButton />
+              <ProgressApiToggle />
+            </>
+          )}
+
         {/* Search Only */}
         <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
           <Stack

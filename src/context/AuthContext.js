@@ -217,8 +217,7 @@ export const AuthProvider = ({ children }) => {
   const isStaff = () => {
     return (
       currentUser &&
-      (currentUser.role === "staff" ||
-        currentUser.role === "Staff")
+      (currentUser.role === "staff" || currentUser.role === "Staff")
     );
   };
 
