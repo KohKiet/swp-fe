@@ -771,6 +771,11 @@ class AdminService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
+      // Debug: Log the data being sent
+      console.log("Creating course with data:", courseData);
+      console.log("Data type:", typeof courseData);
+      console.log("Is FormData:", courseData instanceof FormData);
+
       // Try the main course creation endpoint
       const response = await this.authenticatedRequest(
         API_CONFIG.ENDPOINTS.COURSE_ALL,
@@ -794,6 +799,18 @@ class AdminService {
       throw new Error(response.error || "Course creation failed");
     } catch (error) {
       console.error("Course creation failed:", error.message);
+
+      // Debug: Log more details about the error
+      if (error.status === 415) {
+        console.error("HTTP 415 - Unsupported Media Type");
+        console.error("Request data:", courseData);
+        console.error("Request headers:", {
+          "Content-Type":
+            courseData instanceof FormData
+              ? "multipart/form-data"
+              : "application/json",
+        });
+      }
 
       // Only provide user-friendly error messages for connection issues
       // For backend errors (500, etc.), pass through the actual error message

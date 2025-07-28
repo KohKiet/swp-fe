@@ -932,47 +932,6 @@ Chi tiết lỗi: ${error.message}`);
         }}>
         <Button onClick={onCancel}>Cancel</Button>
 
-        {/* Debug Test Button - Remove in production */}
-        {process.env.NODE_ENV === "development" && (
-          <Button
-            variant="outlined"
-            onClick={async () => {
-              const token = localStorage.getItem("accessToken");
-              console.log("Testing API connection...");
-              console.log("Token exists:", !!token);
-              console.log(
-                "Token preview:",
-                token ? token.substring(0, 20) + "..." : "No token"
-              );
-
-              if (isEditingExistingQuiz) {
-                console.log("Testing quiz update API...");
-                try {
-                  // Test with minimal payload
-                  const testRes = await adminService.updateQuiz(
-                    quizData.id,
-                    {
-                      title: quizData.title || "Test Title",
-                    }
-                  );
-                  console.log("Quiz update test result:", testRes);
-                  alert(
-                    `API Test - Update Quiz: ${
-                      testRes.success
-                        ? "Success"
-                        : "Failed: " + testRes.error
-                    }`
-                  );
-                } catch (error) {
-                  console.error("Quiz update test error:", error);
-                  alert(`API Test Error: ${error.message}`);
-                }
-              }
-            }}>
-            🔧 Test API
-          </Button>
-        )}
-
         <Button
           variant="contained"
           onClick={handleSaveQuiz}

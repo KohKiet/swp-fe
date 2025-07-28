@@ -200,7 +200,7 @@ const AdminCourseManagement = () => {
     courseType: "BasicAwareness",
     ageGroup: AgeGroupEnum.ADULTS,
     categoryId: "", // Add required CategoryId field
-    image: null,
+    imageUrl: "",
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -276,7 +276,7 @@ const AdminCourseManagement = () => {
   const handleImageChange = useCallback((e) => {
     setFormData((prev) => ({
       ...prev,
-      image: e.target.files?.[0] || null,
+      imageUrl: e.target.value || "",
     }));
   }, []);
 
@@ -396,7 +396,7 @@ const AdminCourseManagement = () => {
       courseType: "BasicAwareness",
       ageGroup: AgeGroupEnum.ADULTS,
       categoryId: "", // Reset categoryId
-      image: null,
+      imageUrl: "",
     });
     setFormErrors({});
     // Clear inputs immediately without setTimeout
@@ -487,7 +487,7 @@ const AdminCourseManagement = () => {
       CourseType: formData.courseType,
       AgeGroup: formData.ageGroup,
       CategoryId: formData.categoryId, // Add required CategoryId
-      Image: formData.image,
+      ImageUrl: formData.imageUrl, // Use imageUrl for the API
     });
 
     try {
@@ -507,7 +507,7 @@ const AdminCourseManagement = () => {
           courseType: "BasicAwareness",
           ageGroup: AgeGroupEnum.ADULTS,
           categoryId: categories.length > 0 ? categories[0].id : "", // Reset to first category if available
-          image: null,
+          imageUrl: "",
         });
         setFormErrors({});
 
@@ -1384,40 +1384,16 @@ const AdminCourseManagement = () => {
                   variant="subtitle2"
                   gutterBottom
                   sx={{ fontWeight: 600, color: "text.primary" }}>
-                  Hình Ảnh Khóa Học
+                  Hình Ảnh Khóa Học (URL)
                 </Typography>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  startIcon={<AddIcon />}
-                  sx={{
-                    borderRadius: 2,
-                    textTransform: "none",
-                    fontWeight: 500,
-                  }}>
-                  Tải Lên Hình Ảnh
-                  <input
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                </Button>
-                {formData.image && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      ml: 2,
-                      color: "success.main",
-                      fontWeight: 600,
-                      bgcolor: alpha("#4caf50", 0.1),
-                      px: 1,
-                      py: 0.5,
-                      borderRadius: 1,
-                    }}>
-                    ✓ {formData.image.name}
-                  </Typography>
-                )}
+                <TextField
+                  label="URL hình ảnh"
+                  fullWidth
+                  value={formData.imageUrl || ""}
+                  onChange={handleImageChange}
+                  placeholder="https://..."
+                  sx={{ borderRadius: 2 }}
+                />
               </Box>
             </Box>
           </DialogContent>

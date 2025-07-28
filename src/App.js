@@ -32,8 +32,8 @@ import ConsultantList from "./pages/ConsultantList";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ApiTest from "./components/ApiTest";
-import CoursePlayer from "./components/CoursePlayer";
 import UserDashboard from "./components/UserDashboard";
+import DebugToolsToggle from "./components/DebugToolsToggle";
 
 // Survey Flow Pages
 import SurveyEntryPage from "./pages/surveys/SurveyEntryPage";
@@ -101,10 +101,6 @@ function AppContent() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/education" element={<EducationHub />} />
           <Route
-            path="/education/courses/:courseId"
-            element={<CoursePlayer />}
-          />
-          <Route
             path="/education/dashboard"
             element={
               <UserProtectedRoute element={<UserDashboard />} />
@@ -148,7 +144,7 @@ function AppContent() {
           />
           {/* End Survey Flow */}
 
-          <Route path="/lesson/:lessonId" element={<Lesson />} />
+          <Route path="/lesson/:courseId" element={<Lesson />} />
           <Route path="/quiz/:quizId" element={<Quiz />} />
 
           <Route path="/demo" element={<FeatureDemo />} />
@@ -201,6 +197,7 @@ function AppContent() {
         </Routes>
       </main>
       <Footer />
+      <DebugToolsToggle />
     </div>
   );
 }

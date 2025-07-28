@@ -73,6 +73,15 @@ class MockAuthService {
   getAccessToken() {
     return null; // Always return null since mock is disabled
   }
+
+  async fetchUserProfile() {
+    console.log("Mock fetchUserProfile disabled");
+    return {
+      success: false,
+      error:
+        "Mock authentication is disabled. Please use real backend authentication.",
+    };
+  }
 }
 
 const mockAuthService = new MockAuthService();
